@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台積電 (2330.TW) 法人全方位分析儀表板</title>
+    <meta name="description" content="台積電全方位法人分析儀表板，涵蓋基本面、技術面、籌碼面、總體經濟面、消息面、產業面與未來展望。">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <i class="fa-solid fa-microchip logo-icon"></i>
+                <h2>TSMC 分析儀表板</h2>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-item active" data-panel="fundamental"><i class="fa-solid fa-building"></i> 基本面分析</button>
+                <button class="nav-item" data-panel="technical"><i class="fa-solid fa-chart-line"></i> 技術面分析</button>
+                <button class="nav-item" data-panel="chip"><i class="fa-solid fa-users"></i> 籌碼面分析</button>
+                <button class="nav-item" data-panel="macro"><i class="fa-solid fa-globe"></i> 總經面分析</button>
+                <button class="nav-item" data-panel="news"><i class="fa-regular fa-newspaper"></i> 消息面分析</button>
+                <button class="nav-item" data-panel="industry"><i class="fa-solid fa-industry"></i> 產業面分析</button>
+                <button class="nav-item" data-panel="outlook"><i class="fa-solid fa-rocket"></i> 未來 10 年展望</button>
+                <button class="nav-item" data-panel="risk"><i class="fa-solid fa-scale-balanced"></i> 風險情境</button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-title">
+                    <h1>台積電 (2330.TW) <span id="current-price" class="stock-price">--</span></h1>
+                    <span id="price-change" class="price-change">--</span>
+                </div>
+                <div class="header-actions">
+                    <span class="last-update">最後更新: <span id="last-update-time">尚未更新</span></span>
+                    <button id="refresh-btn" class="btn btn-primary"><i class="fa-solid fa-rotate-right"></i> 更新資料</button>
+                </div>
+            </header>
+
+            <div class="dashboard-area">
+                <!-- 基本面面板 -->
+                <section id="panel-fundamental" class="panel active">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-building"></i> 基本面分析</h3>
+                        <p>營收成長、毛利率、EPS 趨勢、本益比與財務健全度全覽</p>
+                    </div>
+                    <div class="grid-container">
+                        <div class="card stat-card span-3">
+                            <h4>本益比 (P/E)</h4>
+                            <div class="stat-value" id="pe-ratio">--</div>
+                            <div class="stat-sub">即時市場估值</div>
+                        </div>
+                        <div class="card stat-card span-3">
+                            <h4>近四季 EPS (TTM)</h4>
+                            <div class="stat-value" id="eps-ttm">--</div>
+                            <div class="stat-sub">新台幣 / 股</div>
+                        </div>
+                        <div class="card stat-card span-3">
+                            <h4>ROE (%)</h4>
+                            <div class="stat-value" id="roe-value">--</div>
+                            <div class="stat-sub">股東權益報酬率</div>
+                        </div>
+                        <div class="card stat-card span-3">
+                            <h4>現金殖利率 (%)</h4>
+                            <div class="stat-value" id="dividend-yield">--</div>
+                            <div class="stat-sub">年化殖利率</div>
+                        </div>
+                        <div class="card stat-card span-3">
+                            <h4>營業利益率</h4>
+                            <div class="stat-value" id="operating-margin">58.1%</div>
+                            <div class="stat-sub">2026 Q1 實績</div>
+                        </div>
+                        <div class="card stat-card span-3">
+                            <h4>淨利率</h4>
+                            <div class="stat-value" id="net-margin">50.5%</div>
+                            <div class="stat-sub">2026 Q1 實績</div>
+                        </div>
+                        <div class="card stat-card span-3">
+                            <h4>2025 EPS</h4>
+                            <div class="stat-value">66.25</div>
+                            <div class="stat-sub">新台幣 / 股，年增 46.4%</div>
+                        </div>
+                        <div class="card stat-card span-3">
+                            <h4>先進製程佔比</h4>
+                            <div class="stat-value">74%</div>
+                            <div class="stat-sub">7nm 以下，2025 全年</div>
+                        </div>
+                        <!-- 圖表行 -->
+                        <div class="card chart-card full-width">
+                            <h4>季度營收與毛利率趨勢 (24Q1 ~ 26Q1)</h4>
+                            <p class="text-muted">全部使用 FinMind 真實財報數字，單位：十億台幣</p>
+                            <div class="chart-container"><canvas id="fundamental-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>單季 EPS 趨勢 (24Q1 ~ 26Q1)</h4>
+                            <div class="chart-container"><canvas id="eps-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>營收年增率 YoY (%)</h4>
+                            <p class="text-muted">同比成長動能追蹤</p>
+                            <div class="chart-container"><canvas id="yoy-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>獲利率三階段拆解</h4>
+                            <p class="text-muted">毛利率、營業利益率、淨利率同圖比較，看製程升級與營運槓桿</p>
+                            <div class="chart-container"><canvas id="margin-stack-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>現金流與資本密集度</h4>
+                            <p class="text-muted">營收、資本支出與股利拉在一起，觀察成長品質</p>
+                            <div class="chart-container"><canvas id="cashflow-capex-chart"></canvas></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 技術面面板 -->
+                <section id="panel-technical" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-chart-line"></i> 技術面分析</h3>
+                        <p>K 線圖、布林通道 (Bollinger Bands)、KD 指標與成交量分析</p>
+                    </div>
+                    <div class="grid-container">
+                        <div class="card chart-card full-width">
+                            <h4>股價走勢與布林通道 (近6個月)</h4>
+                            <p class="text-muted">布林通道：20MA ± 2倍標準差，碰觸下軌為支撐，上軌為壓力</p>
+                            <div class="chart-container large"><canvas id="technical-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>KD 指標 (隨機指標 K9D9)</h4>
+                            <p class="text-muted">K<20 超賣區；K>80 超買區；黃金交叉為買訊</p>
+                            <div class="chart-container"><canvas id="kd-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>成交量趨勢 (近6個月)</h4>
+                            <p class="text-muted">量增價漲為健康型態，量縮為籌碼鎖定</p>
+                            <div class="chart-container"><canvas id="volume-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>RSI 14 動能區間</h4>
+                            <p class="text-muted">70 以上偏熱，30 以下偏冷，適合搭配股價通道判讀</p>
+                            <div class="chart-container"><canvas id="rsi-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>MACD 趨勢轉折</h4>
+                            <p class="text-muted">DIF 與 DEA 交叉觀察中期動能，柱狀體顯示擴張或收斂</p>
+                            <div class="chart-container"><canvas id="macd-chart"></canvas></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 籌碼面面板 -->
+                <section id="panel-chip" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-users"></i> 籌碼面分析</h3>
+                        <p>三大法人動向、外資持股比例趨勢與近五年法人建倉成本</p>
+                    </div>
+                    <div class="grid-container">
+                        <div class="card stat-card full-width" style="flex-direction: row; gap: 40px; justify-content: space-around;">
+                            <div style="text-align:center;">
+                                <h4>外資持股比例</h4>
+                                <div class="stat-value" id="foreign-ratio">--</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <h4>近30日外資累計</h4>
+                                <div class="stat-value" id="foreign-net-30d">--</div>
+                                <div class="stat-sub">張</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <h4>近30日投信累計</h4>
+                                <div class="stat-value" id="trust-net-30d">--</div>
+                                <div class="stat-sub">張</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <h4>近30日自營累計</h4>
+                                <div class="stat-value" id="dealer-net-30d">--</div>
+                                <div class="stat-sub">張</div>
+                            </div>
+                        </div>
+                        <div class="card chart-card full-width">
+                            <h4>三大法人買賣超 (近30日)</h4>
+                            <p class="text-muted">紅色=買超；綠色=賣超 — 滑動區域即顯示詳細資訊</p>
+                            <div class="chart-container"><canvas id="chip-flow-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>法人累積買賣超趨勢</h4>
+                            <p class="text-muted">把每日買賣超累加，快速看資金是連續堆疊或反覆撤退</p>
+                            <div class="chart-container"><canvas id="chip-cumulative-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>籌碼判讀重點</h4>
+                            <div class="insight-list">
+                                <div class="insight-row"><span>外資</span><strong>決定大型權值股方向</strong><small>觀察是否連續買超與 ADR 強弱同步</small></div>
+                                <div class="insight-row"><span>投信</span><strong>反映本土基金配置</strong><small>常在財報與高股息換股時放大波動</small></div>
+                                <div class="insight-row"><span>自營</span><strong>短線避險與套利</strong><small>需搭配期貨與選擇權部位判讀</small></div>
+                            </div>
+                        </div>
+                        <div class="card chart-card full-width">
+                            <h4>近 5 年法人持股成本分析</h4>
+                            <p class="text-muted">52週均線 ≈ 1年法人成本；260週均線 ≈ 長期底部支撐</p>
+                            <div class="chart-container large"><canvas id="chip-cost-chart"></canvas></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 總經面面板 -->
+                <section id="panel-macro" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-globe"></i> 總經面分析</h3>
+                        <p>匯率連動、費城半導體指數與台積電 ADR 跨市場比較</p>
+                    </div>
+                    <div class="grid-container">
+                        <div class="card stat-card span-3">
+                            <h4>2330 一年報酬</h4>
+                            <div class="stat-value" id="macro-tsm-return">--</div>
+                            <div class="stat-sub">台股本地價格</div>
+                        </div>
+                        <div class="card stat-card span-3">
+                            <h4>ADR 一年報酬</h4>
+                            <div class="stat-value" id="macro-adr-return">--</div>
+                            <div class="stat-sub">NYSE: TSM</div>
+                        </div>
+                        <div class="card stat-card span-3">
+                            <h4>SOXX 一年報酬</h4>
+                            <div class="stat-value" id="macro-sox-return">--</div>
+                            <div class="stat-sub">半導體 ETF</div>
+                        </div>
+                        <div class="card stat-card span-3">
+                            <h4>匯率相關性</h4>
+                            <div class="stat-value" id="macro-fx-corr">--</div>
+                            <div class="stat-sub">2330 vs USD/TWD</div>
+                        </div>
+                        <div class="card chart-card full-width">
+                            <h4>台積電股價與 USD/TWD 匯率連動 (近1年)</h4>
+                            <p class="text-muted">台幣升值通常壓縮台積電美元計價競爭力，注意負相關現象</p>
+                            <div class="chart-container"><canvas id="macro-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card full-width">
+                            <h4>費城半導體 (SOXX ETF)、台積電 ADR (TSM)、台積電 (2330.TW) 報酬率比較</h4>
+                            <p class="text-muted">以1年前為基期，正規化為累積報酬率(%)，觀察強弱勢差異</p>
+                            <div class="chart-container"><canvas id="sox-adr-chart"></canvas></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 消息面面板 -->
+                <section id="panel-news" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-regular fa-newspaper"></i> 消息面分析</h3>
+                        <p>即時新聞情緒分析、多空情緒指標與最新外資研究報告</p>
+                    </div>
+                    <div class="grid-container">
+                        <div class="card stat-card full-width">
+                            <h4>AI 多空情緒指標 (News Sentiment)</h4>
+                            <p class="text-muted">自動掃描最新新聞標題關鍵字，運算市場情緒分數 (0=極度悲觀 / 100=極度樂觀)</p>
+                            <div style="display:flex; align-items:center; gap: 30px; margin-top: 15px; flex-wrap: wrap;">
+                                <div style="text-align: center; min-width:120px;">
+                                    <div class="stat-value" id="sentiment-score" style="font-size: 56px;">--</div>
+                                    <div id="sentiment-label" style="font-size: 16px; font-weight: 600; margin-top: 5px;">分析中...</div>
+                                </div>
+                                <div style="flex: 1; min-width: 200px;">
+                                    <div style="display:flex; justify-content:space-between; font-size: 12px; color:#64748b; margin-bottom: 6px;">
+                                        <span>極度悲觀 0</span>
+                                        <span>中立 50</span>
+                                        <span>100 極度樂觀</span>
+                                    </div>
+                                    <div style="height: 14px; background: linear-gradient(to right, #22c55e, #94a3b8, #ef4444); border-radius: 7px; position: relative;">
+                                        <div id="sentiment-needle" style="position: absolute; top: -4px; width: 4px; height: 22px; background: #fff; border-radius: 2px; left: 50%; transform: translateX(-50%); transition: left 0.6s;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card list-card full-width" id="news-container">
+                            <!-- 新聞將透過 JS 載入 -->
+                        </div>
+                        <div class="card list-card full-width" id="sentiment-keywords">
+                            <!-- 情緒關鍵字將透過 JS 載入 -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 產業面面板 -->
+                <section id="panel-industry" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-industry"></i> 產業面分析</h3>
+                        <p>先進製程競爭格局、AI 晶片需求分析與同業市佔比較</p>
+                    </div>
+                    <div class="grid-container">
+                        <div class="card chart-card">
+                            <h4>各製程營收佔比 (26Q1)</h4>
+                            <p class="text-muted">3nm 佔比持續提升，AI 加速器帶動</p>
+                            <div class="chart-container"><canvas id="industry-pie-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>全球晶圓代工市佔率 (2025)</h4>
+                            <p class="text-muted">台積電 61.7% 絕對主導，護城河深厚</p>
+                            <div class="chart-container"><canvas id="market-share-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card full-width">
+                            <h4>平台業務收入結構 (AI 應用佔比趨勢)</h4>
+                            <p class="text-muted">HPC (高效能運算/AI) 平台為最大成長動能，2024 年超越智慧型手機</p>
+                            <div class="chart-container"><canvas id="platform-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>先進製程滲透率</h4>
+                            <p class="text-muted">7nm 以下先進製程營收占比持續上升，反映技術定價能力</p>
+                            <div class="chart-container"><canvas id="advanced-node-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>先進封裝能力組合</h4>
+                            <p class="text-muted">CoWoS、SoIC、InFO 與矽光子是 AI 供應鏈的第二成長曲線</p>
+                            <div class="chart-container"><canvas id="packaging-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card full-width">
+                            <h4>同業競爭能力雷達</h4>
+                            <p class="text-muted">從製程、封裝、良率、客戶信任與全球產能彈性比較護城河</p>
+                            <div class="chart-container"><canvas id="competitive-radar-chart"></canvas></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 展望面面板 -->
+                <section id="panel-outlook" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-rocket"></i> 未來 10 年展望</h3>
+                        <p>先進製程藍圖、資本支出規劃與營收長期預測</p>
+                    </div>
+                    <div class="grid-container">
+                        <div class="card text-card full-width">
+                            <h4><i class="fa-solid fa-map-location-dot" style="color:#3b82f6;"></i> 先進製程藍圖 (Technology Roadmap)</h4>
+                            <div class="roadmap-grid">
+                                <div class="roadmap-item done">
+                                    <div class="roadmap-year">2024</div>
+                                    <div class="roadmap-node">N3E/N3P</div>
+                                    <div class="roadmap-desc">3奈米量產，蘋果 A17 Pro / M4 晶片主要製造商</div>
+                                </div>
+                                <div class="roadmap-item done">
+                                    <div class="roadmap-year">2025</div>
+                                    <div class="roadmap-node">N2</div>
+                                    <div class="roadmap-desc">2奈米於 2025 Q4 進入高量產，採奈米片電晶體架構並展現良率進展</div>
+                                </div>
+                                <div class="roadmap-item current">
+                                    <div class="roadmap-year">2026</div>
+                                    <div class="roadmap-node">N2P / A16</div>
+                                    <div class="roadmap-desc">N2 家族延伸，A16 導入 Super Power Rail，預計 2026 下半年量產</div>
+                                </div>
+                                <div class="roadmap-item future">
+                                    <div class="roadmap-year">2028</div>
+                                    <div class="roadmap-node">A14</div>
+                                    <div class="roadmap-desc">第二代奈米片電晶體完整節點，鎖定高效能與節能運算需求</div>
+                                </div>
+                                <div class="roadmap-item future">
+                                    <div class="roadmap-year">2029~</div>
+                                    <div class="roadmap-node">A10 / Beyond</div>
+                                    <div class="roadmap-desc">更先進節點、3D 堆疊、矽光子與電源/互連創新延續技術護城河</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>歷年與預估資本支出 (Capex)</h4>
+                            <p class="text-muted">單位：十億美元 (USD Billion)</p>
+                            <div class="chart-container"><canvas id="outlook-capex-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>長期營收預測 (2024~2030)</h4>
+                            <p class="text-muted">以年均複合成長率 CAGR ~20% 推估</p>
+                            <div class="chart-container"><canvas id="outlook-revenue-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card full-width">
+                            <h4>2030 營收情境分析</h4>
+                            <p class="text-muted">以 AI/HPC 滲透率、先進封裝供給與資本支出效率分為保守、基準、樂觀三情境</p>
+                            <div class="chart-container"><canvas id="outlook-scenario-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card full-width">
+                            <h4>全球製造布局</h4>
+                            <div class="geo-grid">
+                                <div class="geo-item"><strong>台灣</strong><span>新竹、高雄等 2nm 與先進封裝核心基地</span></div>
+                                <div class="geo-item"><strong>美國 Arizona</strong><span>第一座廠已量產，第二座廠預計 2027 下半年高量產</span></div>
+                                <div class="geo-item"><strong>日本 Kumamoto</strong><span>第一座特殊製程廠量產，第二座規劃導入 3nm</span></div>
+                                <div class="geo-item"><strong>德國 Dresden</strong><span>聚焦汽車與工業特殊製程，強化歐洲供應彈性</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 風險情境面板 -->
+                <section id="panel-risk" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-scale-balanced"></i> 風險情境分析</h3>
+                        <p>把 AI 循環、估值、匯率、地緣與資本支出壓力放在同一張桌上比較</p>
+                    </div>
+                    <div class="grid-container">
+                        <div class="card chart-card">
+                            <h4>主要風險雷達</h4>
+                            <p class="text-muted">分數越高代表需要更頻繁追蹤，並非單純代表利空</p>
+                            <div class="chart-container"><canvas id="risk-radar-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>估值敏感度矩陣</h4>
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>情境</th><th>EPS 假設</th><th>P/E</th><th>合理價區</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>保守</td><td>NT$ 78</td><td>18x</td><td>1,400</td></tr>
+                                    <tr><td>基準</td><td>NT$ 88</td><td>22x</td><td>1,940</td></tr>
+                                    <tr><td>樂觀</td><td>NT$ 102</td><td>26x</td><td>2,650</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card text-card full-width">
+                            <h4>關鍵催化與監控清單</h4>
+                            <div class="watch-grid">
+                                <div class="watch-item good"><strong>AI 需求</strong><span>雲端資本支出、GPU/ASIC tape-out、CoWoS 交期</span></div>
+                                <div class="watch-item good"><strong>N2/A16 良率</strong><span>量產進度、毛利率稀釋幅度、客戶導入節奏</span></div>
+                                <div class="watch-item neutral"><strong>匯率</strong><span>USD/TWD 與海外成本，影響台幣財報轉換</span></div>
+                                <div class="watch-item caution"><strong>地緣供應鏈</strong><span>出口管制、海外廠成本、客戶要求地域彈性</span></div>
+                                <div class="watch-item caution"><strong>估值壓縮</strong><span>利率、半導體景氣循環與市場風險偏好</span></div>
+                                <div class="watch-item neutral"><strong>能源與水資源</strong><span>先進製程與封裝擴產後的營運韌性</span></div>
+                            </div>
+                        </div>
+                        <div class="card text-card full-width">
+                            <h4>資料來源註記</h4>
+                            <p class="source-note">
+                                動態市場資料來自 Yahoo Finance 與 FinMind API；靜態財務、製程與布局假設參考台積公司 2026 Q1 季報、2025 年報與 2026 股東會議程書。此頁為研究儀表板，不構成投資建議。
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>
