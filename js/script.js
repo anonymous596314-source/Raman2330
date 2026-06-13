@@ -418,54 +418,98 @@ function renderCashflowCapexChart() {
 
 // ─── 技術面圖表 ────────────────────────────────────────────────
 function renderTechnicalChart(data) {
-    const labels = data.map(d => `${d.date.getMonth()+1}/${d.date.getDate()}`);
+    if (!data?.length) { showChartFallback('technical-chart'); return; }
+
+    const labels = data.map(d => {
+        const dt = new Date(d.date);
+        return `${dt.getMonth()+1}/${dt.getDate()}`;
+    });
     const closes = data.map(d => d.close);
-    const bb = calculateBollingerBands(data, 20, 2);
+
+    // 布林通道 + 中長期均線
+    const bb    = calculateBollingerBands(data, 20, 2);
+    const ma60  = calculateMA(data, 60);
+    const ma120 = calculateMA(data, 120);
+    const ma240 = calculateMA(data, 240);
 
     createChart('technical-chart', {
         type: 'line',
         data: {
             labels,
             datasets: [
-                { label: '收盤價', data: closes, borderColor: '#3b82f6', borderWidth: 2.5, tension: 0.1, pointRadius: 0, fill: false },
-                { label: '中軌 (20MA)', data: bb.ma, borderColor: '#f59e0b', borderWidth: 1.5, tension: 0.1, pointRadius: 0, borderDash: [] },
-                { label: '上軌', data: bb.upper, borderColor: '#10b981', borderDash: [4, 4], borderWidth: 1, tension: 0.1, pointRadius: 0, fill: false },
-                { label: '下軌', data: bb.lower, borderColor: '#ef4444', borderDash: [4, 4], borderWidth: 1, tension: 0.1, pointRadius: 0, fill: '2' }
+                { label: '收盤價',          data: closes,   borderColor: '#f8fafc',               borderWidth: 2,   pointRadius: 0, tension: 0.1 },
+                { label: '布林上軌',         data: bb.upper, borderColor: 'rgba(239,68,68,0.7)',   borderWidth: 1,   borderDash: [4,3], pointRadius: 0, fill: false },
+                { label: '布林中線 (MA20)',  data: bb.ma,    borderColor: 'rgba(148,163,184,0.8)', borderWidth: 1.5, pointRadius: 0 },
+                { label: '布林下軌',         data: bb.lower, borderColor: 'rgba(34,197,94,0.7)',   borderWidth: 1,   borderDash: [4,3], pointRadius: 0, fill: '+1', backgroundColor: 'rgba(34,197,94,0.04)' },
+                { label: 'MA60',             data: ma60,     borderColor: '#f59e0b',               borderWidth: 1.5, pointRadius: 0, tension: 0.3 },
+                { label: 'MA120',            data: ma120,    borderColor: '#a78bfa',               borderWidth: 1.5, pointRadius: 0, tension: 0.3 },
+                { label: 'MA240',            data: ma240,    borderColor: '#fb923c',               borderWidth: 1.5, pointRadius: 0, tension: 0.3 },
             ]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { position: 'top' } },
+            plugins: {
+                legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 16, font: { size: 11 } } },
+                tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: NT$${ctx.raw?.toFixed ? ctx.raw.toFixed(0) : '--'}` } }
+            },
             scales: {
-                x: { ticks: { maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { grid: { color: 'rgba(255,255,255,0.05)' } }
+                x: { ticks: { maxTicksLimit: 10, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#94a3b8', callback: v => 'NT$' + v.toLocaleString() }, grid: { color: 'rgba(255,255,255,0.05)' } }
             }
         }
     });
 
+    // KD 指標（超買超賣 + 交叉訊號）
     const kd = calculateKD(data);
+    const kdDatasets = [
+        { label: 'K 值', data: kd.k, borderColor: '#3b82f6', borderWidth: 2, tension: 0.3, pointRadius: 0 },
+        { label: 'D 值', data: kd.d, borderColor: '#f59e0b', borderWidth: 2, tension: 0.3, pointRadius: 0 }
+    ];
+
+    // 標記黃金交叉和死亡交叉
+    const crossPoints = kd.k.map((k, i) => {
+        if (i === 0 || k === null || kd.k[i-1] === null) return null;
+        if (kd.k[i-1] < kd.d[i-1] && k > kd.d[i]) return { x: labels[i], y: k, type: 'golden' };
+        if (kd.k[i-1] > kd.d[i-1] && k < kd.d[i]) return { x: labels[i], y: k, type: 'death' };
+        return null;
+    }).filter(Boolean);
+
     createChart('kd-chart', {
         type: 'line',
         data: {
             labels,
             datasets: [
-                { label: 'K 值', data: kd.k, borderColor: '#3b82f6', borderWidth: 2, tension: 0.3, pointRadius: 0 },
-                { label: 'D 值', data: kd.d, borderColor: '#f59e0b', borderWidth: 2, tension: 0.3, pointRadius: 0 }
+                ...kdDatasets,
+                // 超買區背景（K>80）和超賣區背景（K<20）用點表示
+                {
+                    label: '超買 (K>80)',
+                    data: kd.k.map(v => v !== null && v > 80 ? v : null),
+                    borderColor: 'rgba(239,68,68,0.9)', backgroundColor: 'rgba(239,68,68,0.15)',
+                    borderWidth: 0, pointRadius: 3, pointStyle: 'circle', showLine: false
+                },
+                {
+                    label: '超賣 (K<20)',
+                    data: kd.k.map(v => v !== null && v < 20 ? v : null),
+                    borderColor: 'rgba(34,197,94,0.9)', backgroundColor: 'rgba(34,197,94,0.15)',
+                    borderWidth: 0, pointRadius: 3, pointStyle: 'circle', showLine: false
+                }
             ]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: {
-                annotation: {},
-                legend: { position: 'top' }
+                legend: { position: 'top', labels: { color: '#94a3b8', filter: item => item.datasetIndex < 2 } },
+                tooltip: { callbacks: { label: ctx => ctx.datasetIndex < 2 ? ` ${ctx.dataset.label}: ${ctx.raw?.toFixed(1) ?? '--'}` : null } }
             },
             scales: {
-                x: { ticks: { maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { grid: { color: 'rgba(255,255,255,0.05)' }, min: 0, max: 100 }
+                x: { ticks: { maxTicksLimit: 10, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: {
+                    min: 0, max: 100,
+                    ticks: { color: '#94a3b8', callback: v => v },
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                }
             }
         }
     });
@@ -1445,57 +1489,6 @@ function renderVIXChart(tsmData, vixData) {
                     grid: { drawOnChartArea: false },
                     title: { display: true, text: 'VIX', color: '#f59e0b' }
                 }
-            }
-        }
-    });
-}
-
-// ── 4. 技術面加均線（整合到 renderTechnicalChart）──────────────
-// 在現有 renderTechnicalChart 基礎上，加 MA 的方式是把它做成一個 patch
-// 找到 renderTechnicalChart，在 datasets 最後加 MA 線
-const _origRenderTechnical = renderTechnicalChart;
-function renderTechnicalChart(data) {
-    if (!data?.length) { showChartFallback('technical-chart'); return; }
-
-    const labels = data.map(d => {
-        const dt = new Date(d.date);
-        return `${dt.getMonth()+1}/${dt.getDate()}`;
-    });
-    const closes = data.map(d => d.close);
-
-    // 布林通道
-    const bb = calculateBollingerBands(data, 20, 2);
-
-    // 均線
-    const ma20  = calculateMA(data, 20);
-    const ma60  = calculateMA(data, 60);
-    const ma120 = calculateMA(data, 120);
-    const ma240 = calculateMA(data, 240);
-
-    createChart('technical-chart', {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [
-                { label: '收盤價',     data: closes,   borderColor: '#f8fafc', borderWidth: 2,   pointRadius: 0, tension: 0.1, order: 0 },
-                { label: '布林上軌',   data: bb.upper, borderColor: 'rgba(239,68,68,0.6)',  borderWidth: 1, borderDash: [4,3], pointRadius: 0, fill: false },
-                { label: '布林中線(MA20)', data: bb.ma, borderColor: 'rgba(148,163,184,0.8)', borderWidth: 1.5, pointRadius: 0, fill: false },
-                { label: '布林下軌',   data: bb.lower, borderColor: 'rgba(34,197,94,0.6)',   borderWidth: 1, borderDash: [4,3], pointRadius: 0, fill: '+1', backgroundColor: 'rgba(34,197,94,0.04)' },
-                { label: 'MA60',       data: ma60,     borderColor: '#f59e0b', borderWidth: 1.5, pointRadius: 0, tension: 0.3, borderDash: [] },
-                { label: 'MA120',      data: ma120,    borderColor: '#a78bfa', borderWidth: 1.5, pointRadius: 0, tension: 0.3, borderDash: [] },
-                { label: 'MA240',      data: ma240,    borderColor: '#fb923c', borderWidth: 1.5, pointRadius: 0, tension: 0.3, borderDash: [] },
-            ]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-                legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 16, font: { size: 11 } } },
-                tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: NT$${ctx.raw?.toFixed ? ctx.raw.toFixed(0) : ctx.raw}` } }
-            },
-            scales: {
-                x: { ticks: { maxTicksLimit: 10, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { ticks: { color: '#94a3b8', callback: v => 'NT$' + v.toLocaleString() }, grid: { color: 'rgba(255,255,255,0.05)' } }
             }
         }
     });
