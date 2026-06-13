@@ -2,6 +2,7 @@
 //  啟動診斷（開啟 F12 Console 可看到每個 API 的測試結果）
 // ═══════════════════════════════════════════════════════════════
 async function runApiDiagnostics() {
+    console.log('%c📦 api.js 版本: 2026-06-13 09:20 — 使用 Twelve Data 直連', 'color:#3b82f6;font-weight:bold');
     const results = {};
     const test = async (name, url, timeout = 8000) => {
         try {
