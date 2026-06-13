@@ -153,65 +153,31 @@ async function fetchQuoteSummary() {
     const cached = cacheGet(cacheKey);
     if (cached) return cached;
 
-    // ── 主力：Twelve Data quote（透過 corsproxy.io）──────────
-    try {
-        const tdQuoteUrl = `${TWELVEDATA_BASE}/quote?symbol=2330&exchange=TWSE&apikey=${TWELVEDATA_KEY}`;
-        const url  = `https://corsproxy.io/?${encodeURIComponent(tdQuoteUrl)}`;
-        const res  = await fetchWithTimeout(url, 8000);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (data && data.close && !data.status?.includes('error')) {
-            const price  = parseFloat(data.close);
-            const prev   = parseFloat(data.previous_close);
-            const result = {
-                price,
-                change:        price - prev,
-                changePercent: ((price - prev) / prev) * 100
-            };
-            cacheSet(cacheKey, result);
-            return result;
-        }
-    } catch (e) { console.warn('[報價] Twelve Data 失敗:', e.message); }
-
-    // ── 備援：TWSE MIS 即時盤中（直連）─────────────────────
-    try {
-        const url  = `${TWSE_MIS}?ex_ch=tse_2330.tw&json=1&delay=0`;
-        const data = await fetchJSON(url, 8000);
-        if (data?.msgArray?.[0]) {
-            const d     = data.msgArray[0];
-            const price = parseFloat(d.z || d.y); // z=成交價, y=昨收
-            const prev  = parseFloat(d.y);
-            const result = {
-                price,
-                change:        price - prev,
-                changePercent: ((price - prev) / prev) * 100
-            };
-            cacheSet(cacheKey, result);
-            return result;
-        }
-    } catch (e) { console.warn('[報價] TWSE MIS 失敗:', e.message); }
-
-    // ── 備援2：TWSE OpenAPI 當日收盤（直連）────────────────────
+    // ── 主力：FinMind TaiwanStockPrice（直連 ✅ 已確認可用）────
     try {
         const today = new Date();
-        const yyyymm = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}01`;
-        const url  = `${TWSE_BASE}/exchangeReport/STOCK_DAY?response=json&stockNo=2330&date=${yyyymm}`;
-        const data = await fetchJSON(url, 8000);
-        if (data?.data?.length > 0) {
-            const last = data.data[data.data.length - 1];
-            const price = parseFloat(last[6].replace(/,/g, '')); // 收盤價欄位
-            const prev  = data.data.length > 1
-                ? parseFloat(data.data[data.data.length - 2][6].replace(/,/g, ''))
-                : price;
+        const threeDaysAgo = new Date(today);
+        threeDaysAgo.setDate(today.getDate() - 5); // 往前5天確保有資料
+        const startDate = threeDaysAgo.toISOString().split('T')[0];
+        const url = `${FINMIND_BASE}?dataset=TaiwanStockPrice&data_id=${TWSE_SYMBOL}&start_date=${startDate}`;
+        const json = await fetchJSON(url, 8000);
+        if (json?.data?.length > 0) {
+            const rows = json.data;
+            const last = rows[rows.length - 1];
+            const prev = rows.length > 1 ? rows[rows.length - 2] : last;
+            const price = parseFloat(last.close);
+            const prevPrice = parseFloat(prev.close);
             const result = {
                 price,
-                change:        price - prev,
-                changePercent: ((price - prev) / prev) * 100
+                change:        price - prevPrice,
+                changePercent: ((price - prevPrice) / prevPrice) * 100,
+                date:          last.date
             };
             cacheSet(cacheKey, result);
+            console.log(`[報價] FinMind: ${price} (${last.date})`);
             return result;
         }
-    } catch (e) { console.warn('[報價] TWSE OpenAPI 失敗:', e.message); }
+    } catch (e) { console.warn('[報價] FinMind 失敗:', e.message); }
 
     return null;
 }
@@ -297,52 +263,61 @@ async function fetchHistoricalData(range = "1y", interval = "1d", customSymbol =
     const cached = cacheGet(cacheKey);
     if (cached) return cached.map(r => ({ ...r, date: new Date(r.date) }));
 
-    // ── 主力：Twelve Data（透過 corsproxy.io，避免直連 429）────
-    try {
-        const tdSym   = toTDSymbol(targetSymbol);
-        const tdInt   = toTDInterval(interval);
-        const outSize = rangeToOutputSize(range);
-        const needsExchange = (targetSymbol === SYMBOL || targetSymbol === '2330.TW');
-        const exchangeParam = needsExchange ? '&exchange=TWSE' : '';
-        const tdUrl   = `${TWELVEDATA_BASE}/time_series?symbol=${encodeURIComponent(tdSym)}&interval=${tdInt}&outputsize=${outSize}${exchangeParam}&apikey=${TWELVEDATA_KEY}`;
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(tdUrl)}`;
-        console.log(`[Twelve Data] 請求: ${tdSym} ${tdInt} x${outSize}`);
-        const res  = await fetchWithTimeout(proxyUrl, 12000);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (data?.status === 'error') {
-            console.warn(`[Twelve Data] API 錯誤 ${targetSymbol}:`, data.message);
-        } else {
-            const parsed = parseTDTimeSeries(data);
-            console.log(`[Twelve Data] ${targetSymbol}: 收到 ${parsed.length} 筆`);
-            if (parsed.length > 0) {
-                cacheSet(cacheKey, parsed);
-                return parsed;
-            }
-        }
-    } catch (e) { console.warn(`[歷史] Twelve Data ${targetSymbol} 失敗:`, e.message); }
+    const isTSMC = (targetSymbol === SYMBOL || targetSymbol === '2330.TW');
 
-    // ── 備援：TWSE OpenAPI（只限 2330.TW 台股）──────────────────
-    if (targetSymbol === SYMBOL || targetSymbol === '2330.TW') {
+    // ── 主力（台股）：FinMind TaiwanStockPrice（直連 ✅）─────────
+    if (isTSMC) {
         try {
             const monthsMap = { '6mo': 6, '1y': 12, '5y': 60, '10y': 120 };
             const months = monthsMap[range] || 12;
-            const parsed = await fetchTWSEHistory(Math.min(months, 60)); // TWSE 最多抓 5 年（效能考量）
-            if (parsed.length > 0) {
-                // 若需要週線，自行 resample
+            const startDate = new Date();
+            startDate.setMonth(startDate.getMonth() - months);
+            const start = startDate.toISOString().split('T')[0];
+            const url = `${FINMIND_BASE}?dataset=TaiwanStockPrice&data_id=${TWSE_SYMBOL}&start_date=${start}`;
+            const json = await fetchJSON(url, 15000);
+            if (json?.data?.length > 0) {
+                const parsed = json.data.map(r => ({
+                    date:   new Date(r.date),
+                    open:   parseFloat(r.open),
+                    high:   parseFloat(r.max),
+                    low:    parseFloat(r.min),
+                    close:  parseFloat(r.close),
+                    volume: parseInt(r.Trading_Volume) || 0
+                })).filter(r => !isNaN(r.close));
                 const result = interval === '1wk' ? resampleWeekly(parsed) : parsed;
                 cacheSet(cacheKey, result);
-                console.info(`[備援] ${targetSymbol} 使用 TWSE OpenAPI (${result.length} 筆)`);
+                console.log(`[FinMind] ${targetSymbol} ${range}: ${result.length} 筆`);
                 return result;
             }
-        } catch (e) { console.warn(`[歷史] TWSE OpenAPI 失敗:`, e.message); }
+        } catch (e) { console.warn(`[歷史] FinMind ${targetSymbol} 失敗:`, e.message); }
+    }
+
+    // ── 主力（美股/ETF）：Twelve Data 透過 corsproxy.io ──────────
+    if (!isTSMC) {
+        try {
+            const tdSym   = toTDSymbol(targetSymbol);
+            const tdInt   = toTDInterval(interval);
+            const outSize = rangeToOutputSize(range);
+            const tdUrl   = `${TWELVEDATA_BASE}/time_series?symbol=${encodeURIComponent(tdSym)}&interval=${tdInt}&outputsize=${outSize}&apikey=${TWELVEDATA_KEY}`;
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(tdUrl)}`;
+            console.log(`[Twelve Data] ${tdSym} ${tdInt} x${outSize}`);
+            const res  = await fetchWithTimeout(proxyUrl, 12000);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            if (data?.status === 'error') throw new Error(data.message);
+            const parsed = parseTDTimeSeries(data);
+            if (parsed.length > 0) {
+                cacheSet(cacheKey, parsed);
+                console.log(`[Twelve Data] ${targetSymbol}: ${parsed.length} 筆`);
+                return parsed;
+            }
+        } catch (e) { console.warn(`[歷史] Twelve Data ${targetSymbol} 失敗:`, e.message); }
     }
 
     // ── 最終備援：靜態嵌入資料（確保圖表永遠有東西顯示）────────
     // 診斷提示：若頻繁走到這裡，請開 F12 > Network 確認 proxy 是否通
     // Twelve Data URL: https://api.twelvedata.com/time_series?symbol=TSM&interval=1week&outputsize=52&apikey=...
-    console.warn(`[靜態備援] ${targetSymbol} 所有 API 失敗，使用內建靜態資料。若要真實資料請確認 Twelve Data key 有效且 proxy 可連線。`);
-    const isTSMC   = (targetSymbol === SYMBOL || targetSymbol === '2330.TW');
+    console.warn(`[靜態備援] ${targetSymbol} 使用內建靜態資料`);
     const isTSMADR = (targetSymbol === ADR_SYMBOL);
     const isSOXX   = (targetSymbol === SOX_SYMBOL);
     const isTWD    = (targetSymbol === 'TWD=X');
