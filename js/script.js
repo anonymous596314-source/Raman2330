@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initApp() {
     setupSidebar();
     setupRefreshLogic();
+    runApiDiagnostics(); // 背景執行，不阻塞頁面載入，F12 Console 可看結果
     await refreshData();
 }
 
@@ -38,8 +39,12 @@ function setupRefreshLogic() {
 async function refreshData(partial = false) {
     updateTimestamp();
 
-    // 1. Quote
-    const quote = await fetchQuoteSummary();
+    // ── 第一波：Quote + News 並行（畫面最快有資料）──────────────
+    const [quote, news] = await Promise.allSettled([
+        fetchQuoteSummary(),
+        fetchNews()
+    ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : null));
+
     if (quote) {
         document.getElementById('current-price').innerText = quote.price.toFixed(2);
         const changeEl = document.getElementById('price-change');
@@ -48,8 +53,6 @@ async function refreshData(partial = false) {
         changeEl.className = 'price-change ' + (quote.change >= 0 ? 'up' : 'down');
     }
 
-    // 2. News
-    const news = await fetchNews();
     if (news && news.length > 0) {
         const newsContainer = document.getElementById('news-container');
         newsContainer.innerHTML = '<h4>即時外資報告與新聞</h4>' + news.map(n => `
@@ -59,12 +62,29 @@ async function refreshData(partial = false) {
             </div>
         `).join('');
         analyzeSentiment(news);
+    } else {
+        const newsContainer = document.getElementById('news-container');
+        if (newsContainer) {
+            newsContainer.innerHTML = '<h4>即時外資報告與新聞</h4><div class="chart-fallback" style="margin-top:12px;"><strong>新聞資料暫時無法取得</strong><span>Yahoo Finance proxy 未回應，請按右上角「更新資料」重試。情緒分析將在新聞載入後自動更新。</span></div>';
+        }
     }
 
     if (partial) return;
 
-    // 3. Fundamentals
-    const fund = await fetchFundamentals();
+    // ── 第二波：所有重資料全部並行發出 ──────────────────────────
+    const [fund, techData, chipData, flowData, twdData, tsm1yData, soxData, adrData] =
+        await Promise.allSettled([
+            fetchFundamentals(),                          // 基本面
+            fetchHistoricalData("6mo", "1d"),             // 技術面 K 線
+            fetchHistoricalData("10y", "1wk"),            // 籌碼成本（需10年才有260週MA）
+            fetchChipFlow(),                              // 三大法人
+            fetchHistoricalData("1y",  "1wk", "TWD=X"),  // 匯率
+            fetchHistoricalData("1y",  "1wk"),            // 台積 1y 週線
+            fetchHistoricalData("1y",  "1wk", SOX_SYMBOL),
+            fetchHistoricalData("1y",  "1wk", ADR_SYMBOL)
+        ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : null));
+
+    // 3. 基本面
     if (fund) {
         document.getElementById('pe-ratio').innerText = fund.peRatio ? (typeof fund.peRatio === 'number' ? fund.peRatio.toFixed(2) : fund.peRatio) : '--';
         document.getElementById('eps-ttm').innerText = fund.eps ? fund.eps.toFixed(2) : '--';
@@ -82,25 +102,25 @@ async function refreshData(partial = false) {
         renderCashflowCapexChart();
     }
 
-    // 4. Technical
-    const techData = await fetchHistoricalData("6mo", "1d");
+    // 4. 技術面
     if (techData && techData.length > 0) {
         renderTechnicalChart(techData);
         renderVolumeChart(techData);
         renderRsiChart(techData);
         renderMacdChart(techData);
+    } else {
+        ['technical-chart', 'kd-chart', 'volume-chart', 'rsi-chart', 'macd-chart'].forEach(showChartFallback);
     }
 
-    // 5. Chip
-    const chipData = await fetchHistoricalData("5y", "1wk");
+    // 5. 籌碼面
     if (chipData && chipData.length > 0) {
         renderChipCostChart(chipData);
+    } else {
+        showChartFallback('chip-cost-chart');
     }
-    const flowData = await fetchChipFlow();
     if (flowData) {
         renderChipFlowChart(flowData);
         renderChipCumulativeChart(flowData);
-        // Update summary stats
         const sumForeign = flowData.foreign.reduce((a, b) => a + b, 0);
         const sumTrust = flowData.trust.reduce((a, b) => a + b, 0);
         const sumDealer = flowData.dealer.reduce((a, b) => a + b, 0);
@@ -119,16 +139,20 @@ async function refreshData(partial = false) {
         renderChipCumulativeChart();
     }
 
-    // 6. Macro
-    const twdData = await fetchHistoricalData("1y", "1wk", "TWD=X");
-    const tsm1yData = await fetchHistoricalData("1y", "1wk");
-    const soxData = await fetchHistoricalData("1y", "1wk", SOX_SYMBOL);
-    const adrData = await fetchHistoricalData("1y", "1wk", ADR_SYMBOL);
-    if (twdData.length > 0 && tsm1yData.length > 0) renderMacroChart(tsm1yData, twdData);
-    if (soxData.length > 0 && adrData.length > 0) renderSoxAdrChart(tsm1yData, soxData, adrData);
-    updateMacroSnapshot(tsm1yData, twdData, soxData, adrData);
+    // 6. 總經面
+    if (twdData && twdData.length > 0 && tsm1yData && tsm1yData.length > 0) {
+        renderMacroChart(tsm1yData, twdData);
+    } else {
+        showChartFallback('macro-chart');
+    }
+    if (soxData && soxData.length > 0 && adrData && adrData.length > 0) {
+        renderSoxAdrChart(tsm1yData, soxData, adrData);
+    } else {
+        showChartFallback('sox-adr-chart');
+    }
+    updateMacroSnapshot(tsm1yData || [], twdData || [], soxData || [], adrData || []);
 
-    // 7. Industry & Outlook
+    // 7. 靜態圖表
     renderIndustryChart();
     renderOutlookChart();
     renderRiskChart();
@@ -162,6 +186,20 @@ function escapeHtml(value) {
     const div = document.createElement('div');
     div.textContent = value ?? '';
     return div.innerHTML;
+}
+
+/**
+ * 當 API 資料抓不到時，在 canvas 位置顯示友善提示
+ */
+function showChartFallback(ctxId, msg) {
+    const el = document.getElementById(ctxId);
+    if (!el) return;
+    // 若已被替換成 div，不重複替換
+    if (el.tagName !== 'CANVAS') return;
+    const fb = document.createElement('div');
+    fb.className = 'chart-fallback';
+    fb.innerHTML = `<strong>資料暫時無法取得</strong><span>${msg || 'Yahoo Finance / FinMind proxy 未回應，請按右上角「更新資料」重試，或稍後再試。'}</span>`;
+    el.replaceWith(fb);
 }
 
 // ─── 基本面圖表 ────────────────────────────────────────────────
@@ -473,10 +511,23 @@ function renderMacdChart(data) {
 
 // ─── 籌碼面圖表 ────────────────────────────────────────────────
 function renderChipCostChart(data) {
+    const canvasEl = document.getElementById('chip-cost-chart');
+    if (!canvasEl) return;
+
+    if (!data || data.length < 53) {
+        const fb = document.createElement('div');
+        fb.className = 'chart-fallback';
+        fb.innerHTML = '<strong>法人成本資料暫時無法取得</strong><span>Yahoo Finance CORS proxy 未回應，請稍後按右上角「更新資料」重試。</span>';
+        canvasEl.replaceWith(fb);
+        return;
+    }
+
     const labels = data.map(d => `${d.date.getFullYear()}/${d.date.getMonth()+1}`);
     const closes = data.map(d => d.close);
     const cost1Y = calculateMA(data, 52);
-    const cost5Y = calculateMA(data, Math.min(260, data.length - 1));
+    // 需要至少 260 筆才有意義；資料不足時降級顯示已有長度的 MA
+    const longPeriod = data.length >= 260 ? 260 : Math.max(104, data.length - 1);
+    const cost5Y = calculateMA(data, longPeriod);
 
     createChart('chip-cost-chart', {
         type: 'line',
@@ -485,7 +536,7 @@ function renderChipCostChart(data) {
             datasets: [
                 { label: '台積電股價', data: closes, borderColor: '#3b82f6', borderWidth: 2, tension: 0.1, pointRadius: 0 },
                 { label: '近1年法人成本線 (52週MA)', data: cost1Y, borderColor: '#f59e0b', borderWidth: 2, borderDash: [6, 3], tension: 0.4, pointRadius: 0 },
-                { label: '近5年法人成本線 (260週MA)', data: cost5Y, borderColor: '#ef4444', borderWidth: 2.5, tension: 0.4, pointRadius: 0 }
+                { label: `長期法人底部 (${longPeriod}週MA)`, data: cost5Y, borderColor: '#ef4444', borderWidth: 2.5, tension: 0.4, pointRadius: 0 }
             ]
         },
         options: {
@@ -641,24 +692,72 @@ function renderMacroChart(tsmData, twdData) {
 }
 
 function renderSoxAdrChart(tsmData, soxData, adrData) {
-    const minLength = Math.min(tsmData.length, soxData.length, adrData.length);
-    if (minLength === 0) { console.warn('SOX/ADR 資料不足'); return; }
-    const rTsm = tsmData.slice(-minLength);
-    const rSox = soxData.slice(-minLength);
-    const rAdr = adrData.slice(-minLength);
-    const labels = rTsm.map(d => `${d.date.getMonth()+1}/${d.date.getDate()}`);
+    if (!tsmData?.length || !soxData?.length || !adrData?.length) {
+        console.warn('SOX/ADR 資料不足'); return;
+    }
 
-    const base = (arr) => arr[0].close;
-    const pct  = (arr, b) => arr.map(d => +((d.close - b) / b * 100).toFixed(2));
+    // 以「1年前」為共同起點
+    const cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - 1);
+
+    const since = arr => {
+        const f = arr.filter(d => new Date(d.date) >= cutoff);
+        return f.length > 2 ? f : arr.slice(-52);
+    };
+
+    const rTsm = since(tsmData);
+    const rSox = since(soxData);
+    const rAdr = since(adrData);
+
+    // ── 建立統一時間軸：以資料最多的那組為主軸，其他插值對齊 ──
+    // 用最長的那組作為 labels 基準
+    const master = [rTsm, rSox, rAdr].reduce((a, b) => a.length >= b.length ? a : b);
+    const labels = master.map(d => {
+        const dt = new Date(d.date);
+        return `${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()}`;
+    });
+
+    // 把任意陣列插值對齊到 master 長度
+    const alignTo = (arr, masterArr) => {
+        if (arr.length === masterArr.length) {
+            // 長度相同，直接用
+            const base = arr[0].close;
+            return arr.map(d => +((d.close - base) / base * 100).toFixed(2));
+        }
+        // 長度不同：用線性插值對齊
+        const base = arr[0].close;
+        const result = [];
+        for (let i = 0; i < masterArr.length; i++) {
+            const targetTime = new Date(masterArr[i].date).getTime();
+            // 找最接近的兩個點做插值
+            let lo = arr[0], hi = arr[arr.length - 1];
+            for (let j = 0; j < arr.length - 1; j++) {
+                if (new Date(arr[j].date).getTime() <= targetTime &&
+                    new Date(arr[j+1].date).getTime() >= targetTime) {
+                    lo = arr[j]; hi = arr[j+1]; break;
+                }
+            }
+            const t1 = new Date(lo.date).getTime();
+            const t2 = new Date(hi.date).getTime();
+            const frac = t2 === t1 ? 0 : (targetTime - t1) / (t2 - t1);
+            const close = lo.close + (hi.close - lo.close) * frac;
+            result.push(+((close - base) / base * 100).toFixed(2));
+        }
+        return result;
+    };
+
+    const tsmPct = alignTo(rTsm, master);
+    const soxPct = alignTo(rSox, master);
+    const adrPct = alignTo(rAdr, master);
 
     createChart('sox-adr-chart', {
         type: 'line',
         data: {
             labels,
             datasets: [
-                { label: '台積電 (2330.TW)',     data: pct(rTsm, base(rTsm)), borderColor: '#ef4444', borderWidth: 2, tension: 0.1, pointRadius: 0 },
-                { label: '台積電 ADR (TSM)',      data: pct(rAdr, base(rAdr)), borderColor: '#3b82f6', borderWidth: 2, tension: 0.1, pointRadius: 0 },
-                { label: 'SOXX 半導體 ETF',       data: pct(rSox, base(rSox)), borderColor: '#10b981', borderWidth: 2, tension: 0.1, pointRadius: 0 }
+                { label: '台積電 (2330.TW)',  data: tsmPct, borderColor: '#ef4444', borderWidth: 2.5, tension: 0.1, pointRadius: 0 },
+                { label: '台積電 ADR (TSM)',  data: adrPct, borderColor: '#3b82f6', borderWidth: 2,   tension: 0.1, pointRadius: 0 },
+                { label: 'SOXX 半導體 ETF',  data: soxPct, borderColor: '#10b981', borderWidth: 2,   tension: 0.1, pointRadius: 0 }
             ]
         },
         options: {
@@ -666,12 +765,21 @@ function renderSoxAdrChart(tsmData, soxData, adrData) {
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: {
-                legend: { position: 'top' },
-                tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw >= 0 ? '+' : ''}${ctx.raw}%` } }
+                legend: { position: 'top', labels: { color: '#94a3b8' } },
+                tooltip: {
+                    callbacks: {
+                        title: items => labels[items[0].dataIndex] || '',
+                        label: ctx => ` ${ctx.dataset.label}: ${ctx.raw >= 0 ? '+' : ''}${ctx.raw}%`
+                    }
+                }
             },
             scales: {
-                x: { ticks: { maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '累積報酬率 %' } }
+                x: { ticks: { maxTicksLimit: 12, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#94a3b8', callback: v => v + '%' },
+                    title: { display: true, text: '累積報酬率 (%)', color: '#94a3b8' }
+                }
             }
         }
     });
