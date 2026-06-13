@@ -16,13 +16,14 @@ async function runApiDiagnostics() {
         }
     };
     await Promise.all([
-        test('TwelveData-quote',   `${TWELVEDATA_BASE}/quote?symbol=2330&exchange=TWSE&apikey=${TWELVEDATA_KEY}`),
-        test('TwelveData-series',  `${TWELVEDATA_BASE}/time_series?symbol=2330&exchange=TWSE&interval=1week&outputsize=5&apikey=${TWELVEDATA_KEY}`),
-        test('TWSE-OpenAPI',       `${TWSE_BASE}/exchangeReport/STOCK_DAY?response=json&stockNo=2330&date=20260601`),
-        test('TWSE-MIS',           `${TWSE_MIS}?ex_ch=tse_2330.tw&json=1&delay=0`),
-        test('FinMind',            `${FINMIND_BASE}?dataset=TaiwanStockPER&data_id=2330&start_date=2026-05-01`),
-        test('Proxy-allorigins',   `https://api.allorigins.win/raw?url=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/2330.TW?range=1d&interval=1d')}`),
-        test('Proxy-corsproxy',    `https://corsproxy.io/?${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/2330.TW?range=1d&interval=1d')}`),
+        test('TwelveData-2330直連',  `${TWELVEDATA_BASE}/quote?symbol=2330&exchange=TWSE&apikey=${TWELVEDATA_KEY}`),
+        test('TwelveData-TSM直連',   `${TWELVEDATA_BASE}/quote?symbol=TSM&apikey=${TWELVEDATA_KEY}`),
+        test('TwelveData-SOXX直連',  `${TWELVEDATA_BASE}/quote?symbol=SOXX&apikey=${TWELVEDATA_KEY}`),
+        test('TWSE-OpenAPI直連',     `${TWSE_BASE}/exchangeReport/STOCK_DAY?response=json&stockNo=2330&date=20260601`),
+        test('TWSE-MIS直連',         `${TWSE_MIS}?ex_ch=tse_2330.tw&json=1&delay=0`),
+        test('FinMind直連',          `${FINMIND_BASE}?dataset=TaiwanStockPER&data_id=2330&start_date=2026-05-01`),
+        test('Proxy-allorigins',     `https://api.allorigins.win/raw?url=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/2330.TW?range=1d&interval=1d')}`),
+        test('Proxy-corsproxy',      `https://corsproxy.io/?${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/2330.TW?range=1d&interval=1d')}`),
     ]);
     console.group('%c📡 台積電儀表板 API 診斷結果', 'font-size:14px;font-weight:bold;color:#3b82f6');
     for (const [name, result] of Object.entries(results)) {
@@ -109,6 +110,20 @@ async function fetchViaProxy(url) {
     const cached = cacheGet(cacheKey);
     if (cached) return cached;
 
+    // 先試直連（Twelve Data、FinMind 等支援 CORS 的 API 直連更快更穩）
+    try {
+        const res = await fetchWithTimeout(url, 8000);
+        if (res.ok) {
+            const text = await res.text();
+            if (text && text.length > 10 && !text.startsWith('<')) {
+                const json = JSON.parse(text);
+                cacheSet(cacheKey, json);
+                return json;
+            }
+        }
+    } catch {}
+
+    // 直連失敗才走 proxy（用於 Yahoo Finance 等需要 proxy 的 API）
     const tries = CORS_PROXIES.map(async (makeProxy) => {
         const res = await fetchWithTimeout(makeProxy(url), 9000);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -137,10 +152,10 @@ async function fetchQuoteSummary() {
     const cached = cacheGet(cacheKey);
     if (cached) return cached;
 
-    // ── 主力：Twelve Data quote（透過 proxy）─────────────────
+    // ── 主力：Twelve Data quote 直連 ─────────────────────────
     try {
         const url  = `${TWELVEDATA_BASE}/quote?symbol=2330&exchange=TWSE&apikey=${TWELVEDATA_KEY}`;
-        const data = await fetchViaProxy(url);
+        const data = await fetchJSON(url, 8000);
         if (data && data.close && !data.status?.includes('error')) {
             const price  = parseFloat(data.close);
             const prev   = parseFloat(data.previous_close);
@@ -154,10 +169,10 @@ async function fetchQuoteSummary() {
         }
     } catch (e) { console.warn('[報價] Twelve Data 失敗:', e.message); }
 
-    // ── 備援：TWSE MIS 即時盤中（透過 proxy）────────────────
+    // ── 備援：TWSE MIS 即時盤中（直連）─────────────────────
     try {
         const url  = `${TWSE_MIS}?ex_ch=tse_2330.tw&json=1&delay=0`;
-        const data = await fetchViaProxy(url);
+        const data = await fetchJSON(url, 8000);
         if (data?.msgArray?.[0]) {
             const d     = data.msgArray[0];
             const price = parseFloat(d.z || d.y); // z=成交價, y=昨收
@@ -172,12 +187,12 @@ async function fetchQuoteSummary() {
         }
     } catch (e) { console.warn('[報價] TWSE MIS 失敗:', e.message); }
 
-    // ── 備援2：TWSE OpenAPI 當日收盤（透過 proxy）───────────────
+    // ── 備援2：TWSE OpenAPI 當日收盤（直連）────────────────────
     try {
         const today = new Date();
         const yyyymm = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}01`;
         const url  = `${TWSE_BASE}/exchangeReport/STOCK_DAY?response=json&stockNo=2330&date=${yyyymm}`;
-        const data = await fetchViaProxy(url);
+        const data = await fetchJSON(url, 8000);
         if (data?.data?.length > 0) {
             const last = data.data[data.data.length - 1];
             const price = parseFloat(last[6].replace(/,/g, '')); // 收盤價欄位
@@ -278,21 +293,20 @@ async function fetchHistoricalData(range = "1y", interval = "1d", customSymbol =
     const cached = cacheGet(cacheKey);
     if (cached) return cached.map(r => ({ ...r, date: new Date(r.date) }));
 
-    // ── 主力：Twelve Data（透過 proxy，相容 file:// 環境）──────
+    // ── 主力：Twelve Data 直連（原生支援 CORS，不需 proxy）────
     try {
         const tdSym   = toTDSymbol(targetSymbol);
         const tdInt   = toTDInterval(interval);
         const outSize = rangeToOutputSize(range);
-        // TSM、SOXX 是美股，不加 exchange；2330 台股需要 exchange=TWSE
         const needsExchange = (targetSymbol === SYMBOL || targetSymbol === '2330.TW');
         const exchangeParam = needsExchange ? '&exchange=TWSE' : '';
         const tdUrl   = `${TWELVEDATA_BASE}/time_series?symbol=${encodeURIComponent(tdSym)}&interval=${tdInt}&outputsize=${outSize}${exchangeParam}&apikey=${TWELVEDATA_KEY}`;
-        console.log(`[Twelve Data] 請求: ${tdSym} ${tdInt} x${outSize}`);
-        const data    = await fetchViaProxy(tdUrl);
+        console.log(`[Twelve Data] 直連請求: ${tdSym} ${tdInt} x${outSize}`);
+        const data = await fetchJSON(tdUrl, 12000);
         if (data?.status === 'error') {
             console.warn(`[Twelve Data] API 錯誤 ${targetSymbol}:`, data.message);
         } else {
-            const parsed  = parseTDTimeSeries(data);
+            const parsed = parseTDTimeSeries(data);
             console.log(`[Twelve Data] ${targetSymbol}: 收到 ${parsed.length} 筆`);
             if (parsed.length > 0) {
                 cacheSet(cacheKey, parsed);
