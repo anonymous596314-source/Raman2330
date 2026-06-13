@@ -71,17 +71,26 @@ async function refreshData(partial = false) {
 
     if (partial) return;
 
-    // ── 第二波：所有重資料全部並行發出 ──────────────────────────
-    const [fund, techData, chipData, flowData, twdData, tsm1yData, soxData, adrData] =
+    // ── 第二波：分兩批避免 Twelve Data rate limit（8次/分鐘）──
+    // 第一批：FinMind（不受限）+ 台積電歷史（2支 Twelve Data）
+    const [fund, techData, chipData, flowData, tsm1yData] =
         await Promise.allSettled([
-            fetchFundamentals(),                          // 基本面
-            fetchHistoricalData("6mo", "1d"),             // 技術面 K 線
-            fetchHistoricalData("10y", "1wk"),            // 籌碼成本（需10年才有260週MA）
-            fetchChipFlow(),                              // 三大法人
-            fetchHistoricalData("1y",  "1wk", "TWD=X"),  // 匯率
-            fetchHistoricalData("1y",  "1wk"),            // 台積 1y 週線
-            fetchHistoricalData("1y",  "1wk", SOX_SYMBOL),
-            fetchHistoricalData("1y",  "1wk", ADR_SYMBOL)
+            fetchFundamentals(),                          // FinMind，不受 TD 限制
+            fetchHistoricalData("6mo", "1d"),             // TD: 技術面日線
+            fetchHistoricalData("10y", "1wk"),            // TD: 籌碼成本週線
+            fetchChipFlow(),                              // FinMind，不受 TD 限制
+            fetchHistoricalData("1y",  "1wk"),            // TD: 台積1年週線
+        ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : null));
+
+    // 等 1.5 秒再打第二批，避免觸發 rate limit
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // 第二批：TSM ADR、SOXX、匯率（3支）
+    const [twdData, soxData, adrData] =
+        await Promise.allSettled([
+            fetchHistoricalData("1y",  "1wk", "TWD=X"),  // TD: 匯率
+            fetchHistoricalData("1y",  "1wk", SOX_SYMBOL), // TD: SOXX
+            fetchHistoricalData("1y",  "1wk", ADR_SYMBOL)  // TD: TSM ADR
         ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : null));
 
     // 3. 基本面

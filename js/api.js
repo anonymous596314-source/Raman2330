@@ -153,10 +153,13 @@ async function fetchQuoteSummary() {
     const cached = cacheGet(cacheKey);
     if (cached) return cached;
 
-    // ── 主力：Twelve Data quote 直連 ─────────────────────────
+    // ── 主力：Twelve Data quote（透過 corsproxy.io）──────────
     try {
-        const url  = `${TWELVEDATA_BASE}/quote?symbol=2330&exchange=TWSE&apikey=${TWELVEDATA_KEY}`;
-        const data = await fetchJSON(url, 8000);
+        const tdQuoteUrl = `${TWELVEDATA_BASE}/quote?symbol=2330&exchange=TWSE&apikey=${TWELVEDATA_KEY}`;
+        const url  = `https://corsproxy.io/?${encodeURIComponent(tdQuoteUrl)}`;
+        const res  = await fetchWithTimeout(url, 8000);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
         if (data && data.close && !data.status?.includes('error')) {
             const price  = parseFloat(data.close);
             const prev   = parseFloat(data.previous_close);
@@ -294,7 +297,7 @@ async function fetchHistoricalData(range = "1y", interval = "1d", customSymbol =
     const cached = cacheGet(cacheKey);
     if (cached) return cached.map(r => ({ ...r, date: new Date(r.date) }));
 
-    // ── 主力：Twelve Data 直連（原生支援 CORS，不需 proxy）────
+    // ── 主力：Twelve Data（透過 corsproxy.io，避免直連 429）────
     try {
         const tdSym   = toTDSymbol(targetSymbol);
         const tdInt   = toTDInterval(interval);
@@ -302,8 +305,11 @@ async function fetchHistoricalData(range = "1y", interval = "1d", customSymbol =
         const needsExchange = (targetSymbol === SYMBOL || targetSymbol === '2330.TW');
         const exchangeParam = needsExchange ? '&exchange=TWSE' : '';
         const tdUrl   = `${TWELVEDATA_BASE}/time_series?symbol=${encodeURIComponent(tdSym)}&interval=${tdInt}&outputsize=${outSize}${exchangeParam}&apikey=${TWELVEDATA_KEY}`;
-        console.log(`[Twelve Data] 直連請求: ${tdSym} ${tdInt} x${outSize}`);
-        const data = await fetchJSON(tdUrl, 12000);
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(tdUrl)}`;
+        console.log(`[Twelve Data] 請求: ${tdSym} ${tdInt} x${outSize}`);
+        const res  = await fetchWithTimeout(proxyUrl, 12000);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
         if (data?.status === 'error') {
             console.warn(`[Twelve Data] API 錯誤 ${targetSymbol}:`, data.message);
         } else {
