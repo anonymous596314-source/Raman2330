@@ -500,6 +500,80 @@ async function fetchNews() {
     return staticNews;
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+//  新增抓取函式
+// ═══════════════════════════════════════════════════════════════
+
+/** P/E 歷史（FinMind，用於 P/E Band 圖）*/
+async function fetchPERHistory(years = 3) {
+    const cacheKey = `per_history_${years}y`;
+    const cached = cacheGet(cacheKey);
+    if (cached) return cached;
+    try {
+        const start = new Date();
+        start.setFullYear(start.getFullYear() - years);
+        const startDate = start.toISOString().split('T')[0];
+        const json = await fetchJSON(
+            `${FINMIND_BASE}?dataset=TaiwanStockPER&data_id=${TWSE_SYMBOL}&start_date=${startDate}`
+        );
+        if (!json?.data?.length) return null;
+        const result = json.data.map(r => ({
+            date: r.date,
+            per:  parseFloat(r.PER),
+            pbr:  parseFloat(r.PBR)
+        })).filter(r => !isNaN(r.per) && r.per > 0);
+        cacheSet(cacheKey, result);
+        console.log(`[FinMind] PER history: ${result.length} 筆`);
+        return result;
+    } catch(e) { console.warn('[fetchPERHistory]', e.message); return null; }
+}
+
+/** 外資持股比例歷史（FinMind）*/
+async function fetchShareholdingHistory(months = 24) {
+    const cacheKey = `shareholding_${months}m`;
+    const cached = cacheGet(cacheKey);
+    if (cached) return cached;
+    try {
+        const start = new Date();
+        start.setMonth(start.getMonth() - months);
+        const startDate = start.toISOString().split('T')[0];
+        const json = await fetchJSON(
+            `${FINMIND_BASE}?dataset=TaiwanStockShareholding&data_id=${TWSE_SYMBOL}&start_date=${startDate}`
+        );
+        if (!json?.data?.length) return null;
+        const result = json.data.map(r => ({
+            date:  r.date,
+            ratio: parseFloat(r.ForeignInvestmentSharesRatio)
+        })).filter(r => !isNaN(r.ratio));
+        cacheSet(cacheKey, result);
+        console.log(`[FinMind] Shareholding: ${result.length} 筆`);
+        return result;
+    } catch(e) { console.warn('[fetchShareholdingHistory]', e.message); return null; }
+}
+
+/** VIX 恐慌指數（Twelve Data via corsproxy，近1年週線）*/
+async function fetchVIX() {
+    const cacheKey = 'vix_1y';
+    const cached = cacheGet(cacheKey);
+    if (cached) return cached.map(r => ({ ...r, date: new Date(r.date) }));
+    try {
+        const tdUrl = `${TWELVEDATA_BASE}/time_series?symbol=VIX&interval=1week&outputsize=52&apikey=${TWELVEDATA_KEY}`;
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(tdUrl)}`;
+        const res = await fetchWithTimeout(proxyUrl, 12000);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (data?.status === 'error') throw new Error(data.message);
+        const parsed = parseTDTimeSeries(data);
+        if (parsed.length > 0) {
+            cacheSet(cacheKey, parsed);
+            console.log(`[Twelve Data] VIX: ${parsed.length} 筆`);
+            return parsed;
+        }
+    } catch(e) { console.warn('[fetchVIX]', e.message); }
+    return [];
+}
+
 // ═══════════════════════════════════════════════════════════════
 //  技術指標計算（不改動）
 // ═══════════════════════════════════════════════════════════════
