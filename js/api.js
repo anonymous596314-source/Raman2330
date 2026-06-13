@@ -552,6 +552,62 @@ async function fetchShareholdingHistory(months = 24) {
     } catch(e) { console.warn('[fetchShareholdingHistory]', e.message); return null; }
 }
 
+
+/** 股息歷史（FinMind TaiwanStockDividend）*/
+async function fetchDividendHistory() {
+    const cacheKey = 'dividend_history';
+    const cached = cacheGet(cacheKey);
+    if (cached) return cached;
+    try {
+        const start = new Date();
+        start.setFullYear(start.getFullYear() - 8);
+        const json = await fetchJSON(
+            `${FINMIND_BASE}?dataset=TaiwanStockDividend&data_id=${TWSE_SYMBOL}&start_date=${start.toISOString().split('T')[0]}`
+        );
+        if (!json?.data?.length) return null;
+        // 合併同年的現金股息
+        const byYear = {};
+        json.data.forEach(r => {
+            const yr = r.date?.substring(0,4) || r.stock_dividend_proceed_date?.substring(0,4);
+            if (!yr) return;
+            if (!byYear[yr]) byYear[yr] = { year: yr, cash: 0, stock: 0 };
+            if (r.cash_dividend !== undefined) byYear[yr].cash += parseFloat(r.cash_dividend) || 0;
+            if (r.stock_dividend !== undefined) byYear[yr].stock += parseFloat(r.stock_dividend) || 0;
+        });
+        const result = Object.values(byYear).sort((a,b) => a.year.localeCompare(b.year));
+        cacheSet(cacheKey, result);
+        console.log(`[FinMind] 股息歷史: ${result.length} 年`);
+        return result;
+    } catch(e) { console.warn('[fetchDividendHistory]', e.message); return null; }
+}
+
+/** 融資融券餘額（FinMind TaiwanStockMarginPurchaseShortSale）*/
+async function fetchMarginData(months = 12) {
+    const cacheKey = `margin_${months}m`;
+    const cached = cacheGet(cacheKey);
+    if (cached) return cached;
+    try {
+        const start = new Date();
+        start.setMonth(start.getMonth() - months);
+        const json = await fetchJSON(
+            `${FINMIND_BASE}?dataset=TaiwanStockMarginPurchaseShortSale&data_id=${TWSE_SYMBOL}&start_date=${start.toISOString().split('T')[0]}`
+        );
+        if (!json?.data?.length) return null;
+        const result = json.data.map(r => ({
+            date:         r.date,
+            marginBuy:    parseInt(r.MarginPurchaseBuy)    || 0,
+            marginSell:   parseInt(r.MarginPurchaseSell)   || 0,
+            marginBalance:parseInt(r.MarginPurchaseBalance)|| 0,
+            shortSell:    parseInt(r.ShortSaleSell)        || 0,
+            shortBuy:     parseInt(r.ShortSaleBuy)         || 0,
+            shortBalance: parseInt(r.ShortSaleBalance)     || 0,
+        }));
+        cacheSet(cacheKey, result);
+        console.log(`[FinMind] 融資融券: ${result.length} 筆`);
+        return result;
+    } catch(e) { console.warn('[fetchMarginData]', e.message); return null; }
+}
+
 /** VIX 恐慌指數（Twelve Data via corsproxy，近1年週線）*/
 async function fetchVIX() {
     const cacheKey = 'vix_1y';
