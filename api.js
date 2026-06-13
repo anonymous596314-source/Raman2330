@@ -283,12 +283,21 @@ async function fetchHistoricalData(range = "1y", interval = "1d", customSymbol =
         const tdSym   = toTDSymbol(targetSymbol);
         const tdInt   = toTDInterval(interval);
         const outSize = rangeToOutputSize(range);
-        const tdUrl   = `${TWELVEDATA_BASE}/time_series?symbol=${encodeURIComponent(tdSym)}&interval=${tdInt}&outputsize=${outSize}&apikey=${TWELVEDATA_KEY}`;
+        // TSM、SOXX 是美股，不加 exchange；2330 台股需要 exchange=TWSE
+        const needsExchange = (targetSymbol === SYMBOL || targetSymbol === '2330.TW');
+        const exchangeParam = needsExchange ? '&exchange=TWSE' : '';
+        const tdUrl   = `${TWELVEDATA_BASE}/time_series?symbol=${encodeURIComponent(tdSym)}&interval=${tdInt}&outputsize=${outSize}${exchangeParam}&apikey=${TWELVEDATA_KEY}`;
+        console.log(`[Twelve Data] 請求: ${tdSym} ${tdInt} x${outSize}`);
         const data    = await fetchViaProxy(tdUrl);
-        const parsed  = parseTDTimeSeries(data);
-        if (parsed.length > 0) {
-            cacheSet(cacheKey, parsed);
-            return parsed;
+        if (data?.status === 'error') {
+            console.warn(`[Twelve Data] API 錯誤 ${targetSymbol}:`, data.message);
+        } else {
+            const parsed  = parseTDTimeSeries(data);
+            console.log(`[Twelve Data] ${targetSymbol}: 收到 ${parsed.length} 筆`);
+            if (parsed.length > 0) {
+                cacheSet(cacheKey, parsed);
+                return parsed;
+            }
         }
     } catch (e) { console.warn(`[歷史] Twelve Data ${targetSymbol} 失敗:`, e.message); }
 
@@ -309,7 +318,9 @@ async function fetchHistoricalData(range = "1y", interval = "1d", customSymbol =
     }
 
     // ── 最終備援：靜態嵌入資料（確保圖表永遠有東西顯示）────────
-    console.warn(`[靜態備援] ${targetSymbol} 使用內建靜態資料`);
+    // 診斷提示：若頻繁走到這裡，請開 F12 > Network 確認 proxy 是否通
+    // Twelve Data URL: https://api.twelvedata.com/time_series?symbol=TSM&interval=1week&outputsize=52&apikey=...
+    console.warn(`[靜態備援] ${targetSymbol} 所有 API 失敗，使用內建靜態資料。若要真實資料請確認 Twelve Data key 有效且 proxy 可連線。`);
     const isTSMC   = (targetSymbol === SYMBOL || targetSymbol === '2330.TW');
     const isTSMADR = (targetSymbol === ADR_SYMBOL);
     const isSOXX   = (targetSymbol === SOX_SYMBOL);
@@ -948,59 +959,58 @@ const STATIC_TWDUSD_WEEKLY = [
 ];
 
 const STATIC_TSM_ADR_WEEKLY = [
-  {date:new Date("2025-06-13"),open:177.07,high:177.42,low:175.8,close:176.53,volume:16124313},
-  {date:new Date("2025-06-20"),open:185.83,high:187.48,low:184.3,close:184.62,volume:10503601},
-  {date:new Date("2025-06-27"),open:186.05,high:188.03,low:185.33,close:186.69,volume:11567746},
-  {date:new Date("2025-07-04"),open:185.36,high:188.88,low:183.36,close:187.9,volume:11533341},
-  {date:new Date("2025-07-11"),open:193.69,high:194.3,low:191.03,close:191.87,volume:15761947},
-  {date:new Date("2025-07-18"),open:186.95,high:188.58,low:186.72,close:187.43,volume:12009884},
-  {date:new Date("2025-07-25"),open:191.72,high:194.08,low:189.65,close:192.31,volume:10427937},
-  {date:new Date("2025-08-01"),open:192.66,high:195.23,low:189.85,close:191.86,volume:12749136},
-  {date:new Date("2025-08-08"),open:208.92,high:209.35,low:204.09,close:206.04,volume:13455370},
-  {date:new Date("2025-08-15"),open:193.97,high:198.28,low:193.35,close:196.59,volume:10060900},
-  {date:new Date("2025-08-22"),open:208.76,high:209.28,low:206.94,close:208.12,volume:13318683},
-  {date:new Date("2025-08-29"),open:207.65,high:209.25,low:206.82,close:208.34,volume:10889308},
-  {date:new Date("2025-09-05"),open:210.1,high:210.37,low:209.68,close:210.27,volume:11523646},
-  {date:new Date("2025-09-12"),open:212.21,high:212.52,low:210.85,close:211.45,volume:15580073},
-  {date:new Date("2025-09-19"),open:217.11,high:217.26,low:214.94,close:217.02,volume:16018146},
-  {date:new Date("2025-09-26"),open:229.01,high:229.48,low:225.13,close:225.6,volume:12232808},
-  {date:new Date("2025-10-03"),open:225.81,high:226.37,low:224.08,close:224.81,volume:14455721},
-  {date:new Date("2025-10-10"),open:226.96,high:227.07,low:223.99,close:225.03,volume:12784181},
-  {date:new Date("2025-10-17"),open:230.76,high:231.19,low:228.32,close:230.1,volume:10149949},
-  {date:new Date("2025-10-24"),open:232.21,high:233.53,low:228.49,close:230.67,volume:12987499},
-  {date:new Date("2025-10-31"),open:233.32,high:235.75,low:230.79,close:232.39,volume:12878913},
-  {date:new Date("2025-11-07"),open:235.64,high:238.69,low:235.21,close:237.53,volume:15238952},
-  {date:new Date("2025-11-14"),open:244.94,high:246.68,low:240.54,close:241.9,volume:12383459},
-  {date:new Date("2025-11-21"),open:248.69,high:249.2,low:244.22,close:245.21,volume:12236188},
-  {date:new Date("2025-11-28"),open:240.0,high:241.15,low:237.07,close:238.11,volume:11899266},
-  {date:new Date("2025-12-05"),open:253.17,high:253.69,low:251.25,close:252.46,volume:13752191},
-  {date:new Date("2025-12-12"),open:242.99,high:244.09,low:239.86,close:243.96,volume:13183729},
-  {date:new Date("2025-12-19"),open:261.63,high:263.2,low:260.37,close:262.39,volume:15440414},
-  {date:new Date("2025-12-26"),open:245.44,high:249.99,low:243.99,close:249.16,volume:12936199},
-  {date:new Date("2026-01-02"),open:260.93,high:262.4,low:259.71,close:259.75,volume:12228005},
-  {date:new Date("2026-01-09"),open:266.19,high:266.98,low:265.35,close:266.49,volume:15119249},
-  {date:new Date("2026-01-16"),open:268.75,high:268.79,low:264.03,close:266.54,volume:13174614},
-  {date:new Date("2026-01-23"),open:270.55,high:272.72,low:270.09,close:272.08,volume:14210629},
-  {date:new Date("2026-01-30"),open:276.55,high:280.85,low:272.62,close:274.02,volume:11153914},
-  {date:new Date("2026-02-06"),open:267.68,high:269.14,low:267.15,close:267.96,volume:15948556},
-  {date:new Date("2026-02-13"),open:275.07,high:277.08,low:271.62,close:273.65,volume:16167634},
-  {date:new Date("2026-02-20"),open:277.28,high:278.87,low:270.68,close:278.42,volume:12329506},
-  {date:new Date("2026-02-27"),open:285.24,high:286.58,low:284.46,close:284.98,volume:14424373},
-  {date:new Date("2026-03-06"),open:279.55,high:283.14,low:279.04,close:282.13,volume:10589796},
-  {date:new Date("2026-03-13"),open:297.25,high:298.32,low:296.61,close:297.46,volume:13615657},
-  {date:new Date("2026-03-20"),open:292.55,high:295.43,low:286.29,close:288.33,volume:15577059},
-  {date:new Date("2026-03-27"),open:291.76,high:295.18,low:291.45,close:294.11,volume:11848558},
-  {date:new Date("2026-04-03"),open:302.23,high:303.78,low:297.36,close:299.66,volume:11290690},
-  {date:new Date("2026-04-10"),open:301.11,high:309.92,low:300.61,close:306.13,volume:13745941},
-  {date:new Date("2026-04-17"),open:291.7,high:303.7,low:290.46,close:297.57,volume:14138709},
-  {date:new Date("2026-04-24"),open:311.25,high:312.91,low:310.98,close:311.04,volume:15904953},
-  {date:new Date("2026-05-01"),open:316.92,high:316.97,low:316.54,close:316.83,volume:12426682},
-  {date:new Date("2026-05-08"),open:311.03,high:311.53,low:309.94,close:310.25,volume:10053178},
-  {date:new Date("2026-05-15"),open:321.84,high:323.32,low:320.41,close:320.95,volume:13433278},
-  {date:new Date("2026-05-22"),open:327.68,high:327.84,low:324.9,close:326.12,volume:13815635},
-  {date:new Date("2026-05-29"),open:324.91,high:326.54,low:321.24,close:323.09,volume:11412957},
-  {date:new Date("2026-06-05"),open:323.04,high:327.61,low:319.12,close:324.62,volume:14237506},
-  {date:new Date("2026-06-12"),open:335.37,high:335.95,low:329.82,close:333.44,volume:11009948}
+  {date:new Date("2025-06-13"),open:163.95,high:167.15,low:162.43,close:163.97,volume:9930429},
+  {date:new Date("2025-06-20"),open:168.85,high:172.2,low:165.39,close:168.26,volume:11989798},
+  {date:new Date("2025-06-27"),open:171.41,high:173.74,low:168.77,close:170.81,volume:12696621},
+  {date:new Date("2025-07-04"),open:172.41,high:174.93,low:171.87,close:173.2,volume:11208319},
+  {date:new Date("2025-07-11"),open:175.61,high:178.2,low:173.78,close:175.6,volume:13393577},
+  {date:new Date("2025-07-18"),open:173.16,high:174.51,low:172.3,close:173.54,volume:15879658},
+  {date:new Date("2025-07-25"),open:172.14,high:174.91,low:171.48,close:172.28,volume:11357657},
+  {date:new Date("2025-08-01"),open:176.32,high:180.37,low:173.21,close:176.92,volume:17038640},
+  {date:new Date("2025-08-08"),open:179.23,high:183.38,low:177.75,close:180.61,volume:11557389},
+  {date:new Date("2025-08-15"),open:185.84,high:188.05,low:183.83,close:184.47,volume:15738296},
+  {date:new Date("2025-08-22"),open:188.83,high:190.69,low:186.89,close:188.34,volume:9786380},
+  {date:new Date("2025-08-29"),open:191.99,high:195.0,low:188.59,close:190.93,volume:10038096},
+  {date:new Date("2025-09-05"),open:191.78,high:194.32,low:190.44,close:192.09,volume:14779203},
+  {date:new Date("2025-09-12"),open:194.78,high:197.7,low:193.25,close:194.53,volume:11676881},
+  {date:new Date("2025-09-19"),open:196.08,high:199.12,low:194.36,close:196.97,volume:14447953},
+  {date:new Date("2025-09-26"),open:196.52,high:199.89,low:196.22,close:198.29,volume:18611102},
+  {date:new Date("2025-10-03"),open:202.06,high:205.45,low:199.63,close:201.23,volume:9977995},
+  {date:new Date("2025-10-10"),open:201.83,high:204.95,low:199.16,close:201.11,volume:16201954},
+  {date:new Date("2025-10-17"),open:196.99,high:200.28,low:196.04,close:198.24,volume:9597049},
+  {date:new Date("2025-10-24"),open:203.1,high:206.51,low:201.07,close:203.93,volume:16145692},
+  {date:new Date("2025-10-31"),open:209.57,high:210.71,low:205.78,close:208.67,volume:17656686},
+  {date:new Date("2025-11-07"),open:213.24,high:216.82,low:211.75,close:213.25,volume:8448407},
+  {date:new Date("2025-11-14"),open:217.4,high:219.57,low:215.17,close:218.49,volume:15822626},
+  {date:new Date("2025-11-21"),open:221.73,high:224.6,low:220.87,close:223.26,volume:10275406},
+  {date:new Date("2025-11-28"),open:226.96,high:229.74,low:225.23,close:226.73,volume:10709921},
+  {date:new Date("2025-12-05"),open:226.29,high:229.51,low:225.05,close:227.61,volume:11914922},
+  {date:new Date("2025-12-12"),open:232.89,high:236.62,low:230.15,close:233.7,volume:17673030},
+  {date:new Date("2025-12-19"),open:237.89,high:240.97,low:235.77,close:237.68,volume:12493031},
+  {date:new Date("2025-12-26"),open:242.42,high:245.33,low:240.75,close:243.3,volume:14962801},
+  {date:new Date("2026-01-02"),open:250.2,high:252.33,low:247.05,close:249.43,volume:11172830},
+  {date:new Date("2026-01-09"),open:253.77,high:255.35,low:253.31,close:254.26,volume:10371067},
+  {date:new Date("2026-01-16"),open:258.93,high:261.95,low:257.12,close:259.42,volume:11423028},
+  {date:new Date("2026-01-23"),open:266.58,high:268.19,low:264.87,close:266.24,volume:19142387},
+  {date:new Date("2026-01-30"),open:263.76,high:265.78,low:261.47,close:263.72,volume:19664754},
+  {date:new Date("2026-02-06"),open:260.69,high:263.71,low:257.85,close:261.03,volume:18904494},
+  {date:new Date("2026-02-13"),open:272.23,high:273.89,low:268.64,close:271.31,volume:9445186},
+  {date:new Date("2026-02-20"),open:279.02,high:282.28,low:275.45,close:279.48,volume:12715310},
+  {date:new Date("2026-02-27"),open:285.67,high:288.63,low:282.42,close:286.35,volume:16020727},
+  {date:new Date("2026-03-06"),open:293.56,high:295.03,low:290.86,close:292.58,volume:14608186},
+  {date:new Date("2026-03-13"),open:292.55,high:293.58,low:290.02,close:292.05,volume:14350686},
+  {date:new Date("2026-03-20"),open:290.83,high:292.23,low:286.7,close:289.87,volume:19051589},
+  {date:new Date("2026-03-27"),open:298.73,high:301.39,low:296.2,close:298.1,volume:10433313},
+  {date:new Date("2026-04-03"),open:305.32,high:309.25,low:304.6,close:305.85,volume:11558699},
+  {date:new Date("2026-04-10"),open:315.51,high:317.11,low:312.95,close:316.1,volume:19359854},
+  {date:new Date("2026-04-17"),open:323.96,high:327.34,low:320.86,close:324.05,volume:17840180},
+  {date:new Date("2026-04-25"),open:319.06,high:322.69,low:316.6,close:318.61,volume:10700238},
+  {date:new Date("2026-05-02"),open:329.06,high:332.74,low:327.01,close:330.24,volume:18468388},
+  {date:new Date("2026-05-09"),open:340.14,high:341.59,low:338.35,close:340.56,volume:13040292},
+  {date:new Date("2026-05-16"),open:351.65,high:352.98,low:348.2,close:351.07,volume:8085302},
+  {date:new Date("2026-05-23"),open:357.48,high:359.22,low:356.39,close:357.59,volume:14789549},
+  {date:new Date("2026-05-30"),open:368.6,high:369.95,low:366.63,close:367.81,volume:15211895},
+  {date:new Date("2026-06-06"),open:376.71,high:380.17,low:375.89,close:378.21,volume:8643438}
 ];
 
 const STATIC_SOXX_WEEKLY = [

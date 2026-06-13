@@ -696,39 +696,68 @@ function renderSoxAdrChart(tsmData, soxData, adrData) {
         console.warn('SOX/ADR 資料不足'); return;
     }
 
-    // 以「1年前」為共同起點，各自取1年內資料
+    // 以「1年前」為共同起點
     const cutoff = new Date();
     cutoff.setFullYear(cutoff.getFullYear() - 1);
 
     const since = arr => {
-        const filtered = arr.filter(d => new Date(d.date) >= cutoff);
-        return filtered.length > 2 ? filtered : arr.slice(-52); // fallback 最後52筆
+        const f = arr.filter(d => new Date(d.date) >= cutoff);
+        return f.length > 2 ? f : arr.slice(-52);
     };
 
     const rTsm = since(tsmData);
     const rSox = since(soxData);
     const rAdr = since(adrData);
 
-    // 各自以第一筆為基期做正規化（累積報酬率%）
-    const normalize = arr => {
+    // ── 建立統一時間軸：以資料最多的那組為主軸，其他插值對齊 ──
+    // 用最長的那組作為 labels 基準
+    const master = [rTsm, rSox, rAdr].reduce((a, b) => a.length >= b.length ? a : b);
+    const labels = master.map(d => {
+        const dt = new Date(d.date);
+        return `${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()}`;
+    });
+
+    // 把任意陣列插值對齊到 master 長度
+    const alignTo = (arr, masterArr) => {
+        if (arr.length === masterArr.length) {
+            // 長度相同，直接用
+            const base = arr[0].close;
+            return arr.map(d => +((d.close - base) / base * 100).toFixed(2));
+        }
+        // 長度不同：用線性插值對齊
         const base = arr[0].close;
-        return arr.map(d => +((d.close - base) / base * 100).toFixed(2));
+        const result = [];
+        for (let i = 0; i < masterArr.length; i++) {
+            const targetTime = new Date(masterArr[i].date).getTime();
+            // 找最接近的兩個點做插值
+            let lo = arr[0], hi = arr[arr.length - 1];
+            for (let j = 0; j < arr.length - 1; j++) {
+                if (new Date(arr[j].date).getTime() <= targetTime &&
+                    new Date(arr[j+1].date).getTime() >= targetTime) {
+                    lo = arr[j]; hi = arr[j+1]; break;
+                }
+            }
+            const t1 = new Date(lo.date).getTime();
+            const t2 = new Date(hi.date).getTime();
+            const frac = t2 === t1 ? 0 : (targetTime - t1) / (t2 - t1);
+            const close = lo.close + (hi.close - lo.close) * frac;
+            result.push(+((close - base) / base * 100).toFixed(2));
+        }
+        return result;
     };
 
-    // 用月份/日期標籤，每組各自的時間軸
-    const toLabel = d => {
-        const dt = new Date(d.date);
-        return `${dt.getMonth()+1}/${dt.getDate()}`;
-    };
+    const tsmPct = alignTo(rTsm, master);
+    const soxPct = alignTo(rSox, master);
+    const adrPct = alignTo(rAdr, master);
 
     createChart('sox-adr-chart', {
         type: 'line',
         data: {
-            labels: rTsm.map(toLabel),
+            labels,
             datasets: [
-                { label: '台積電 (2330.TW)',  data: normalize(rTsm), borderColor: '#ef4444', borderWidth: 2.5, tension: 0.1, pointRadius: 0 },
-                { label: '台積電 ADR (TSM)',  data: normalize(rAdr), borderColor: '#3b82f6', borderWidth: 2,   tension: 0.1, pointRadius: 0 },
-                { label: 'SOXX 半導體 ETF',  data: normalize(rSox), borderColor: '#10b981', borderWidth: 2,   tension: 0.1, pointRadius: 0 }
+                { label: '台積電 (2330.TW)',  data: tsmPct, borderColor: '#ef4444', borderWidth: 2.5, tension: 0.1, pointRadius: 0 },
+                { label: '台積電 ADR (TSM)',  data: adrPct, borderColor: '#3b82f6', borderWidth: 2,   tension: 0.1, pointRadius: 0 },
+                { label: 'SOXX 半導體 ETF',  data: soxPct, borderColor: '#10b981', borderWidth: 2,   tension: 0.1, pointRadius: 0 }
             ]
         },
         options: {
@@ -739,9 +768,7 @@ function renderSoxAdrChart(tsmData, soxData, adrData) {
                 legend: { position: 'top', labels: { color: '#94a3b8' } },
                 tooltip: {
                     callbacks: {
-                        title: items => rTsm[items[0].dataIndex]
-                            ? new Date(rTsm[items[0].dataIndex].date).toLocaleDateString('zh-TW')
-                            : '',
+                        title: items => labels[items[0].dataIndex] || '',
                         label: ctx => ` ${ctx.dataset.label}: ${ctx.raw >= 0 ? '+' : ''}${ctx.raw}%`
                     }
                 }
