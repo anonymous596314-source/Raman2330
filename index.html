@@ -122,6 +122,11 @@
                             <p class="text-muted">營收、資本支出與股利拉在一起，觀察成長品質</p>
                             <div class="chart-container"><canvas id="cashflow-capex-chart"></canvas></div>
                         </div>
+                        <div class="card chart-card full-width">
+                            <h4>本益比歷史走勢 (P/E Band)</h4>
+                            <p class="text-muted">灰色虛線為歷史均值，紅/綠區間為 ±1σ 與 ±2σ 標準差帶，協助判斷當前估值貴賤</p>
+                            <div class="chart-container"><canvas id="per-band-chart"></canvas></div>
+                        </div>
                     </div>
                 </section>
 
@@ -211,6 +216,11 @@
                             <p class="text-muted">52週均線 ≈ 1年法人成本；260週均線 ≈ 長期底部支撐</p>
                             <div class="chart-container large"><canvas id="chip-cost-chart"></canvas></div>
                         </div>
+                        <div class="card chart-card full-width">
+                            <h4>外資持股比例歷史趨勢 (近2年)</h4>
+                            <p class="text-muted">外資持股比例持續攀升，顯示國際資金長期信任度；驟降通常伴隨重要風險訊號</p>
+                            <div class="chart-container"><canvas id="shareholding-chart"></canvas></div>
+                        </div>
                     </div>
                 </section>
 
@@ -251,6 +261,11 @@
                             <p class="text-muted">以1年前為基期，正規化為累積報酬率(%)，觀察強弱勢差異</p>
                             <div class="chart-container"><canvas id="sox-adr-chart"></canvas></div>
                         </div>
+                        <div class="card chart-card full-width">
+                            <h4>VIX 恐慌指數 vs 台積電股價 (近1年)</h4>
+                            <p class="text-muted">VIX 飆升（>30）通常對應市場恐慌，台積電往往短期承壓；VIX 回落則為布局窗口</p>
+                            <div class="chart-container"><canvas id="vix-chart"></canvas></div>
+                        </div>
                     </div>
                 </section>
 
@@ -286,6 +301,9 @@
                         </div>
                         <div class="card list-card full-width" id="sentiment-keywords">
                             <!-- 情緒關鍵字將透過 JS 載入 -->
+                        </div>
+                        <div class="card full-width" id="analyst-targets">
+                            <!-- 法人目標價將透過 JS 載入 -->
                         </div>
                     </div>
                 </section>
@@ -429,6 +447,9 @@
                                 <div class="watch-item caution"><strong>估值壓縮</strong><span>利率、半導體景氣循環與市場風險偏好</span></div>
                                 <div class="watch-item neutral"><strong>能源與水資源</strong><span>先進製程與封裝擴產後的營運韌性</span></div>
                             </div>
+                        </div>
+                        <div class="card full-width" id="valuation-calculator">
+                            <!-- 互動式估值計算機將透過 JS 載入 -->
                         </div>
                         <div class="card text-card full-width">
                             <h4>資料來源註記</h4>
