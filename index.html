@@ -127,6 +127,11 @@
                             <p class="text-muted">灰色虛線為歷史均值，紅/綠區間為 ±1σ 與 ±2σ 標準差帶，協助判斷當前估值貴賤</p>
                             <div class="chart-container"><canvas id="per-band-chart"></canvas></div>
                         </div>
+                        <div class="card chart-card full-width">
+                            <h4>現金股息 vs 殖利率歷史</h4>
+                            <p class="text-muted">台積電連續多年調升股息，殖利率反映股價相對股息的投資吸引力</p>
+                            <div class="chart-container"><canvas id="dividend-chart"></canvas></div>
+                        </div>
                     </div>
                 </section>
 
@@ -220,6 +225,11 @@
                             <h4>外資持股比例歷史趨勢 (近2年)</h4>
                             <p class="text-muted">外資持股比例持續攀升，顯示國際資金長期信任度；驟降通常伴隨重要風險訊號</p>
                             <div class="chart-container"><canvas id="shareholding-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card full-width">
+                            <h4>融資融券餘額趨勢 (近1年)</h4>
+                            <p class="text-muted">融資餘額高代表散戶槓桿偏高、籌碼不穩；融券回補力道為潛在支撐</p>
+                            <div class="chart-container"><canvas id="margin-chart"></canvas></div>
                         </div>
                     </div>
                 </section>
@@ -345,6 +355,12 @@
                             <p class="text-muted">從製程、封裝、良率、客戶信任與全球產能彈性比較護城河</p>
                             <div class="chart-container"><canvas id="competitive-radar-chart"></canvas></div>
                         </div>
+                        <div class="card chart-card wide">
+                            <h4>前五大客戶集中度（2025 年報）</h4>
+                            <p class="text-muted">Apple、NVIDIA 合計約佔 42%，AI 晶片客戶比重持續擴大</p>
+                            <div class="chart-container"><canvas id="customer-pie-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card" id="customer-note"></div>
                     </div>
                 </section>
 
@@ -450,6 +466,11 @@
                         </div>
                         <div class="card full-width" id="valuation-calculator">
                             <!-- 互動式估值計算機將透過 JS 載入 -->
+                        </div>
+                        <div class="card chart-card full-width" id="scenario-chart">
+                            <h4>情境壓力測試：股價路徑（2025–2030）</h4>
+                            <p class="text-muted">三種情境（牛/基準/熊）下 EPS × P/E 推算股價，灰色為當前實際股價參考線</p>
+                            <div class="chart-container"><canvas id="scenario-canvas"></canvas></div>
                         </div>
                         <div class="card text-card full-width">
                             <h4>資料來源註記</h4>
