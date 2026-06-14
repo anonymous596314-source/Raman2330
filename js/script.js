@@ -1645,9 +1645,10 @@ function renderDividendChart(data) {
     const cash   = data.map(r => +r.cash.toFixed(2));
 
     // 殖利率 = 全年股息 / 年均股價（更合理，非年底收盤）
+    // 年均股價（用於殖利率計算，比年底收盤更合理）
     const avgPrices = {
-        '2018':200, '2019':270, '2020':400, '2021':580,
-        '2022':530, '2023':535, '2024':850, '2025':1200
+        '2018':215, '2019':270, '2020':400, '2021':580,
+        '2022':500, '2023':535, '2024':820, '2025':1200
     };
     const yields = data.map(r => {
         const p = avgPrices[r.year];
@@ -1735,7 +1736,7 @@ function renderMarginChart(data) {
                     pointRadius: 0,
                     fill: true,
                     tension: 0.3,
-                    yAxisID: 'y'
+                    yAxisID: 'yMargin'
                 },
                 {
                     label: '融券餘額 (千張)',
@@ -1746,7 +1747,7 @@ function renderMarginChart(data) {
                     pointRadius: 0,
                     fill: true,
                     tension: 0.3,
-                    yAxisID: 'y1'
+                    yAxisID: 'yShort'
                 }
             ]
         },
@@ -1756,20 +1757,22 @@ function renderMarginChart(data) {
             plugins: {
                 legend: { position: 'top', labels: { color: '#94a3b8' } },
                 tooltip: { callbacks: {
-                    label: ctx => ` ${ctx.dataset.label}: ${ctx.raw?.toLocaleString()}千張`
+                    label: ctx => ` ${ctx.dataset.label}: ${ctx.raw?.toLocaleString() ?? '--'} 千張`
                 }}
             },
             scales: {
                 x: { ticks: { maxTicksLimit: 10, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: {
+                yMargin: {
+                    type: 'linear',
                     position: 'left',
-                    ticks: { color: '#ef4444' },
+                    ticks: { color: '#ef4444', callback: v => v + '千' },
                     grid: { color: 'rgba(255,255,255,0.05)' },
                     title: { display: true, text: '融資 (千張)', color: '#ef4444' }
                 },
-                y1: {
+                yShort: {
+                    type: 'linear',
                     position: 'right',
-                    ticks: { color: '#22c55e' },
+                    ticks: { color: '#22c55e', callback: v => v + '千' },
                     grid: { drawOnChartArea: false },
                     title: { display: true, text: '融券 (千張)', color: '#22c55e' }
                 }
