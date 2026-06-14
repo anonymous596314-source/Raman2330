@@ -204,11 +204,10 @@ async function refreshData(partial = false) {
         showChartFallback('dividend-chart');
     }
 
-    console.log('[診斷] marginData:', marginData, Array.isArray(marginData), marginData?.length);
+    console.log('[診斷] marginData[0]:', JSON.stringify(marginData?.[0]));
     if (marginData && marginData.length > 0) {
-        try { renderMarginChart(marginData); } catch(e) { console.error('[renderMarginChart]', e); showChartFallback('margin-chart'); }
+        try { renderMarginChart(marginData); } catch(e) { console.error('[renderMarginChart ERROR]', e.message, e.stack); showChartFallback('margin-chart'); }
     } else {
-        console.warn('[診斷] marginData 無效，走 fallback');
         showChartFallback('margin-chart');
     }
 
@@ -1717,12 +1716,14 @@ function renderDividendChart(data) {
 // ── 融資融券餘額（籌碼面）─────────────────────────────────────
 function renderMarginChart(data) {
     if (!data?.length) return;
+    console.log('[renderMarginChart] 第一筆:', JSON.stringify(data[0]));
 
-    // 若是日線資料（超過100筆），每5筆採樣一次；週線資料直接用
+    // FinMind 真實欄位：MarginPurchaseBalance, ShortSaleBalance
     const sampled = data.length > 60 ? data.filter((_, i) => i % 5 === 0) : data;
     const labels  = sampled.map(r => r.date.substring(5));
-    const margin  = sampled.map(r => Math.round((r.marginBalance || 0) / 1000)); // 千張
-    const shortS  = sampled.map(r => Math.round((r.shortBalance  || 0) / 1000));
+    const margin  = sampled.map(r => Math.round((r.marginBalance || r.MarginPurchaseBalance || 0) / 1000));
+    const shortS  = sampled.map(r => Math.round((r.shortBalance  || r.ShortSaleBalance      || 0) / 1000));
+    console.log('[renderMarginChart] 樣本:', labels.slice(0,3), margin.slice(0,3), shortS.slice(0,3));
 
     createChart('margin-chart', {
         type: 'line',
