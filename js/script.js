@@ -199,26 +199,26 @@ async function refreshData(partial = false) {
     }
 
     if (dividendHistory && dividendHistory.length > 0) {
-        renderDividendChart(dividendHistory);
+        try { renderDividendChart(dividendHistory); } catch(e) { console.error('[renderDividendChart]',e); showChartFallback('dividend-chart'); }
     } else {
         showChartFallback('dividend-chart');
     }
 
     if (marginData && marginData.length > 0) {
-        renderMarginChart(marginData);
+        try { renderMarginChart(marginData); } catch(e) { console.error('[renderMarginChart]',e); showChartFallback('margin-chart'); }
     } else {
         showChartFallback('margin-chart');
     }
 
-    // 靜態圖（不需 API）
-    renderCustomerConcentration();
-    renderScenarioChart();
+    // 靜態圖（不需 API）- 每個包 try-catch 互不影響
+    try { renderCustomerConcentration(); } catch(e) { console.error('[renderCustomerConcentration]', e); }
+    try { renderScenarioChart(); }        catch(e) { console.error('[renderScenarioChart]', e); }
 
     // 8. 靜態圖表
-    renderIndustryChart();
-    renderOutlookChart();
-    renderRiskChart();
-    renderValuationCalculator();
+    try { renderIndustryChart(); }        catch(e) { console.error('[renderIndustryChart]', e); }
+    try { renderOutlookChart(); }         catch(e) { console.error('[renderOutlookChart]', e); }
+    try { renderRiskChart(); }            catch(e) { console.error('[renderRiskChart]', e); }
+    try { renderValuationCalculator(); }  catch(e) { console.error('[renderValuationCalculator]', e); }
 }
 
 function updateTimestamp() {
@@ -1644,14 +1644,13 @@ function renderDividendChart(data) {
     const labels = data.map(r => r.year);
     const cash   = data.map(r => +r.cash.toFixed(2));
 
-    // 殖利率用靜態收盤近似（EPS/收盤 比例）
-    // 用已知年底股價推算
-    const approxPrices = {
-        '2018':220,'2019':325,'2020':535,'2021':635,'2022':430,
-        '2023':595,'2024':1065,'2025':1490
+    // 殖利率 = 全年股息 / 年均股價（更合理，非年底收盤）
+    const avgPrices = {
+        '2018':200, '2019':270, '2020':400, '2021':580,
+        '2022':530, '2023':535, '2024':850, '2025':1200
     };
     const yields = data.map(r => {
-        const p = approxPrices[r.year];
+        const p = avgPrices[r.year];
         return p ? +((r.cash / p) * 100).toFixed(2) : null;
     });
 
@@ -1782,8 +1781,8 @@ function renderMarginChart(data) {
 // ── 客戶集中度（產業面）───────────────────────────────────────
 // 資料來源：台積電 2025 年報（公開）
 function renderCustomerConcentration() {
-    const el = document.getElementById('customer-concentration');
-    if (!el) return;
+    // canvas 存在即可，不需要獨立容器
+    if (!document.getElementById('customer-pie-chart')) return;
 
     // Apple/NVIDIA/AMD/Qualcomm/其他（依 2025 年報近似佔比）
     const customers = [
