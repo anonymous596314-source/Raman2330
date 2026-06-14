@@ -1716,11 +1716,11 @@ function renderDividendChart(data) {
 function renderMarginChart(data) {
     if (!data?.length) return;
 
-    // 週採樣（避免資料過密）
-    const sampled = data.filter((_, i) => i % 5 === 0);
+    // 若是日線資料（超過100筆），每5筆採樣一次；週線資料直接用
+    const sampled = data.length > 60 ? data.filter((_, i) => i % 5 === 0) : data;
     const labels  = sampled.map(r => r.date.substring(5));
-    const margin  = sampled.map(r => Math.round(r.marginBalance / 1000)); // 千張
-    const shortS  = sampled.map(r => Math.round(r.shortBalance  / 1000));
+    const margin  = sampled.map(r => Math.round((r.marginBalance || 0) / 1000)); // 千張
+    const shortS  = sampled.map(r => Math.round((r.shortBalance  || 0) / 1000));
 
     createChart('margin-chart', {
         type: 'line',
@@ -1843,56 +1843,121 @@ function renderCustomerConcentration() {
 
 // ── 情境壓力測試（風險面）─────────────────────────────────────
 // 三種情境：熊市、基準、牛市的 EPS × P/E 路徑
-function renderScenarioChart() {
+// ── 情境壓力測試（風險面）────────────────────────────────────
+// 邏輯：固定 EPS 情境（悲觀/基準/樂觀），三條 P/E 線（熊/基準/牛）
+// 2025 用實際數字，2026 起為預估
+
+const SCENARIO_DATA = {
+    // EPS 預估（三種假設）
+    eps: {
+        bear: { label: '悲觀 EPS', values: { 2025:82, 2026:88, 2027:92, 2028:95, 2029:98,  2030:100 } },
+        base: { label: '基準 EPS', values: { 2025:82, 2026:98, 2027:115,2028:132,2029:150, 2030:168 } },
+        bull: { label: '樂觀 EPS', values: { 2025:82, 2026:112,2027:142,2028:175,2029:210, 2030:248 } },
+    },
+    // P/E 假設（三種市場估值）
+    pe: {
+        bear: { label: '熊市 P/E（15x）',   val: 15, color: '#ef4444' },
+        base: { label: '基準 P/E（22x）',   val: 22, color: '#3b82f6' },
+        bull: { label: '牛市 P/E（28x）',   val: 28, color: '#10b981' },
+    },
+    // 2025 實際年末股價（已知）
+    actual2025: 1490
+};
+
+let _scenarioEpsMode = 'base'; // 目前選取的 EPS 情境
+
+function renderScenarioChart(epsMode) {
+    epsMode = epsMode || _scenarioEpsMode;
+    _scenarioEpsMode = epsMode;
+
     const el = document.getElementById('scenario-chart');
     if (!el) return;
 
-    const years = ['2025E', '2026E', '2027E', '2028E', '2029E', '2030E'];
+    // 建立按鈕 UI（只建一次）
+    if (!document.getElementById('scenario-buttons')) {
+        const btnGroup = document.createElement('div');
+        btnGroup.id = 'scenario-buttons';
+        btnGroup.style.cssText = 'display:flex;gap:8px;margin-bottom:16px;';
+        ['bear','base','bull'].forEach(mode => {
+            const eps = SCENARIO_DATA.eps[mode];
+            const colors = {bear:'#ef4444',base:'#3b82f6',bull:'#10b981'};
+            const btn = document.createElement('button');
+            btn.id = `scenario-btn-${mode}`;
+            btn.textContent = eps.label;
+            btn.style.cssText = `padding:6px 14px;border-radius:6px;border:1px solid ${colors[mode]};
+                background:${mode===epsMode?colors[mode]:'transparent'};
+                color:${mode===epsMode?'#fff':colors[mode]};
+                cursor:pointer;font-size:13px;font-family:inherit;transition:all 0.2s;`;
+            btn.onclick = () => renderScenarioChart(mode);
+            btnGroup.appendChild(btn);
+        });
+        // 插到 canvas 前
+        const canvas = document.getElementById('scenario-canvas');
+        if (canvas?.parentNode) canvas.parentNode.insertBefore(btnGroup, canvas);
+    } else {
+        // 更新按鈕樣式
+        ['bear','base','bull'].forEach(mode => {
+            const colors = {bear:'#ef4444',base:'#3b82f6',bull:'#10b981'};
+            const btn = document.getElementById(`scenario-btn-${mode}`);
+            if (!btn) return;
+            btn.style.background = mode === epsMode ? colors[mode] : 'transparent';
+            btn.style.color      = mode === epsMode ? '#fff' : colors[mode];
+        });
+    }
 
-    // 三情境：EPS × P/E 合理區間（基於公開分析師預估）
-    const scenarios = {
-        bear: {
-            label: '熊市情境', color: '#ef4444',
-            eps:   [78, 85, 90, 88, 85, 82],
-            pe:    [14, 15, 15, 14, 13, 13],
-        },
-        base: {
-            label: '基準情境', color: '#3b82f6',
-            eps:   [85, 98, 115, 130, 148, 165],
-            pe:    [20, 22, 22, 21, 20, 20],
-        },
-        bull: {
-            label: '牛市情境', color: '#10b981',
-            eps:   [90, 112, 140, 168, 200, 230],
-            pe:    [26, 28, 30, 28, 27, 26],
+    const epsData   = SCENARIO_DATA.eps[epsMode];
+    const peScenes  = SCENARIO_DATA.pe;
+    const years     = [2025, 2026, 2027, 2028, 2029, 2030];
+    const labels    = years.map((y,i) => i === 0 ? `${y}（實際）` : `${y}E`);
+
+    // 現價參考線
+    const currentPrice = parseFloat(
+        document.getElementById('current-price')?.textContent?.replace(/,/g,'') || '2310'
+    );
+
+    const datasets = [
+        // 三條 P/E 線
+        ...Object.values(peScenes).map(pe => ({
+            label: pe.label,
+            data: years.map((y, i) => {
+                if (i === 0) return SCENARIO_DATA.actual2025; // 2025 用實際值
+                return Math.round(epsData.values[y] * pe.val);
+            }),
+            borderColor: pe.color,
+            borderWidth: 2.5,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            tension: 0.3,
+            fill: false,
+        })),
+        // 當前股價水平線（灰色）
+        {
+            label: `現價 NT$${currentPrice.toLocaleString()}`,
+            data: years.map(() => currentPrice),
+            borderColor: 'rgba(148,163,184,0.6)',
+            borderWidth: 1.5,
+            borderDash: [6, 4],
+            pointRadius: 0,
+            fill: false,
         }
-    };
-
-    const datasets = Object.values(scenarios).map(s => ({
-        label: s.label,
-        data: s.eps.map((e, i) => Math.round(e * s.pe[i])),
-        borderColor: s.color,
-        backgroundColor: s.color.replace(')', ',0.08)').replace('rgb', 'rgba'),
-        borderWidth: 2.5,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        tension: 0.3,
-        fill: false,
-    }));
+    ];
 
     createChart('scenario-canvas', {
         type: 'line',
-        data: { labels: years, datasets },
+        data: { labels, datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: {
-                legend: { position: 'top', labels: { color: '#94a3b8' } },
+                legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 20 } },
                 tooltip: { callbacks: {
+                    title: items => labels[items[0].dataIndex],
                     label: ctx => {
-                        const s = Object.values(scenarios)[ctx.datasetIndex];
-                        const i = ctx.dataIndex;
-                        return ` ${s.label}: NT$${ctx.raw.toLocaleString()} (EPS ${s.eps[i]} × ${s.pe[i]}x)`;
+                        if (ctx.datasetIndex >= 3) return ` ${ctx.dataset.label}`;
+                        const pe = Object.values(peScenes)[ctx.datasetIndex];
+                        const y = years[ctx.dataIndex];
+                        const eps = ctx.dataIndex === 0 ? '（實際）' : `EPS NT$${epsData.values[y]} × ${pe.val}x`;
+                        return ` ${pe.label}: NT$${ctx.raw.toLocaleString()} ${eps}`;
                     }
                 }}
             },
