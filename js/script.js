@@ -204,9 +204,11 @@ async function refreshData(partial = false) {
         showChartFallback('dividend-chart');
     }
 
+    console.log('[診斷] marginData:', marginData, Array.isArray(marginData), marginData?.length);
     if (marginData && marginData.length > 0) {
-        try { renderMarginChart(marginData); } catch(e) { console.error('[renderMarginChart]',e); showChartFallback('margin-chart'); }
+        try { renderMarginChart(marginData); } catch(e) { console.error('[renderMarginChart]', e); showChartFallback('margin-chart'); }
     } else {
+        console.warn('[診斷] marginData 無效，走 fallback');
         showChartFallback('margin-chart');
     }
 
