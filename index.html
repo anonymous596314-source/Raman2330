@@ -276,6 +276,11 @@
                             <p class="text-muted">VIX 飆升（>30）通常對應市場恐慌，台積電往往短期承壓；VIX 回落則為布局窗口</p>
                             <div class="chart-container"><canvas id="vix-chart"></canvas></div>
                         </div>
+                        <div class="card chart-card full-width">
+                            <h4>跨市場相關性熱力圖 (近1年週線)</h4>
+                            <p class="text-muted">數值越接近 +1 代表高度正相關（深紅），越接近 -1 代表負相關（深藍）；圓形代表已量產，三角形代表規劃中</p>
+                            <div class="chart-container" style="height:320px"><canvas id="correlation-heatmap"></canvas></div>
+                        </div>
                     </div>
                 </section>
 
@@ -415,6 +420,11 @@
                             <h4>2030 營收情境分析</h4>
                             <p class="text-muted">以 AI/HPC 滲透率、先進封裝供給與資本支出效率分為保守、基準、樂觀三情境</p>
                             <div class="chart-container"><canvas id="outlook-scenario-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card full-width">
+                            <h4>先進製程節點競爭比較：TSMC vs Samsung vs Intel</h4>
+                            <p class="text-muted">以電晶體密度 (MTr/mm²) 衡量製程實力。實心圓 = 已量產，三角形 = 規劃中。資料來源：各公司技術路線圖 (2026 Q2)</p>
+                            <div class="chart-container large"><canvas id="process-roadmap-chart"></canvas></div>
                         </div>
                         <div class="card text-card full-width">
                             <h4>全球製造布局</h4>
