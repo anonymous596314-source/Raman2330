@@ -279,14 +279,14 @@ function showChartFallback(ctxId, msg) {
 // ─── 基本面圖表 ────────────────────────────────────────────────
 const QUARTER_LABELS = ['24Q1','24Q2','24Q3','24Q4','25Q1','25Q2','25Q3','25Q4','26Q1'];
 const REVENUES_B     = [592.64, 673.51, 759.69, 868.46, 839.25, 933.79, 989.92, 1046.09, 1134.10];
-const GROSS_MARGINS  = [53.1, 53.2, 57.8, 59.0, 58.8, 58.6, 59.5, 62.3, 66.3];
+const GROSS_MARGINS  = [53.1, 53.2, 57.8, 59.0, 58.8, 58.6, 59.5, 62.3, 66.2];
 const EPS_QUARTERLY  = [7.98, 9.56, 12.55, 14.45, 13.95, 15.36, 17.44, 19.51, 22.08];
 const OPERATING_MARGINS = [42.0, 42.5, 47.5, 49.0, 48.5, 49.6, 50.6, 54.0, 58.1];
 const NET_MARGINS = [38.0, 36.8, 42.8, 43.1, 43.1, 44.3, 45.7, 48.4, 50.5];
 const ANNUAL_LABELS = ['2021', '2022', '2023', '2024', '2025'];
 const ANNUAL_REVENUE_B = [1587, 2264, 2161, 2894, 3809];
-const ANNUAL_CAPEX_USD_B = [30.0, 36.3, 30.4, 30.0, 29.8];
-const ANNUAL_DIVIDEND = [11.0, 11.0, 12.0, 14.0, 18.0];
+const ANNUAL_CAPEX_USD_B = [30.0, 36.3, 30.4, 29.8, 38.0]; // 2025 法說指引 USD 38-42B
+const ANNUAL_DIVIDEND = [10.5, 11.0, 11.5, 15.0, 19.0]; // 依年報：2021=10.5, 2022=11.0, 2023=11.5, 2024=15.0, 2025=19.0
 
 function renderFundamentalChart() {
     createChart('fundamental-chart', {
@@ -1872,9 +1872,9 @@ function renderCustomerConcentration() {
 const SCENARIO_DATA = {
     // EPS 預估（三種假設）
     eps: {
-        bear: { label: '悲觀 EPS', values: { 2025:82, 2026:88, 2027:92, 2028:95, 2029:98,  2030:100 } },
-        base: { label: '基準 EPS', values: { 2025:82, 2026:98, 2027:115,2028:132,2029:150, 2030:168 } },
-        bull: { label: '樂觀 EPS', values: { 2025:82, 2026:112,2027:142,2028:175,2029:210, 2030:248 } },
+        bear: { label: '悲觀 EPS', values: { 2025:87, 2026:88, 2027:92, 2028:95, 2029:98,  2030:100 } },
+        base: { label: '基準 EPS', values: { 2025:87, 2026:98, 2027:115,2028:132,2029:150, 2030:168 } },
+        bull: { label: '樂觀 EPS', values: { 2025:87, 2026:112,2027:142,2028:175,2029:210, 2030:248 } },
     },
     // P/E 假設（三種市場估值）
     pe: {
@@ -1883,7 +1883,7 @@ const SCENARIO_DATA = {
         bull: { label: '牛市 P/E（28x）',   val: 28, color: '#10b981' },
     },
     // 2025 實際年末股價（已知）
-    actual2025: 1490
+    actual2025: 1490  // 2025年末收盤（用戶確認）
 };
 
 let _scenarioEpsMode = 'base'; // 目前選取的 EPS 情境
