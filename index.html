@@ -278,8 +278,8 @@
                         </div>
                         <div class="card chart-card full-width">
                             <h4>跨市場相關性熱力圖 (近1年週線)</h4>
-                            <p class="text-muted">數值越接近 +1 代表高度正相關（深紅），越接近 -1 代表負相關（深藍）；圓形代表已量產，三角形代表規劃中</p>
-                            <div class="chart-container" style="height:320px"><canvas id="correlation-heatmap"></canvas></div>
+                            <p class="text-muted">數值越接近 +1 代表高度正相關（深紅），越接近 -1 代表負相關（深藍），0 為無相關（灰）</p>
+                            <div id="correlation-heatmap-svg" style="width:100%;overflow-x:auto;padding:16px 0;"></div>
                         </div>
                     </div>
                 </section>
