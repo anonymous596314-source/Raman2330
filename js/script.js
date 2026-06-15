@@ -199,12 +199,13 @@ async function refreshData(partial = false) {
         showChartFallback('vix-chart');
     }
 
-    // 相關性熱力圖（需要 tsm1yData, soxData, adrData, spyData）
+    // 相關性熱力圖（SVG，不依賴 canvas）
     try {
         renderCorrelationHeatmap(tsm1yData, soxData, adrData, spyData);
     } catch(e) {
         console.error('[renderCorrelationHeatmap]', e);
-        showChartFallback('correlation-heatmap');
+        const el = document.getElementById('correlation-heatmap-svg');
+        if (el) el.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px">相關性資料計算中，請稍候...</p>';
     }
 
     if (dividendHistory && dividendHistory.length > 0) {
@@ -1986,13 +1987,13 @@ function renderScenarioChart(epsMode) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  相關性熱力圖（總經面）
+//  相關性熱力圖（總經面）— SVG 版，精確對齊
 // ═══════════════════════════════════════════════════════════════
 function renderCorrelationHeatmap(tsmData, soxData, adrData, spyData) {
-    const canvas = document.getElementById('correlation-heatmap');
-    if (!canvas) return;
+    const el = document.getElementById('correlation-heatmap-svg');
+    if (!el) return;
 
-    // 計算週報酬率序列
+    // 週報酬率序列
     const weeklyReturns = (data) => {
         if (!data?.length) return [];
         return data.slice(1).map((r, i) => {
@@ -2000,22 +2001,18 @@ function renderCorrelationHeatmap(tsmData, soxData, adrData, spyData) {
             return prev > 0 ? (r.close - prev) / prev : 0;
         });
     };
-
     const cutoff = new Date();
     cutoff.setFullYear(cutoff.getFullYear() - 1);
-    const since = arr => (arr || []).filter(d => new Date(d.date) >= cutoff);
+    const since  = arr => (arr || []).filter(d => new Date(d.date) >= cutoff);
 
-    const series = {
-        '台積電\n(2330)': weeklyReturns(since(tsmData)),
-        'SOXX\n半導體': weeklyReturns(since(soxData)),
-        'TSM\nADR':      weeklyReturns(since(adrData)),
-        'SPY\nS&P500':   weeklyReturns(since(spyData)),
-    };
+    const labels = ['台積電|(2330)', 'SOXX|半導體', 'TSM|ADR', 'SPY|S&P500'];
+    const series = [
+        weeklyReturns(since(tsmData)),
+        weeklyReturns(since(soxData)),
+        weeklyReturns(since(adrData)),
+        weeklyReturns(since(spyData)),
+    ];
 
-    const names  = Object.keys(series);
-    const n      = names.length;
-
-    // 計算相關係數矩陣
     const corr = (a, b) => {
         const len = Math.min(a.length, b.length);
         if (len < 5) return 0;
@@ -2031,100 +2028,91 @@ function renderCorrelationHeatmap(tsmData, soxData, adrData, spyData) {
         return da * db > 0 ? +(num / Math.sqrt(da * db)).toFixed(3) : 0;
     };
 
-    const matrix = names.map(r => names.map(c => corr(series[r], series[c])));
+    const n = labels.length;
+    const matrix = Array.from({length: n}, (_, i) =>
+        Array.from({length: n}, (_, j) => corr(series[i], series[j]))
+    );
 
-    // 用 Chart.js 的 bubble chart 模擬熱力圖
-    const data_pts = [];
-    matrix.forEach((row, ri) => {
-        row.forEach((val, ci) => {
-            data_pts.push({ x: ci, y: n - 1 - ri, v: val });
-        });
-    });
-
-    // 顏色插值：-1=藍，0=灰，+1=紅
-    const corrColor = (v, alpha = 0.85) => {
+    // 顏色：-1=藍 #3b82f6，0=灰 #334155，+1=紅 #ef4444
+    const heatColor = (v) => {
         if (v >= 0) {
-            const r = Math.round(239 * v + 30 * (1 - v));
-            const g = Math.round(68  * v + 41 * (1 - v));
-            const b = Math.round(68  * v + 59 * (1 - v));
-            return `rgba(${r},${g},${b},${alpha})`;
+            const t = v;
+            const r = Math.round(59  + (239 - 59)  * t);
+            const g = Math.round(130 + (68  - 130) * t);
+            const b = Math.round(246 + (68  - 246) * t);
+            return `rgb(${r},${g},${b})`;
         } else {
             const t = -v;
-            const r = Math.round(59  * (1 - t) + 30 * t);
-            const g = Math.round(130 * (1 - t) + 41 * t);
-            const b = Math.round(246 * (1 - t) + 59 * t);
-            return `rgba(${r},${g},${b},${alpha})`;
+            const r = Math.round(51  + (59  - 51)  * (1-t));
+            const g = Math.round(65  + (130 - 65)  * (1-t));
+            const b = Math.round(85  + (246 - 85)  * (1-t));
+            return `rgb(${r},${g},${b})`;
         }
     };
 
-    createChart('correlation-heatmap', {
-        type: 'bubble',
-        data: {
-            datasets: [{
-                data: data_pts.map(p => ({
-                    x: p.x, y: p.y, r: 38,
-                    v: p.v
-                })),
-                backgroundColor: data_pts.map(p => corrColor(p.v)),
-                borderColor:     data_pts.map(p => corrColor(p.v, 1)),
-                borderWidth: 1,
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: ctx => {
-                            const p = data_pts[ctx.dataIndex];
-                            const rName = names[n - 1 - Math.round(ctx.parsed.y)];
-                            const cName = names[Math.round(ctx.parsed.x)];
-                            return ` ${rName.replace('\n','  ')} ↔ ${cName.replace('\n','  ')}: ${p.v.toFixed(3)}`;
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    type: 'linear', min: -0.5, max: n - 0.5,
-                    ticks: {
-                        stepSize: 1, color: '#94a3b8',
-                        callback: v => names[Math.round(v)]?.replace('\n', ' ') ?? ''
-                    },
-                    grid: { display: false }
-                },
-                y: {
-                    type: 'linear', min: -0.5, max: n - 0.5,
-                    ticks: {
-                        stepSize: 1, color: '#94a3b8',
-                        callback: v => names[n - 1 - Math.round(v)]?.replace('\n', ' ') ?? ''
-                    },
-                    grid: { display: false }
-                }
-            },
-            // 在 bubble 內畫相關係數數字
-            animation: {
-                onComplete: function() {
-                    const chart = this;
-                    const ctx2  = chart.ctx;
-                    ctx2.save();
-                    ctx2.font = 'bold 13px Inter, sans-serif';
-                    ctx2.textAlign = 'center';
-                    ctx2.textBaseline = 'middle';
-                    chart.data.datasets[0].data.forEach((pt, i) => {
-                        const meta  = chart.getDatasetMeta(0);
-                        const elem  = meta.data[i];
-                        if (!elem) return;
-                        const val   = data_pts[i].v;
-                        ctx2.fillStyle = Math.abs(val) > 0.5 ? '#fff' : '#cbd5e1';
-                        ctx2.fillText(val.toFixed(2), elem.x, elem.y);
-                    });
-                    ctx2.restore();
-                }
-            }
-        }
+    // SVG 尺寸
+    const cellSize  = 90;
+    const labelW    = 90;  // 左側 Y 標籤寬
+    const labelH    = 64;  // 上方 X 標籤高
+    const svgW      = labelW + cellSize * n;
+    const svgH      = labelH + cellSize * n;
+
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}" style="max-width:100%;display:block;margin:auto;font-family:Inter,sans-serif;">`;
+
+    // X 軸標籤（頂部）
+    labels.forEach((lab, j) => {
+        const cx = labelW + j * cellSize + cellSize / 2;
+        const lines = lab.split('|');
+        svg += `<text x="${cx}" y="${labelH - 32}" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="600">${lines[0]}</text>`;
+        svg += `<text x="${cx}" y="${labelH - 14}" text-anchor="middle" fill="#64748b" font-size="11">${lines[1] || ''}</text>`;
     });
+
+    // Y 軸標籤（左側）
+    labels.forEach((lab, i) => {
+        const cy = labelH + i * cellSize + cellSize / 2;
+        const lines = lab.split('|');
+        svg += `<text x="${labelW - 8}" y="${cy - 6}" text-anchor="end" fill="#94a3b8" font-size="13" font-weight="600">${lines[0]}</text>`;
+        svg += `<text x="${labelW - 8}" y="${cy + 10}" text-anchor="end" fill="#64748b" font-size="11">${lines[1] || ''}</text>`;
+    });
+
+    // 熱力格
+    matrix.forEach((row, i) => {
+        row.forEach((val, j) => {
+            const x   = labelW + j * cellSize;
+            const y   = labelH + i * cellSize;
+            const cx  = x + cellSize / 2;
+            const cy  = y + cellSize / 2;
+            const bg  = heatColor(val);
+            const textColor = Math.abs(val) > 0.4 ? '#ffffff' : '#cbd5e1';
+            const isDiag    = i === j;
+
+            svg += `<rect x="${x+2}" y="${y+2}" width="${cellSize-4}" height="${cellSize-4}" rx="8" fill="${bg}" opacity="${isDiag ? 1 : 0.9}"/>`;
+            // 相關係數數字
+            svg += `<text x="${cx}" y="${cy + 6}" text-anchor="middle" fill="${textColor}" font-size="${isDiag ? 12 : 16}" font-weight="700">${isDiag ? '─' : val.toFixed(2)}</text>`;
+            // 強弱文字
+            if (!isDiag) {
+                const strength = Math.abs(val) > 0.8 ? '極強' : Math.abs(val) > 0.6 ? '強' : Math.abs(val) > 0.4 ? '中' : '弱';
+                svg += `<text x="${cx}" y="${cy + 22}" text-anchor="middle" fill="${textColor}" font-size="10" opacity="0.8">${val >= 0 ? '正' : '負'}相關 ${strength}</text>`;
+            }
+        });
+    });
+
+    // 色條圖例
+    const legendY = svgH - 18;
+    const legendX = labelW;
+    const legendW = cellSize * n;
+    const steps   = 20;
+    for (let k = 0; k < steps; k++) {
+        const v  = -1 + (2 * k / (steps - 1));
+        const lx = legendX + (k / steps) * legendW;
+        svg += `<rect x="${lx}" y="${legendY}" width="${legendW/steps + 1}" height="10" fill="${heatColor(v)}"/>`;
+    }
+    svg += `<text x="${legendX}" y="${legendY - 4}" fill="#64748b" font-size="10">-1</text>`;
+    svg += `<text x="${legendX + legendW/2}" y="${legendY - 4}" text-anchor="middle" fill="#64748b" font-size="10">0</text>`;
+    svg += `<text x="${legendX + legendW}" y="${legendY - 4}" text-anchor="end" fill="#64748b" font-size="10">+1</text>`;
+
+    svg += '</svg>';
+    el.innerHTML = svg;
 }
 
 // ═══════════════════════════════════════════════════════════════
