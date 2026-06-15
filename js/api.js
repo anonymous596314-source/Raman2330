@@ -204,6 +204,7 @@ function toTDSymbol(symbol) {
         '2330.TW': '2330:TWSE',
         'TSM':     'TSM',
         'SOXX':    'SOXX',
+        'SPY':     'SPY',
         'TWD=X':   'USD/TWD'  // Twelve Data 匯率格式
     };
     return map[symbol] || symbol;

@@ -90,13 +90,14 @@ async function refreshData(partial = false) {
     // 等 1.5 秒再打第二批，避免觸發 rate limit
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // 第二批：TSM ADR、SOXX、匯率、VIX（4支）
-    const [twdData, soxData, adrData, vixData] =
+    // 第二批：TSM ADR、SOXX、匯率、VIX、SPY（5支）
+    const [twdData, soxData, adrData, vixData, spyData] =
         await Promise.allSettled([
             fetchHistoricalData("1y",  "1wk", "TWD=X"),  // TD: 匯率
             fetchHistoricalData("1y",  "1wk", SOX_SYMBOL), // TD: SOXX
             fetchHistoricalData("1y",  "1wk", ADR_SYMBOL), // TD: TSM ADR
-            fetchVIX()                                        // TD: VIX
+            fetchVIX(),                                       // TD: VIX
+            fetchHistoricalData("1y",  "1wk", "SPY")     // TD: S&P500
         ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : null));
 
     // 等 1.5 秒再打第三批，避免觸發 rate limit
@@ -198,6 +199,14 @@ async function refreshData(partial = false) {
         showChartFallback('vix-chart');
     }
 
+    // 相關性熱力圖（需要 tsm1yData, soxData, adrData, spyData）
+    try {
+        renderCorrelationHeatmap(tsm1yData, soxData, adrData, spyData);
+    } catch(e) {
+        console.error('[renderCorrelationHeatmap]', e);
+        showChartFallback('correlation-heatmap');
+    }
+
     if (dividendHistory && dividendHistory.length > 0) {
         try { renderDividendChart(dividendHistory); } catch(e) { console.error('[renderDividendChart]',e); showChartFallback('dividend-chart'); }
     } else {
@@ -211,7 +220,8 @@ async function refreshData(partial = false) {
     }
 
     // 靜態圖（不需 API）- 每個包 try-catch 互不影響
-    try { renderCustomerConcentration(); } catch(e) { console.error('[renderCustomerConcentration]', e); }
+    try { renderCustomerConcentration(); }   catch(e) { console.error('[renderCustomerConcentration]', e); }
+    try { renderProcessRoadmapChart(); }      catch(e) { console.error('[renderProcessRoadmapChart]', e); }
     try { renderScenarioChart(); }        catch(e) { console.error('[renderScenarioChart]', e); }
 
     // 8. 靜態圖表
@@ -1969,6 +1979,237 @@ function renderScenarioChart(epsMode) {
                     ticks: { color: '#94a3b8', callback: v => 'NT$' + v.toLocaleString() },
                     grid: { color: 'rgba(255,255,255,0.05)' },
                     title: { display: true, text: '目標股價 (NT$)', color: '#94a3b8' }
+                }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  相關性熱力圖（總經面）
+// ═══════════════════════════════════════════════════════════════
+function renderCorrelationHeatmap(tsmData, soxData, adrData, spyData) {
+    const canvas = document.getElementById('correlation-heatmap');
+    if (!canvas) return;
+
+    // 計算週報酬率序列
+    const weeklyReturns = (data) => {
+        if (!data?.length) return [];
+        return data.slice(1).map((r, i) => {
+            const prev = data[i].close;
+            return prev > 0 ? (r.close - prev) / prev : 0;
+        });
+    };
+
+    const cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - 1);
+    const since = arr => (arr || []).filter(d => new Date(d.date) >= cutoff);
+
+    const series = {
+        '台積電\n(2330)': weeklyReturns(since(tsmData)),
+        'SOXX\n半導體': weeklyReturns(since(soxData)),
+        'TSM\nADR':      weeklyReturns(since(adrData)),
+        'SPY\nS&P500':   weeklyReturns(since(spyData)),
+    };
+
+    const names  = Object.keys(series);
+    const n      = names.length;
+
+    // 計算相關係數矩陣
+    const corr = (a, b) => {
+        const len = Math.min(a.length, b.length);
+        if (len < 5) return 0;
+        const ax = a.slice(-len), bx = b.slice(-len);
+        const ma = ax.reduce((s, v) => s + v, 0) / len;
+        const mb = bx.reduce((s, v) => s + v, 0) / len;
+        let num = 0, da = 0, db = 0;
+        for (let i = 0; i < len; i++) {
+            num += (ax[i] - ma) * (bx[i] - mb);
+            da  += (ax[i] - ma) ** 2;
+            db  += (bx[i] - mb) ** 2;
+        }
+        return da * db > 0 ? +(num / Math.sqrt(da * db)).toFixed(3) : 0;
+    };
+
+    const matrix = names.map(r => names.map(c => corr(series[r], series[c])));
+
+    // 用 Chart.js 的 bubble chart 模擬熱力圖
+    const data_pts = [];
+    matrix.forEach((row, ri) => {
+        row.forEach((val, ci) => {
+            data_pts.push({ x: ci, y: n - 1 - ri, v: val });
+        });
+    });
+
+    // 顏色插值：-1=藍，0=灰，+1=紅
+    const corrColor = (v, alpha = 0.85) => {
+        if (v >= 0) {
+            const r = Math.round(239 * v + 30 * (1 - v));
+            const g = Math.round(68  * v + 41 * (1 - v));
+            const b = Math.round(68  * v + 59 * (1 - v));
+            return `rgba(${r},${g},${b},${alpha})`;
+        } else {
+            const t = -v;
+            const r = Math.round(59  * (1 - t) + 30 * t);
+            const g = Math.round(130 * (1 - t) + 41 * t);
+            const b = Math.round(246 * (1 - t) + 59 * t);
+            return `rgba(${r},${g},${b},${alpha})`;
+        }
+    };
+
+    createChart('correlation-heatmap', {
+        type: 'bubble',
+        data: {
+            datasets: [{
+                data: data_pts.map(p => ({
+                    x: p.x, y: p.y, r: 38,
+                    v: p.v
+                })),
+                backgroundColor: data_pts.map(p => corrColor(p.v)),
+                borderColor:     data_pts.map(p => corrColor(p.v, 1)),
+                borderWidth: 1,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            const p = data_pts[ctx.dataIndex];
+                            const rName = names[n - 1 - Math.round(ctx.parsed.y)];
+                            const cName = names[Math.round(ctx.parsed.x)];
+                            return ` ${rName.replace('\n','  ')} ↔ ${cName.replace('\n','  ')}: ${p.v.toFixed(3)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'linear', min: -0.5, max: n - 0.5,
+                    ticks: {
+                        stepSize: 1, color: '#94a3b8',
+                        callback: v => names[Math.round(v)]?.replace('\n', ' ') ?? ''
+                    },
+                    grid: { display: false }
+                },
+                y: {
+                    type: 'linear', min: -0.5, max: n - 0.5,
+                    ticks: {
+                        stepSize: 1, color: '#94a3b8',
+                        callback: v => names[n - 1 - Math.round(v)]?.replace('\n', ' ') ?? ''
+                    },
+                    grid: { display: false }
+                }
+            },
+            // 在 bubble 內畫相關係數數字
+            animation: {
+                onComplete: function() {
+                    const chart = this;
+                    const ctx2  = chart.ctx;
+                    ctx2.save();
+                    ctx2.font = 'bold 13px Inter, sans-serif';
+                    ctx2.textAlign = 'center';
+                    ctx2.textBaseline = 'middle';
+                    chart.data.datasets[0].data.forEach((pt, i) => {
+                        const meta  = chart.getDatasetMeta(0);
+                        const elem  = meta.data[i];
+                        if (!elem) return;
+                        const val   = data_pts[i].v;
+                        ctx2.fillStyle = Math.abs(val) > 0.5 ? '#fff' : '#cbd5e1';
+                        ctx2.fillText(val.toFixed(2), elem.x, elem.y);
+                    });
+                    ctx2.restore();
+                }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  製程節點競爭對手比較（展望面）
+// ═══════════════════════════════════════════════════════════════
+function renderProcessRoadmapChart() {
+    const canvas = document.getElementById('process-roadmap-chart');
+    if (!canvas) return;
+
+    // 資料來源：各公司技術路線圖公開資訊（截至 2026 Q2）
+    // 以「電晶體密度 MTr/mm²」作為 Y 軸，量產年份作為 X 軸
+    const roadmap = {
+        'TSMC': [
+            { year: 2020, node: '5nm (N5)',   density: 171.3, status: 'done' },
+            { year: 2022, node: '4nm (N4)',   density: 192,   status: 'done' },
+            { year: 2022, node: '3nm (N3)',   density: 292,   status: 'done' },
+            { year: 2025, node: '2nm (N2)',   density: 380,   status: 'done' },
+            { year: 2026, node: 'A16',        density: 450,   status: 'current' },
+            { year: 2028, node: 'A14',        density: 560,   status: 'future' },
+        ],
+        'Samsung': [
+            { year: 2021, node: '5nm',        density: 127,   status: 'done' },
+            { year: 2022, node: '4nm',        density: 149,   status: 'done' },
+            { year: 2022, node: '3nm (GAA)',  density: 228,   status: 'done' },
+            { year: 2025, node: '2nm (GAA)',  density: 300,   status: 'done' },
+            { year: 2027, node: '1.4nm',      density: 420,   status: 'future' },
+        ],
+        'Intel': [
+            { year: 2021, node: 'Intel 7',    density: 100,   status: 'done' },
+            { year: 2023, node: 'Intel 4',    density: 151,   status: 'done' },
+            { year: 2024, node: 'Intel 3',    density: 238,   status: 'done' },
+            { year: 2025, node: '14A (2nm級)', density: 260,  status: 'current' },
+            { year: 2027, node: '10A',        density: 380,   status: 'future' },
+        ],
+    };
+
+    const colors = {
+        'TSMC':    { done: '#3b82f6', current: '#60a5fa', future: 'rgba(59,130,246,0.4)' },
+        'Samsung': { done: '#10b981', current: '#34d399', future: 'rgba(16,185,129,0.4)' },
+        'Intel':   { done: '#f59e0b', current: '#fbbf24', future: 'rgba(245,158,11,0.4)' },
+    };
+
+    const datasets = Object.entries(roadmap).map(([company, nodes]) => ({
+        label: company,
+        data: nodes.map(n => ({ x: n.year, y: n.density, node: n.node, status: n.status })),
+        borderColor: colors[company].done,
+        backgroundColor: nodes.map(n => colors[company][n.status]),
+        pointRadius: nodes.map(n => n.status === 'current' ? 10 : 7),
+        pointHoverRadius: 12,
+        borderWidth: 2,
+        tension: 0.3,
+        fill: false,
+        pointStyle: nodes.map(n => n.status === 'future' ? 'triangle' : 'circle'),
+    }));
+
+    createChart('process-roadmap-chart', {
+        type: 'line',
+        data: { datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'point', intersect: true },
+            plugins: {
+                legend: { position: 'top', labels: { color: '#94a3b8', padding: 20 } },
+                tooltip: {
+                    callbacks: {
+                        title: ctx => `${ctx[0].dataset.label} — ${ctx[0].raw.node}`,
+                        label: ctx => [
+                            ` 量產年份: ${ctx.raw.x}`,
+                            ` 電晶體密度: ${ctx.raw.y} MTr/mm²`,
+                            ` 狀態: ${{ done: '已量產', current: '量產中/規劃量產', future: '未來規劃' }[ctx.raw.status]}`
+                        ]
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'linear', min: 2019.5, max: 2028.5,
+                    ticks: { stepSize: 1, color: '#94a3b8', callback: v => Number.isInteger(v) ? v : '' },
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    title: { display: true, text: '量產年份', color: '#94a3b8' }
+                },
+                y: {
+                    ticks: { color: '#94a3b8', callback: v => v + ' MTr' },
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    title: { display: true, text: '電晶體密度 (MTr/mm²)', color: '#94a3b8' }
                 }
             }
         }
