@@ -913,17 +913,26 @@ function updateMacroSnapshot(tsmData, twdData, soxData, adrData) {
         }
     };
 
-    const pctReturn = (data) => {
+    // 統一用近1年報酬率（與下方圖表基期一致）
+    const pctReturn1Y = (data) => {
         if (!data || data.length < 2) return null;
-        const first = data[0].close;
-        const last = data[data.length - 1].close;
-        if (!first || !last) return null;
-        return ((last - first) / first) * 100;
+        const cutoff = new Date();
+        cutoff.setFullYear(cutoff.getFullYear() - 1);
+        const since = data.filter(d => new Date(d.date) >= cutoff);
+        if (since.length < 2) {
+            // 資料不足1年，用全部
+            const first = data[0].close;
+            const last  = data[data.length - 1].close;
+            return first ? ((last - first) / first) * 100 : null;
+        }
+        const first = since[0].close;
+        const last  = since[since.length - 1].close;
+        return first ? ((last - first) / first) * 100 : null;
     };
 
-    const tsmReturn = pctReturn(tsmData);
-    const adrReturn = pctReturn(adrData);
-    const soxReturn = pctReturn(soxData);
+    const tsmReturn = pctReturn1Y(tsmData);
+    const adrReturn = pctReturn1Y(adrData);
+    const soxReturn = pctReturn1Y(soxData);
 
     if (tsmReturn !== null) setText('macro-tsm-return', `${tsmReturn >= 0 ? '+' : ''}${tsmReturn.toFixed(1)}%`, tsmReturn);
     if (adrReturn !== null) setText('macro-adr-return', `${adrReturn >= 0 ? '+' : ''}${adrReturn.toFixed(1)}%`, adrReturn);
