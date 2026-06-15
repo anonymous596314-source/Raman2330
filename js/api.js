@@ -507,7 +507,7 @@ async function fetchNews() {
 
 /** P/E 歷史（FinMind，用於 P/E Band 圖）*/
 async function fetchPERHistory(years = 3) {
-    const cacheKey = `per_history_${years}y`;
+    const cacheKey = `per_history_v2_${years}y`;
     const cached = cacheGet(cacheKey);
     if (cached) return cached;
     try {
@@ -531,7 +531,7 @@ async function fetchPERHistory(years = 3) {
 
 /** 外資持股比例歷史（FinMind）*/
 async function fetchShareholdingHistory(months = 24) {
-    const cacheKey = `shareholding_${months}m`;
+    const cacheKey = `shareholding_v2_${months}m`;
     const cached = cacheGet(cacheKey);
     if (cached) return cached;
     try {
@@ -555,7 +555,7 @@ async function fetchShareholdingHistory(months = 24) {
 
 /** 股息歷史（FinMind TaiwanStockDividend）*/
 async function fetchDividendHistory() {
-    const cacheKey = 'dividend_history';
+    const cacheKey = 'dividend_history_v2';
     const cached = cacheGet(cacheKey);
     if (cached) return cached;
     try {
@@ -603,7 +603,8 @@ async function fetchDividendHistory() {
 
 /** 融資融券餘額（FinMind TaiwanStockMarginPurchaseShortSale）*/
 async function fetchMarginData(months = 12) {
-    const cacheKey = `margin_${months}m`;
+    // v2 加版本號，強制清掉舊的錯誤靜態備援 cache
+    const cacheKey = `margin_v2_${months}m`;
     const cached = cacheGet(cacheKey);
     if (cached) return cached;
     try {
@@ -617,46 +618,17 @@ async function fetchMarginData(months = 12) {
                 date:          r.date,
                 marginBalance: parseInt(r.MarginPurchaseTodayBalance) || 0,
                 shortBalance:  parseInt(r.ShortSaleTodayBalance)      || 0,
-            })).filter(r => r.date);
+            })).filter(r => r.date && r.marginBalance > 0);
             if (result.length > 0) {
                 cacheSet(cacheKey, result);
-                console.log(`[FinMind] 融資融券: ${result.length} 筆`);
+                console.log(`[FinMind] 融資融券: ${result.length} 筆，最新: ${result[result.length-1].date} 融資${result[result.length-1].marginBalance}張 融券${result[result.length-1].shortBalance}張`);
                 return result;
             }
         }
     } catch(e) { console.warn('[fetchMarginData]', e.message); }
 
-    // 靜態備援：近12個月週採樣（單位：張）
-    console.warn('[融資融券] API 無資料，使用靜態備援（27筆週資料）');
-    return [
-        {date:'2025-06-13',marginBalance:42000,shortBalance:8500},
-        {date:'2025-06-27',marginBalance:43500,shortBalance:8200},
-        {date:'2025-07-11',marginBalance:45000,shortBalance:7800},
-        {date:'2025-07-25',marginBalance:44200,shortBalance:9100},
-        {date:'2025-08-08',marginBalance:46800,shortBalance:9800},
-        {date:'2025-08-22',marginBalance:48500,shortBalance:8600},
-        {date:'2025-09-05',marginBalance:47200,shortBalance:9200},
-        {date:'2025-09-19',marginBalance:49800,shortBalance:8800},
-        {date:'2025-10-03',marginBalance:51200,shortBalance:9500},
-        {date:'2025-10-17',marginBalance:50500,shortBalance:10200},
-        {date:'2025-10-31',marginBalance:53800,shortBalance:9800},
-        {date:'2025-11-14',marginBalance:55200,shortBalance:9100},
-        {date:'2025-11-28',marginBalance:54600,shortBalance:10500},
-        {date:'2025-12-12',marginBalance:57800,shortBalance:11200},
-        {date:'2025-12-26',marginBalance:56400,shortBalance:10800},
-        {date:'2026-01-09',marginBalance:58900,shortBalance:10200},
-        {date:'2026-01-23',marginBalance:61200,shortBalance:9800},
-        {date:'2026-02-06',marginBalance:59800,shortBalance:11500},
-        {date:'2026-02-20',marginBalance:63500,shortBalance:10800},
-        {date:'2026-03-06',marginBalance:65800,shortBalance:11200},
-        {date:'2026-03-20',marginBalance:62400,shortBalance:14500},
-        {date:'2026-04-03',marginBalance:58900,shortBalance:16800},
-        {date:'2026-04-17',marginBalance:61200,shortBalance:14200},
-        {date:'2026-05-01',marginBalance:64800,shortBalance:12500},
-        {date:'2026-05-15',marginBalance:67500,shortBalance:11800},
-        {date:'2026-05-29',marginBalance:70200,shortBalance:11200},
-        {date:'2026-06-12',marginBalance:72800,shortBalance:10500},
-    ];
+    console.warn('[融資融券] FinMind API 失敗，無備援（避免顯示錯誤數字）');
+    return null;
 }
 
 /** VIX 恐慌指數（Twelve Data via corsproxy，近1年週線）*/
