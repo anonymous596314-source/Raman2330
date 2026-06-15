@@ -707,7 +707,7 @@ function renderChipFlowChart(data) {
                 {
                     label: '外資買賣超 (張)',
                     data: data.foreign,
-                    backgroundColor: data.foreign.map(v => v >= 0 ? 'rgba(239,68,68,0.8)' : 'rgba(34,197,94,0.8)'),
+                    backgroundColor: 'rgba(34,197,94,0.75)',
                     borderRadius: 2
                 },
                 {
