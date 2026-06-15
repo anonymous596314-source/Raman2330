@@ -204,7 +204,6 @@ async function refreshData(partial = false) {
         showChartFallback('dividend-chart');
     }
 
-    console.log('[診斷] marginData[0]:', JSON.stringify(marginData?.[0]));
     if (marginData && marginData.length > 0) {
         try { renderMarginChart(marginData); } catch(e) { console.error('[renderMarginChart ERROR]', e.message, e.stack); showChartFallback('margin-chart'); }
     } else {
@@ -1716,14 +1715,12 @@ function renderDividendChart(data) {
 // ── 融資融券餘額（籌碼面）─────────────────────────────────────
 function renderMarginChart(data) {
     if (!data?.length) return;
-    console.log('[renderMarginChart] 第一筆:', JSON.stringify(data[0]));
 
     // FinMind 真實欄位：MarginPurchaseBalance, ShortSaleBalance
     const sampled = data.length > 60 ? data.filter((_, i) => i % 5 === 0) : data;
     const labels  = sampled.map(r => r.date.substring(5));
-    const margin  = sampled.map(r => Math.round((r.marginBalance || r.MarginPurchaseBalance || 0) / 1000));
-    const shortS  = sampled.map(r => Math.round((r.shortBalance  || r.ShortSaleBalance      || 0) / 1000));
-    console.log('[renderMarginChart] 樣本:', labels.slice(0,3), margin.slice(0,3), shortS.slice(0,3));
+    const margin  = sampled.map(r => r.marginBalance || 0); // 張
+    const shortS  = sampled.map(r => r.shortBalance  || 0); // 張
 
     createChart('margin-chart', {
         type: 'line',
@@ -1731,7 +1728,7 @@ function renderMarginChart(data) {
             labels,
             datasets: [
                 {
-                    label: '融資餘額 (千張)',
+                    label: '融資餘額 (張)',
                     data: margin,
                     borderColor: '#ef4444',
                     backgroundColor: 'rgba(239,68,68,0.08)',
@@ -1742,7 +1739,7 @@ function renderMarginChart(data) {
                     yAxisID: 'yMargin'
                 },
                 {
-                    label: '融券餘額 (千張)',
+                    label: '融券餘額 (張)',
                     data: shortS,
                     borderColor: '#22c55e',
                     backgroundColor: 'rgba(34,197,94,0.08)',
@@ -1760,7 +1757,7 @@ function renderMarginChart(data) {
             plugins: {
                 legend: { position: 'top', labels: { color: '#94a3b8' } },
                 tooltip: { callbacks: {
-                    label: ctx => ` ${ctx.dataset.label}: ${ctx.raw?.toLocaleString() ?? '--'} 千張`
+                    label: ctx => ` ${ctx.dataset.label}: ${ctx.raw?.toLocaleString() ?? '--'} 張`
                 }}
             },
             scales: {
@@ -1768,16 +1765,16 @@ function renderMarginChart(data) {
                 yMargin: {
                     type: 'linear',
                     position: 'left',
-                    ticks: { color: '#ef4444', callback: v => v + '千' },
+                    ticks: { color: '#ef4444', callback: v => v.toLocaleString() },
                     grid: { color: 'rgba(255,255,255,0.05)' },
-                    title: { display: true, text: '融資 (千張)', color: '#ef4444' }
+                    title: { display: true, text: '融資 (張)', color: '#ef4444' }
                 },
                 yShort: {
                     type: 'linear',
                     position: 'right',
-                    ticks: { color: '#22c55e', callback: v => v + '千' },
+                    ticks: { color: '#22c55e', callback: v => v.toLocaleString() },
                     grid: { drawOnChartArea: false },
-                    title: { display: true, text: '融券 (千張)', color: '#22c55e' }
+                    title: { display: true, text: '融券 (張)', color: '#22c55e' }
                 }
             }
         }

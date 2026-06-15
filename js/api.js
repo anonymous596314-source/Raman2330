@@ -613,21 +613,10 @@ async function fetchMarginData(months = 12) {
             `${FINMIND_BASE}?dataset=TaiwanStockMarginPurchaseShortSale&data_id=${TWSE_SYMBOL}&start_date=${start.toISOString().split('T')[0]}`
         );
         if (json?.data?.length) {
-            // log 第一筆原始資料，確認真實欄位名稱
-            console.log('[FinMind 融資融券 原始欄位]', JSON.stringify(json.data[0]));
             const result = json.data.map(r => ({
                 date:          r.date,
-                // FinMind 欄位名稱試所有可能格式
-                marginBalance: parseInt(
-                    r.MarginPurchaseBalance ?? r.margin_purchase_balance ??
-                    r.MarginPurchase        ?? r.margin_purchase         ??
-                    r.buy ?? 0
-                ) || 0,
-                shortBalance:  parseInt(
-                    r.ShortSaleBalance ?? r.short_sale_balance ??
-                    r.ShortSale        ?? r.short_sale         ??
-                    r.sell ?? 0
-                ) || 0,
+                marginBalance: parseInt(r.MarginPurchaseTodayBalance) || 0,
+                shortBalance:  parseInt(r.ShortSaleTodayBalance)      || 0,
             })).filter(r => r.date);
             if (result.length > 0) {
                 cacheSet(cacheKey, result);
