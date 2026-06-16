@@ -199,6 +199,14 @@ async function refreshData(partial = false) {
         showChartFallback('vix-chart');
     }
 
+    // ADR 溢折價率（用已有的 adrData + twdData + tsm1yData）
+    if (adrData?.length && twdData?.length && tsm1yData?.length) {
+        try { renderADRPremiumChart(tsm1yData, adrData, twdData); }
+        catch(e) { console.error('[renderADRPremiumChart]', e); showChartFallback('adr-premium-chart'); }
+    } else {
+        showChartFallback('adr-premium-chart');
+    }
+
     // 相關性熱力圖（SVG，不依賴 canvas）
     try {
         renderCorrelationHeatmap(tsm1yData, soxData, adrData, spyData);
@@ -221,6 +229,7 @@ async function refreshData(partial = false) {
     }
 
     // 靜態圖（不需 API）- 每個包 try-catch 互不影響
+    try { renderImportantDates(); }           catch(e) { console.error('[renderImportantDates]', e); }
     try { renderCustomerConcentration(); }   catch(e) { console.error('[renderCustomerConcentration]', e); }
     try { renderProcessRoadmapChart(); }      catch(e) { console.error('[renderProcessRoadmapChart]', e); }
     try { renderScenarioChart(); }        catch(e) { console.error('[renderScenarioChart]', e); }
@@ -473,13 +482,33 @@ function renderTechnicalChart(data) {
                 { label: 'MA60',             data: ma60,     borderColor: '#f59e0b',               borderWidth: 1.5, pointRadius: 0, tension: 0.3 },
                 { label: 'MA120',            data: ma120,    borderColor: '#a78bfa',               borderWidth: 1.5, pointRadius: 0, tension: 0.3 },
                 { label: 'MA240',            data: ma240,    borderColor: '#fb923c',               borderWidth: 1.5, pointRadius: 0, tension: 0.3 },
+                // 支撐壓力位水平線
+                ...(() => {
+                    const { support, resistance } = calcSupportResistance(data);
+                    const lines = [];
+                    resistance.forEach(p => lines.push({
+                        label: `壓力 ${p}`,
+                        data: labels.map(() => p),
+                        borderColor: 'rgba(239,68,68,0.55)', borderWidth: 1,
+                        borderDash: [3,4], pointRadius: 0, fill: false
+                    }));
+                    support.forEach(p => lines.push({
+                        label: `支撐 ${p}`,
+                        data: labels.map(() => p),
+                        borderColor: 'rgba(34,197,94,0.55)', borderWidth: 1,
+                        borderDash: [3,4], pointRadius: 0, fill: false
+                    }));
+                    return lines;
+                })()
             ]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: {
-                legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 16, font: { size: 11 } } },
+                legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 16, font: { size: 11 },
+                    filter: item => !item.text.startsWith('支撐') && !item.text.startsWith('壓力')
+                } },
                 tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: NT$${ctx.raw?.toFixed ? ctx.raw.toFixed(0) : '--'}` } }
             },
             scales: {
@@ -2211,4 +2240,290 @@ function renderProcessRoadmapChart() {
             }
         }
     });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  1. ADR 溢折價率（總經面）
+// ═══════════════════════════════════════════════════════════════
+function renderADRPremiumChart(tsmData, adrData, twdData) {
+    const cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - 1);
+    const since = arr => arr.filter(d => new Date(d.date) >= cutoff);
+
+    const tsm = since(tsmData);
+    const adr = since(adrData);
+    const twd = since(twdData);
+    if (!tsm.length || !adr.length || !twd.length) return;
+
+    // 對齊日期：以台股週線為主軸，找最近的 ADR 和匯率資料
+    const labels  = [];
+    const premium = [];
+
+    tsm.forEach(tsmRow => {
+        const tDate = new Date(tsmRow.date).getTime();
+        const nearAdr = adr.reduce((a, b) =>
+            Math.abs(new Date(b.date) - tDate) < Math.abs(new Date(a.date) - tDate) ? b : a);
+        const nearTwd = twd.reduce((a, b) =>
+            Math.abs(new Date(b.date) - tDate) < Math.abs(new Date(a.date) - tDate) ? b : a);
+
+        // ADR × 匯率 ÷ 5 = ADR 換算台股價格（1 ADR = 5 股）
+        const adrEquiv = nearAdr.close * nearTwd.close / 5;
+        const pct      = tsmRow.close > 0
+            ? +((adrEquiv - tsmRow.close) / tsmRow.close * 100).toFixed(2)
+            : null;
+
+        const dt = new Date(tsmRow.date);
+        labels.push(`${dt.getMonth()+1}/${dt.getDate()}`);
+        premium.push(pct);
+    });
+
+    createChart('adr-premium-chart', {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'ADR 溢折價率 (%)',
+                data: premium,
+                backgroundColor: premium.map(v =>
+                    v === null ? 'transparent' :
+                    v >= 0 ? 'rgba(59,130,246,0.7)' : 'rgba(239,68,68,0.7)'),
+                borderColor: premium.map(v =>
+                    v >= 0 ? '#3b82f6' : '#ef4444'),
+                borderWidth: 1,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: {
+                    label: ctx => ctx.raw !== null
+                        ? ` ADR ${ctx.raw >= 0 ? '溢價' : '折價'}: ${ctx.raw >= 0 ? '+' : ''}${ctx.raw}%`
+                        : ' 無資料'
+                }}
+            },
+            scales: {
+                x: { ticks: { maxTicksLimit: 12, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: {
+                    ticks: { color: '#94a3b8', callback: v => v + '%' },
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    // 零線
+                    afterDataLimits: scale => {
+                        scale.max = Math.max(scale.max, 2);
+                        scale.min = Math.min(scale.min, -2);
+                    }
+                }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  2. 融資使用率（籌碼面）
+// ═══════════════════════════════════════════════════════════════
+function renderMarginUsageChart(data) {
+    if (!data?.length) return;
+
+    const sampled = data.length > 60 ? data.filter((_, i) => i % 5 === 0) : data;
+    const labels  = sampled.map(r => r.date.substring(5));
+
+    // 使用率 = 餘額 / 上限 × 100（FinMind 有 marginLimit 欄位）
+    // fetchMarginData 目前沒抓 limit，用靜態上限估算或直接顯示餘額趨勢
+    // FinMind MarginPurchaseLimit 已在原始資料中，需更新 fetchMarginData
+
+    const usage = sampled.map(r => {
+        if (r.marginLimit && r.marginLimit > 0)
+            return +((r.marginBalance / r.marginLimit) * 100).toFixed(1);
+        return null;
+    });
+
+    const hasUsage = usage.some(v => v !== null);
+
+    if (!hasUsage) {
+        // 若無上限資料，改顯示融資餘額絕對值趨勢 + 說明
+        const el = document.getElementById('margin-usage-chart');
+        if (!el) return;
+        const parent = el.closest('.card');
+        if (parent) {
+            const note = parent.querySelector('p');
+            if (note) note.innerHTML = '融資使用率需要上限資料（FinMind MarginPurchaseLimit）。下圖顯示融資餘額趨勢，數值越高代表散戶槓桿越重';
+        }
+        // 改顯示融資餘額 + 警戒線
+        const margin = sampled.map(r => r.marginBalance || 0);
+        const avg    = Math.round(margin.reduce((s,v)=>s+v,0)/margin.length);
+
+        createChart('margin-usage-chart', {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: '融資餘額 (張)',
+                        data: margin,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245,158,11,0.1)',
+                        borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3
+                    },
+                    {
+                        label: `1年均值 (${avg.toLocaleString()}張)`,
+                        data: sampled.map(() => avg),
+                        borderColor: 'rgba(148,163,184,0.6)',
+                        borderWidth: 1.5, borderDash: [6,3], pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { position: 'top', labels: { color: '#94a3b8' } },
+                    tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw?.toLocaleString()}` }}
+                },
+                scales: {
+                    x: { ticks: { maxTicksLimit: 10, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { ticks: { color: '#f59e0b', callback: v => v.toLocaleString() }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
+            }
+        });
+        return;
+    }
+
+    createChart('margin-usage-chart', {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: '融資使用率 (%)',
+                    data: usage,
+                    borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)',
+                    borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3
+                },
+                { label: '警戒線 60%', data: sampled.map(() => 60),
+                  borderColor: 'rgba(239,68,68,0.6)', borderWidth: 1.5,
+                  borderDash: [6,3], pointRadius: 0 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top', labels: { color: '#94a3b8' } } },
+            scales: {
+                x: { ticks: { maxTicksLimit: 10, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { min: 0, max: 100,
+                     ticks: { color: '#f59e0b', callback: v => v + '%' },
+                     grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  3. 重要日期倒數（消息面）
+// ═══════════════════════════════════════════════════════════════
+function renderImportantDates() {
+    const el = document.getElementById('important-dates');
+    if (!el) return;
+
+    // 台積電 2026 重要日期（公開資訊）
+    const events = [
+        { date: '2026-07-17', label: '2026 Q2 法說會',     icon: 'fa-microphone', type: 'primary' },
+        { date: '2026-07-10', label: 'Q2 初步營收公告',    icon: 'fa-chart-bar',  type: 'info'    },
+        { date: '2026-07-14', label: '2025 Q4 股息除息日', icon: 'fa-coins',      type: 'success' },
+        { date: '2026-10-15', label: '2026 Q3 法說會',     icon: 'fa-microphone', type: 'primary' },
+        { date: '2027-01-15', label: '2026 Q4 法說會',     icon: 'fa-microphone', type: 'primary' },
+    ];
+
+    const now    = new Date();
+    const typeColors = {
+        primary: { bg: 'rgba(59,130,246,0.12)',  border: '#3b82f6',  text: '#60a5fa' },
+        info:    { bg: 'rgba(148,163,184,0.1)',  border: '#64748b',  text: '#94a3b8' },
+        success: { bg: 'rgba(34,197,94,0.12)',   border: '#22c55e',  text: '#4ade80' },
+    };
+
+    const sorted  = events
+        .map(e => ({ ...e, ts: new Date(e.date) }))
+        .filter(e => e.ts >= now)
+        .sort((a, b) => a.ts - b.ts);
+
+    el.innerHTML = `
+        <h4 style="margin-bottom:16px"><i class="fa-solid fa-calendar-days" style="color:var(--accent-color);margin-right:8px"></i>重要日期倒數</h4>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+            ${sorted.map(e => {
+                const days   = Math.ceil((e.ts - now) / 86400000);
+                const c      = typeColors[e.type] || typeColors.info;
+                const urgent = days <= 14;
+                return `
+                <div style="padding:16px;border-radius:12px;background:${c.bg};border:1px solid ${c.border};display:flex;flex-direction:column;gap:6px">
+                    <div style="color:${c.text};font-size:12px;font-weight:600">
+                        <i class="fa-solid ${e.icon}" style="margin-right:6px"></i>${e.label}
+                    </div>
+                    <div style="font-size:11px;color:var(--text-secondary)">${e.date}</div>
+                    <div style="font-size:28px;font-weight:700;color:${urgent ? '#f59e0b' : 'var(--text-primary)'}">
+                        ${days} <span style="font-size:14px;font-weight:400">天後</span>
+                    </div>
+                </div>`;
+            }).join('')}
+        </div>
+    `;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  4. 支撐壓力位自動標注（整合到 renderTechnicalChart）
+//  用 annotation plugin 或直接在資料集加水平線
+// ═══════════════════════════════════════════════════════════════
+function calcSupportResistance(data, topN = 3) {
+    if (!data?.length) return { support: [], resistance: [] };
+
+    const closes = data.map(d => d.close);
+    const highs  = data.map(d => d.high);
+    const lows   = data.map(d => d.low);
+    const cur    = closes[closes.length - 1];
+
+    // 找近期高低點：視窗內的局部極值
+    const pivots = { high: [], low: [] };
+    const win    = 5;
+    for (let i = win; i < data.length - win; i++) {
+        const h = highs[i];
+        const l = lows[i];
+        if (highs.slice(i-win, i+win+1).every(v => v <= h)) pivots.high.push(h);
+        if (lows.slice(i-win,  i+win+1).every(v => v >= l)) pivots.low.push(l);
+    }
+
+    // 聚合相近的價位（±2% 視為同一區間）
+    const cluster = (pts, pct = 0.02) => {
+        const sorted = [...new Set(pts)].sort((a, b) => a - b);
+        const groups = [];
+        let g = [];
+        sorted.forEach(p => {
+            if (!g.length || p / g[0] - 1 < pct) { g.push(p); }
+            else { groups.push(g); g = [p]; }
+        });
+        if (g.length) groups.push(g);
+        return groups
+            .map(gr => Math.round(gr.reduce((s, v) => s + v, 0) / gr.length))
+            .sort((a, b) => b.length - a.length);
+    };
+
+    const allHighs   = cluster(pivots.high);
+    const allLows    = cluster(pivots.low);
+
+    // 整數關卡（每 50 或 100 元一個）
+    const step       = cur > 1000 ? 100 : 50;
+    const intLevels  = [];
+    for (let p = Math.floor(cur/step)*step - step*3; p <= cur + step*4; p += step) {
+        intLevels.push(p);
+    }
+
+    const resistance = [...new Set([
+        ...allHighs.filter(p => p > cur).slice(0, topN),
+        ...intLevels.filter(p => p > cur).slice(0, 2)
+    ])].sort((a, b) => a - b).slice(0, topN);
+
+    const support = [...new Set([
+        ...allLows.filter(p => p < cur).slice(-topN),
+        ...intLevels.filter(p => p < cur).slice(-2)
+    ])].sort((a, b) => b - a).slice(0, topN);
+
+    return { support, resistance };
 }

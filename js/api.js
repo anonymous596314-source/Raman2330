@@ -619,6 +619,8 @@ async function fetchMarginData(months = 12) {
                 date:          r.date,
                 marginBalance: parseInt(r.MarginPurchaseTodayBalance) || 0,
                 shortBalance:  parseInt(r.ShortSaleTodayBalance)      || 0,
+                marginLimit:   parseInt(r.MarginPurchaseLimit)        || 0,
+                shortLimit:    parseInt(r.ShortSaleLimit)             || 0,
             })).filter(r => r.date && r.marginBalance > 0);
             if (result.length > 0) {
                 cacheSet(cacheKey, result);
