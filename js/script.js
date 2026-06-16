@@ -2324,51 +2324,30 @@ function renderADRPremiumChart(tsmData, adrData, twdData) {
 // ═══════════════════════════════════════════════════════════════
 function renderMarginUsageChart(data) {
     if (!data?.length) return;
-    console.log('[融資使用率] data[0]:', JSON.stringify(data[0]));
 
     const sampled = data.length > 60 ? data.filter((_, i) => i % 5 === 0) : data;
     const labels  = sampled.map(r => r.date.substring(5));
+    const margin  = sampled.map(r => r.marginBalance || 0);
+    const limits  = sampled.map(r => r.marginLimit   || 0);
 
-    const usage = sampled.map(r => {
-        if (r.marginLimit && r.marginLimit > 0)
-            return +((r.marginBalance / r.marginLimit) * 100).toFixed(1);
-        return null;
-    });
+    const hasLimit = limits.some(v => v > 0);
 
-    const hasUsage = usage.some(v => v !== null);
-    console.log('[融資使用率] hasUsage:', hasUsage, 'sample usage:', usage.slice(0,3));
-
-    if (!hasUsage) {
-        // 若無上限資料，改顯示融資餘額絕對值趨勢 + 說明
-        const el = document.getElementById('margin-usage-chart');
-        if (!el) return;
-        const parent = el.closest('.card');
-        if (parent) {
-            const note = parent.querySelector('p');
-            if (note) note.innerHTML = '融資使用率需要上限資料（FinMind MarginPurchaseLimit）。下圖顯示融資餘額趨勢，數值越高代表散戶槓桿越重';
-        }
-        // 改顯示融資餘額 + 警戒線
-        const margin = sampled.map(r => r.marginBalance || 0);
-        const avg    = Math.round(margin.reduce((s,v)=>s+v,0)/margin.length);
-
+    if (hasLimit) {
+        // 有上限資料：顯示使用率 %
+        const usage = sampled.map(r =>
+            r.marginLimit > 0 ? +((r.marginBalance / r.marginLimit) * 100).toFixed(2) : null
+        );
         createChart('margin-usage-chart', {
             type: 'line',
             data: {
                 labels,
                 datasets: [
-                    {
-                        label: '融資餘額 (張)',
-                        data: margin,
-                        borderColor: '#f59e0b',
-                        backgroundColor: 'rgba(245,158,11,0.1)',
-                        borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3
-                    },
-                    {
-                        label: `1年均值 (${avg.toLocaleString()}張)`,
-                        data: sampled.map(() => avg),
-                        borderColor: 'rgba(148,163,184,0.6)',
-                        borderWidth: 1.5, borderDash: [6,3], pointRadius: 0
-                    }
+                    { label: '融資使用率 (%)', data: usage,
+                      borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)',
+                      borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 },
+                    { label: '警戒線 60%', data: labels.map(() => 60),
+                      borderColor: 'rgba(239,68,68,0.7)', borderWidth: 1.5,
+                      borderDash: [6,3], pointRadius: 0 }
                 ]
             },
             options: {
@@ -2376,45 +2355,63 @@ function renderMarginUsageChart(data) {
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
                     legend: { position: 'top', labels: { color: '#94a3b8' } },
-                    tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw?.toLocaleString()}` }}
+                    tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw ?? '--'}${ctx.datasetIndex === 0 ? '%' : '%'}` } }
                 },
                 scales: {
                     x: { ticks: { maxTicksLimit: 10, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                    y: { ticks: { color: '#f59e0b', callback: v => v.toLocaleString() }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    y: { min: 0, max: 1,
+                         ticks: { color: '#f59e0b', callback: v => v + '%' },
+                         grid: { color: 'rgba(255,255,255,0.05)' } }
                 }
             }
         });
-        return;
-    }
+    } else {
+        // 無上限資料：顯示融資餘額絕對值 + 1年均值 + 52週高低
+        const avg  = Math.round(margin.reduce((s, v) => s + v, 0) / margin.length);
+        const max1 = Math.max(...margin);
+        const min1 = Math.min(...margin);
 
-    createChart('margin-usage-chart', {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [
-                {
-                    label: '融資使用率 (%)',
-                    data: usage,
-                    borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)',
-                    borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3
+        createChart('margin-usage-chart', {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    { label: '融資餘額 (張)', data: margin,
+                      borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)',
+                      borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 },
+                    { label: `1年均值 ${avg.toLocaleString()}張`, data: labels.map(() => avg),
+                      borderColor: 'rgba(148,163,184,0.7)', borderWidth: 1.5,
+                      borderDash: [6,3], pointRadius: 0 },
+                    { label: `1年高點 ${max1.toLocaleString()}張`, data: labels.map(() => max1),
+                      borderColor: 'rgba(239,68,68,0.5)', borderWidth: 1,
+                      borderDash: [3,4], pointRadius: 0 },
+                    { label: `1年低點 ${min1.toLocaleString()}張`, data: labels.map(() => min1),
+                      borderColor: 'rgba(34,197,94,0.5)', borderWidth: 1,
+                      borderDash: [3,4], pointRadius: 0 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 16 } },
+                    tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw?.toLocaleString() ?? '--'}` } }
                 },
-                { label: '警戒線 60%', data: sampled.map(() => 60),
-                  borderColor: 'rgba(239,68,68,0.6)', borderWidth: 1.5,
-                  borderDash: [6,3], pointRadius: 0 }
-            ]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'top', labels: { color: '#94a3b8' } } },
-            scales: {
-                x: { ticks: { maxTicksLimit: 10, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { min: 0, max: 100,
-                     ticks: { color: '#f59e0b', callback: v => v + '%' },
-                     grid: { color: 'rgba(255,255,255,0.05)' } }
+                scales: {
+                    x: { ticks: { maxTicksLimit: 10, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { ticks: { color: '#f59e0b', callback: v => v.toLocaleString() },
+                         grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
             }
-        }
-    });
+        });
+
+        // 更新說明文字
+        const card = document.getElementById('margin-usage-chart')?.closest('.card');
+        const desc = card?.querySelector('p');
+        if (desc) desc.textContent = '融資餘額近1年走勢，含均值、高低點參考線。融資餘額偏高且接近1年高點，代表散戶槓桿風險上升。';
+    }
 }
+
 
 // ═══════════════════════════════════════════════════════════════
 //  3. 重要日期倒數（消息面）
