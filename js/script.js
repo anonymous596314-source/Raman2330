@@ -2426,12 +2426,16 @@ function renderImportantDates() {
     if (!el) return;
 
     // 台積電 2026 重要日期（公開資訊）
+    // 台積電 2026 重要日期（依公開公告）
+    // 台積電季配息：每季除息一次，隔約4週發放
     const events = [
-        { date: '2026-07-17', label: '2026 Q2 法說會',     icon: 'fa-microphone', type: 'primary' },
-        { date: '2026-07-10', label: 'Q2 初步營收公告',    icon: 'fa-chart-bar',  type: 'info'    },
-        { date: '2026-07-14', label: '2025 Q4 股息除息日', icon: 'fa-coins',      type: 'success' },
-        { date: '2026-10-15', label: '2026 Q3 法說會',     icon: 'fa-microphone', type: 'primary' },
-        { date: '2027-01-15', label: '2026 Q4 法說會',     icon: 'fa-microphone', type: 'primary' },
+        { date: '2026-07-09', label: 'Q1股利發放 (NT$6/股)', icon: 'fa-coins',      type: 'success' },
+        { date: '2026-07-10', label: 'Q2 初步營收公告',       icon: 'fa-chart-bar',  type: 'info'    },
+        { date: '2026-07-17', label: '2026 Q2 法說會',        icon: 'fa-microphone', type: 'primary' },
+        { date: '2026-09-16', label: 'Q2 除息日',             icon: 'fa-scissors',   type: 'warning' },
+        { date: '2026-10-08', label: 'Q2股利發放 (預計)',     icon: 'fa-coins',      type: 'success' },
+        { date: '2026-10-15', label: '2026 Q3 法說會',        icon: 'fa-microphone', type: 'primary' },
+        { date: '2027-01-15', label: '2026 Q4 法說會',        icon: 'fa-microphone', type: 'primary' },
     ];
 
     const now    = new Date();
@@ -2439,6 +2443,7 @@ function renderImportantDates() {
         primary: { bg: 'rgba(59,130,246,0.12)',  border: '#3b82f6',  text: '#60a5fa' },
         info:    { bg: 'rgba(148,163,184,0.1)',  border: '#64748b',  text: '#94a3b8' },
         success: { bg: 'rgba(34,197,94,0.12)',   border: '#22c55e',  text: '#4ade80' },
+        warning: { bg: 'rgba(245,158,11,0.12)',  border: '#f59e0b',  text: '#fbbf24' },
     };
 
     const sorted  = events
@@ -2472,58 +2477,59 @@ function renderImportantDates() {
 //  4. 支撐壓力位自動標注（整合到 renderTechnicalChart）
 //  用 annotation plugin 或直接在資料集加水平線
 // ═══════════════════════════════════════════════════════════════
-function calcSupportResistance(data, topN = 3) {
+function calcSupportResistance(data) {
     if (!data?.length) return { support: [], resistance: [] };
 
-    const closes = data.map(d => d.close);
-    const highs  = data.map(d => d.high);
-    const lows   = data.map(d => d.low);
-    const cur    = closes[closes.length - 1];
+    const closes  = data.map(d => d.close);
+    const highs   = data.map(d => d.high);
+    const lows    = data.map(d => d.low);
+    const volumes = data.map(d => d.volume || 1);
+    const cur     = closes[closes.length - 1];
 
-    // 找近期高低點：視窗內的局部極值
-    const pivots = { high: [], low: [] };
-    const win    = 5;
+    // 找局部高低點（視窗 ±5 根）
+    const win = 5;
+    const pivotHighs = []; // { price, vol }
+    const pivotLows  = [];
     for (let i = win; i < data.length - win; i++) {
-        const h = highs[i];
-        const l = lows[i];
-        if (highs.slice(i-win, i+win+1).every(v => v <= h)) pivots.high.push(h);
-        if (lows.slice(i-win,  i+win+1).every(v => v >= l)) pivots.low.push(l);
+        const h = highs[i], l = lows[i];
+        if (highs.slice(i-win, i+win+1).every(v => v <= h))
+            pivotHighs.push({ price: h, vol: volumes[i] });
+        if (lows.slice(i-win, i+win+1).every(v => v >= l))
+            pivotLows.push({ price: l, vol: volumes[i] });
     }
 
-    // 聚合相近的價位（±2% 視為同一區間）
-    const cluster = (pts, pct = 0.02) => {
-        const sorted = [...new Set(pts)].sort((a, b) => a - b);
+    // 聚合相近價位（±2%），取成交量最大的那組
+    const cluster = (pts) => {
+        const sorted = [...pts].sort((a, b) => a.price - b.price);
         const groups = [];
         let g = [];
         sorted.forEach(p => {
-            if (!g.length || p / g[0] - 1 < pct) { g.push(p); }
+            if (!g.length || p.price / g[0].price - 1 < 0.02) g.push(p);
             else { groups.push(g); g = [p]; }
         });
         if (g.length) groups.push(g);
-        return groups
-            .map(gr => Math.round(gr.reduce((s, v) => s + v, 0) / gr.length))
-            .sort((a, b) => b.length - a.length);
+        // 每組的代表價格（成交量加權均價）和總成交量
+        return groups.map(gr => {
+            const totalVol = gr.reduce((s, v) => s + v.vol, 0);
+            const wavgPrice = Math.round(gr.reduce((s, v) => s + v.price * v.vol, 0) / totalVol);
+            return { price: wavgPrice, vol: totalVol };
+        }).sort((a, b) => b.vol - a.vol); // 成交量大的排前面
     };
 
-    const allHighs   = cluster(pivots.high);
-    const allLows    = cluster(pivots.low);
+    const highClusters = cluster(pivotHighs);
+    const lowClusters  = cluster(pivotLows);
 
-    // 整數關卡（每 50 或 100 元一個）
-    const step       = cur > 1000 ? 100 : 50;
-    const intLevels  = [];
-    for (let p = Math.floor(cur/step)*step - step*3; p <= cur + step*4; p += step) {
-        intLevels.push(p);
-    }
+    // 只取最強的1個壓力（現價以上，成交量最大）
+    const resistance = highClusters
+        .filter(c => c.price > cur * 1.005)
+        .slice(0, 1)
+        .map(c => c.price);
 
-    const resistance = [...new Set([
-        ...allHighs.filter(p => p > cur).slice(0, topN),
-        ...intLevels.filter(p => p > cur).slice(0, 2)
-    ])].sort((a, b) => a - b).slice(0, topN);
-
-    const support = [...new Set([
-        ...allLows.filter(p => p < cur).slice(-topN),
-        ...intLevels.filter(p => p < cur).slice(-2)
-    ])].sort((a, b) => b - a).slice(0, topN);
+    // 只取最強的1個支撐（現價以下，成交量最大）
+    const support = lowClusters
+        .filter(c => c.price < cur * 0.995)
+        .slice(0, 1)
+        .map(c => c.price);
 
     return { support, resistance };
 }

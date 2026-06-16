@@ -605,7 +605,7 @@ async function fetchDividendHistory() {
 /** 融資融券餘額（FinMind TaiwanStockMarginPurchaseShortSale）*/
 async function fetchMarginData(months = 12) {
     // v2 加版本號，強制清掉舊的錯誤靜態備援 cache
-    const cacheKey = `margin_v2_${months}m`;
+    const cacheKey = `margin_v3_${months}m`; // v3: 加入 marginLimit
     const cached = cacheGet(cacheKey);
     if (cached) return cached;
     try {
