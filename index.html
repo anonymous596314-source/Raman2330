@@ -144,7 +144,7 @@
                     <div class="grid-container">
                         <div class="card chart-card full-width">
                             <h4>股價走勢與布林通道 (近6個月)</h4>
-                            <p class="text-muted">布林通道：20MA ± 2倍標準差，碰觸下軌為支撐，上軌為壓力</p>
+                            <p class="text-muted">布林通道：20MA ± 2倍標準差，碰觸下軌為支撐，上軌為壓力。橙色虛線為自動偵測的關鍵支撐壓力位</p>
                             <div class="chart-container large"><canvas id="technical-chart"></canvas></div>
                         </div>
                         <div class="card chart-card">
@@ -230,6 +230,11 @@
                             <p class="text-muted">融資餘額高代表散戶槓桿偏高、籌碼不穩；融券回補力道為潛在支撐。資料來源：FinMind，延遲 T+1~T+2 個交易日</p>
                             <div class="chart-container"><canvas id="margin-chart"></canvas></div>
                         </div>
+                        <div class="card chart-card full-width">
+                            <h4>融資使用率 (近1年)</h4>
+                            <p class="text-muted">融資使用率 = 融資餘額 ÷ 融資上限。使用率偏高（>60%）代表散戶槓桿接近極限，籌碼風險上升</p>
+                            <div class="chart-container"><canvas id="margin-usage-chart"></canvas></div>
+                        </div>
                     </div>
                 </section>
 
@@ -280,6 +285,11 @@
                             <p class="text-muted">數值越接近 +1 代表高度正相關（深紅），越接近 -1 代表負相關（深藍），0 為無相關（灰）</p>
                             <div id="correlation-heatmap-svg" style="width:100%;overflow-x:auto;padding:16px 0;"></div>
                         </div>
+                        <div class="card chart-card full-width">
+                            <h4>台積電 ADR 溢折價率 (近1年)</h4>
+                            <p class="text-muted">ADR 溢價（正值）代表外資願意付更高價買 NYSE，折價（負值）代表本地台股相對強勢。計算：(ADR × 匯率 ÷ 5 − 台股) ÷ 台股 × 100%</p>
+                            <div class="chart-container"><canvas id="adr-premium-chart"></canvas></div>
+                        </div>
                     </div>
                 </section>
 
@@ -315,6 +325,9 @@
                         </div>
                         <div class="card list-card full-width" id="sentiment-keywords">
                             <!-- 情緒關鍵字將透過 JS 載入 -->
+                        </div>
+                        <div class="card full-width" id="important-dates">
+                            <!-- 重要日期倒數 by JS -->
                         </div>
                         <div class="card full-width" id="analyst-targets">
                             <!-- 法人目標價將透過 JS 載入 -->
