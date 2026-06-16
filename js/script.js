@@ -2324,13 +2324,10 @@ function renderADRPremiumChart(tsmData, adrData, twdData) {
 // ═══════════════════════════════════════════════════════════════
 function renderMarginUsageChart(data) {
     if (!data?.length) return;
+    console.log('[融資使用率] data[0]:', JSON.stringify(data[0]));
 
     const sampled = data.length > 60 ? data.filter((_, i) => i % 5 === 0) : data;
     const labels  = sampled.map(r => r.date.substring(5));
-
-    // 使用率 = 餘額 / 上限 × 100（FinMind 有 marginLimit 欄位）
-    // fetchMarginData 目前沒抓 limit，用靜態上限估算或直接顯示餘額趨勢
-    // FinMind MarginPurchaseLimit 已在原始資料中，需更新 fetchMarginData
 
     const usage = sampled.map(r => {
         if (r.marginLimit && r.marginLimit > 0)
@@ -2339,6 +2336,7 @@ function renderMarginUsageChart(data) {
     });
 
     const hasUsage = usage.some(v => v !== null);
+    console.log('[融資使用率] hasUsage:', hasUsage, 'sample usage:', usage.slice(0,3));
 
     if (!hasUsage) {
         // 若無上限資料，改顯示融資餘額絕對值趨勢 + 說明
