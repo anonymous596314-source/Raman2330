@@ -224,8 +224,10 @@ async function refreshData(partial = false) {
 
     if (marginData && marginData.length > 0) {
         try { renderMarginChart(marginData); } catch(e) { console.error('[renderMarginChart ERROR]', e.message, e.stack); showChartFallback('margin-chart'); }
+        try { renderMarginUsageChart(marginData); } catch(e) { console.error('[renderMarginUsageChart ERROR]', e.message, e.stack); showChartFallback('margin-usage-chart'); }
     } else {
         showChartFallback('margin-chart');
+        showChartFallback('margin-usage-chart');
     }
 
     // 靜態圖（不需 API）- 每個包 try-catch 互不影響
