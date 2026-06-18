@@ -712,6 +712,63 @@ async function fetchVIX() {
     ];
 }
 
+
+/** 美債10年期殖利率（Twelve Data via corsproxy）*/
+async function fetchUS10Y() {
+    const cacheKey = 'us10y_3y';
+    const cached = cacheGet(cacheKey);
+    if (cached) return cached.map(r => ({ ...r, date: new Date(r.date) }));
+    try {
+        const tdUrl    = `${TWELVEDATA_BASE}/time_series?symbol=US10Y&interval=1week&outputsize=156&apikey=${TWELVEDATA_KEY}`;
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(tdUrl)}`;
+        const res      = await fetchWithTimeout(proxyUrl, 12000);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data     = await res.json();
+        if (data?.status === 'error') throw new Error(data.message);
+        const parsed   = parseTDTimeSeries(data);
+        if (parsed.length > 0) {
+            cacheSet(cacheKey, parsed);
+            console.log(`[Twelve Data] US10Y: ${parsed.length} 筆`);
+            return parsed;
+        }
+    } catch(e) { console.warn('[fetchUS10Y]', e.message); }
+
+    // 靜態備援：近3年美債10Y週線（%）
+    console.warn('[US10Y] 使用靜態備援');
+    return [
+        {date:new Date("2024-01-05"),close:3.97},{date:new Date("2024-01-19"),close:4.13},
+        {date:new Date("2024-02-02"),close:4.02},{date:new Date("2024-02-16"),close:4.28},
+        {date:new Date("2024-03-01"),close:4.19},{date:new Date("2024-03-15"),close:4.30},
+        {date:new Date("2024-04-05"),close:4.39},{date:new Date("2024-04-19"),close:4.62},
+        {date:new Date("2024-05-03"),close:4.50},{date:new Date("2024-05-17"),close:4.42},
+        {date:new Date("2024-06-07"),close:4.43},{date:new Date("2024-06-21"),close:4.26},
+        {date:new Date("2024-07-05"),close:4.28},{date:new Date("2024-07-19"),close:4.24},
+        {date:new Date("2024-08-02"),close:3.79},{date:new Date("2024-08-16"),close:3.89},
+        {date:new Date("2024-09-06"),close:3.71},{date:new Date("2024-09-20"),close:3.73},
+        {date:new Date("2024-10-04"),close:3.97},{date:new Date("2024-10-18"),close:4.08},
+        {date:new Date("2024-11-01"),close:4.38},{date:new Date("2024-11-15"),close:4.44},
+        {date:new Date("2024-12-06"),close:4.15},{date:new Date("2024-12-20"),close:4.52},
+        {date:new Date("2025-01-03"),close:4.60},{date:new Date("2025-01-17"),close:4.61},
+        {date:new Date("2025-02-07"),close:4.49},{date:new Date("2025-02-21"),close:4.42},
+        {date:new Date("2025-03-07"),close:4.31},{date:new Date("2025-03-21"),close:4.24},
+        {date:new Date("2025-04-04"),close:4.00},{date:new Date("2025-04-18"),close:4.33},
+        {date:new Date("2025-05-02"),close:4.32},{date:new Date("2025-05-16"),close:4.44},
+        {date:new Date("2025-06-06"),close:4.46},{date:new Date("2025-06-20"),close:4.28},
+        {date:new Date("2025-07-04"),close:4.35},{date:new Date("2025-07-18"),close:4.25},
+        {date:new Date("2025-08-01"),close:4.18},{date:new Date("2025-08-15"),close:3.98},
+        {date:new Date("2025-09-05"),close:4.05},{date:new Date("2025-09-19"),close:3.85},
+        {date:new Date("2025-10-03"),close:3.96},{date:new Date("2025-10-17"),close:4.08},
+        {date:new Date("2025-11-07"),close:4.31},{date:new Date("2025-11-21"),close:4.41},
+        {date:new Date("2025-12-05"),close:4.18},{date:new Date("2025-12-19"),close:4.52},
+        {date:new Date("2026-01-09"),close:4.76},{date:new Date("2026-01-23"),close:4.62},
+        {date:new Date("2026-02-06"),close:4.49},{date:new Date("2026-02-20"),close:4.40},
+        {date:new Date("2026-03-06"),close:4.21},{date:new Date("2026-03-20"),close:4.26},
+        {date:new Date("2026-04-03"),close:3.94},{date:new Date("2026-04-17"),close:4.35},
+        {date:new Date("2026-05-02"),close:4.18},{date:new Date("2026-05-16"),close:4.49},
+        {date:new Date("2026-05-30"),close:4.42},{date:new Date("2026-06-13"),close:4.38},
+    ];
+}
+
 // ═══════════════════════════════════════════════════════════════
 //  技術指標計算（不改動）
 // ═══════════════════════════════════════════════════════════════
