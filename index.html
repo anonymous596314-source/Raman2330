@@ -123,6 +123,11 @@
                             <div class="chart-container"><canvas id="cashflow-capex-chart"></canvas></div>
                         </div>
                         <div class="card chart-card full-width">
+                            <h4>EPS 實際 vs 分析師共識預估 (Beat/Miss)</h4>
+                            <p class="text-muted">橘色為分析師預估，白色為實際 EPS；台積電連續 9 季全面超越市場預期，超額幅度 +6%~+10%</p>
+                            <div class="chart-container"><canvas id="eps-beat-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card full-width">
                             <h4>本益比歷史走勢 (P/E Band)</h4>
                             <p class="text-muted">灰色虛線為歷史均值，紅/綠區間為 ±1σ 與 ±2σ 標準差帶，協助判斷當前估值貴賤</p>
                             <div class="chart-container"><canvas id="per-band-chart"></canvas></div>
@@ -131,6 +136,16 @@
                             <h4>現金股息 vs 殖利率歷史</h4>
                             <p class="text-muted">台積電連續多年調升股息，殖利率反映股價相對股息的投資吸引力</p>
                             <div class="chart-container"><canvas id="dividend-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card wide">
+                            <h4>股東權益報酬率 (ROE) 歷史趨勢</h4>
+                            <p class="text-muted">ROE = 淨利 ÷ 股東權益，衡量資金運用效率。台積電 ROE 長期維持 20%+ 代表高效資本回報</p>
+                            <div class="chart-container"><canvas id="roe-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>資產負債表健康度</h4>
+                            <p class="text-muted">現金水位持續提升，負債比率下降，財務體質逐年改善</p>
+                            <div class="chart-container"><canvas id="balance-sheet-chart"></canvas></div>
                         </div>
                     </div>
                 </section>
@@ -284,6 +299,11 @@
                             <h4>跨市場相關性熱力圖 (近1年週線)</h4>
                             <p class="text-muted">數值越接近 +1 代表高度正相關（深紅），越接近 -1 代表負相關（深藍），0 為無相關（灰）</p>
                             <div id="correlation-heatmap-svg" style="width:100%;overflow-x:auto;padding:16px 0;"></div>
+                        </div>
+                        <div class="card chart-card full-width">
+                            <h4>美債 10Y 殖利率 vs 台積電 P/E (近3年)</h4>
+                            <p class="text-muted">利率上升通常壓縮科技股本益比（利率↑ → P/E↓）；利率回落則有助估值修復。雙軸觀察利率環境對台積電估值的影響</p>
+                            <div class="chart-container"><canvas id="rate-pe-chart"></canvas></div>
                         </div>
                         <div class="card chart-card full-width">
                             <h4>台積電 ADR 溢折價率 (近1年)</h4>
