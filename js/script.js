@@ -310,7 +310,7 @@ const EPS_QUARTERLY  = [7.98, 9.56, 12.55, 14.45, 13.95, 15.36, 17.44, 19.51, 22
 const OPERATING_MARGINS = [42.0, 42.5, 47.5, 49.0, 48.5, 49.6, 50.6, 54.0, 58.1];
 const NET_MARGINS = [38.0, 36.8, 42.8, 43.1, 43.1, 44.3, 45.7, 48.4, 50.5];
 const ANNUAL_LABELS = ['2021', '2022', '2023', '2024', '2025'];
-const ANNUAL_REVENUE_B = [1587, 2264, 2161, 2894, 3809];
+const ANNUAL_REVENUE_B = [15874, 22639, 21617, 28943, 38091]; // 億元台幣（年報數字）
 const ANNUAL_CAPEX_USD_B = [30.0, 36.3, 30.4, 29.8, 38.0]; // 2025 法說指引 USD 38-42B
 const ANNUAL_DIVIDEND = [10.5, 11.0, 11.5, 15.0, 19.0]; // 依年報：2021=10.5, 2022=11.0, 2023=11.5, 2024=15.0, 2025=19.0
 
@@ -2625,14 +2625,17 @@ function renderROEChart() {
     if (!canvas) return;
 
     // 台積電年度 ROE（淨利/股東權益，公開年報）
+    // 資料來源：台積電年報（ROE 依年報公告值，淨利單位億元）
+    // ROE 使用年報公告值（平均股東權益計算），非自行推算
     const data = [
-        { yr:'2019', roe:21.9, ni:345.3,  eq:1574.6 },
-        { yr:'2020', roe:29.8, ni:517.9,  eq:1737.3 },
-        { yr:'2021', roe:26.9, ni:594.3,  eq:2209.2 },
-        { yr:'2022', roe:39.8, ni:1016.5, eq:2554.0 },
-        { yr:'2023', roe:26.2, ni:838.5,  eq:3200.7 },
-        { yr:'2024', roe:30.0, ni:1173.3, eq:3912.5 },
-        { yr:'2025', roe:30.5, ni:1487.5, eq:4876.4 },
+        { yr:'2018', roe:21.9, ni:3511  },
+        { yr:'2019', roe:20.9, ni:3453  },
+        { yr:'2020', roe:29.8, ni:5179  },
+        { yr:'2021', roe:29.7, ni:5965  },
+        { yr:'2022', roe:39.6, ni:10165 },
+        { yr:'2023', roe:26.0, ni:8385  },
+        { yr:'2024', roe:30.0, ni:11733 },
+        { yr:'2025', roe:35.1, ni:17179 },
     ];
 
     createChart('roe-chart', {
@@ -2656,7 +2659,7 @@ function renderROEChart() {
                 legend: { position: 'top', labels: { color: '#94a3b8' } },
                 tooltip: { callbacks: {
                     label: ctx => ctx.datasetIndex === 0
-                        ? ` ROE: ${ctx.raw}%（淨利 NT$${data[ctx.dataIndex].ni}B ÷ 股東權益 NT$${data[ctx.dataIndex].eq}B）`
+                        ? ` ROE: ${ctx.raw}%（本期淨利 NT$${data[ctx.dataIndex].ni.toLocaleString()}億，來源：年報）`
                         : ` ${ctx.dataset.label}`
                 }}
             },
@@ -2678,13 +2681,14 @@ function renderBalanceSheetChart() {
     const canvas = document.getElementById('balance-sheet-chart');
     if (!canvas) return;
 
-    // 台積電年度資產負債表（十億台幣，公開年報）
+    // 資料來源：台積電年報（億元台幣）
+    // 有息負債 = 應付公司債 + 長期借款
     const data = [
-        { yr:'2021', cash:985,  debt:1340, equity:3070, netCash:985-1340  },
-        { yr:'2022', cash:1256, debt:1420, equity:3564, netCash:1256-1420 },
-        { yr:'2023', cash:1380, debt:1580, equity:3827, netCash:1380-1580 },
-        { yr:'2024', cash:1820, debt:1680, equity:4452, netCash:1820-1680 },
-        { yr:'2025', cash:2150, debt:1780, equity:5201, netCash:2150-1780 },
+        { yr:'2021', cash:11108, debt:8470,  equity:21680, netCash:11108-8470  },
+        { yr:'2022', cash:14050, debt:9260,  equity:29460, netCash:14050-9260  },
+        { yr:'2023', cash:17180, debt:9040,  equity:34590, netCash:17180-9040  },
+        { yr:'2024', cash:21276, debt:9584,  equity:43236, netCash:21276-9584  },
+        { yr:'2025', cash:27679, debt:8960,  equity:54608, netCash:27679-8960  },
     ];
 
     createChart('balance-sheet-chart', {
@@ -2707,14 +2711,14 @@ function renderBalanceSheetChart() {
             plugins: {
                 legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 16 } },
                 tooltip: { callbacks: {
-                    label: ctx => ` ${ctx.dataset.label}: NT$${ctx.raw?.toLocaleString()}B`
+                    label: ctx => ` ${ctx.dataset.label}: NT$${ctx.raw?.toLocaleString()}億`
                 }}
             },
             scales: {
                 x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
                 y: { ticks: { color: '#94a3b8', callback: v => v + 'B' },
                      grid: { color: 'rgba(255,255,255,0.05)' },
-                     title: { display: true, text: '十億台幣 (B NTD)', color: '#94a3b8' } }
+                     title: { display: true, text: '億元台幣', color: '#94a3b8' } }
             }
         }
     });

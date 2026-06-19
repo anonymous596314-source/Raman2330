@@ -765,7 +765,8 @@ async function fetchUS10Y() {
         {date:new Date("2026-03-06"),close:4.21},{date:new Date("2026-03-20"),close:4.26},
         {date:new Date("2026-04-03"),close:3.94},{date:new Date("2026-04-17"),close:4.35},
         {date:new Date("2026-05-02"),close:4.18},{date:new Date("2026-05-16"),close:4.49},
-        {date:new Date("2026-05-30"),close:4.42},{date:new Date("2026-06-13"),close:4.38},
+        {date:new Date("2026-05-30"),close:4.42},{date:new Date("2026-06-13"),close:4.42},
+        {date:new Date("2026-06-18"),close:4.45},
     ];
 }
 
