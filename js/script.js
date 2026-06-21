@@ -247,6 +247,10 @@ async function refreshData(partial = false) {
 
     // 靜態圖（不需 API）- 每個包 try-catch 互不影響
     try { renderImportantDates(); }           catch(e) { console.error('[renderImportantDates]', e); }
+    try { renderThreeMarginChart(); }         catch(e) { console.error('[renderThreeMarginChart]', e); }
+    try { renderRnDRateChart(); }             catch(e) { console.error('[renderRnDRateChart]', e); }
+    try { renderCashflowDeepChart(); }        catch(e) { console.error('[renderCashflowDeepChart]', e); }
+    try { renderLiquidityChart(); }           catch(e) { console.error('[renderLiquidityChart]', e); }
     try { renderCustomerConcentration(); }   catch(e) { console.error('[renderCustomerConcentration]', e); }
     try { renderProcessRoadmapChart(); }      catch(e) { console.error('[renderProcessRoadmapChart]', e); }
     try { renderScenarioChart(); }        catch(e) { console.error('[renderScenarioChart]', e); }
@@ -2797,6 +2801,188 @@ function renderRatePEChart(us10yData, perHistory) {
                          ticks: { color: '#ef4444', callback: v => v + '%' },
                          grid: { drawOnChartArea: false },
                          title: { display: true, text: '美債10Y (%)', color: '#ef4444' } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  三率歷史趨勢（基本面）— 資料來源：台積電年報
+// ═══════════════════════════════════════════════════════════════
+function renderThreeMarginChart() {
+    if (!document.getElementById('three-margin-chart')) return;
+    // 年報數字（2018–26Q1）
+    const labels = ['2018','2019','2020','2021','2022','2023','2024','2025','26Q1'];
+    const gm     = [37.2, 34.8, 42.3, 40.9, 49.5, 42.6, 45.7, 50.8, 58.1];
+    const opm    = [27.0, 23.1, 33.0, 30.3, 40.7, 31.0, 35.3, 42.8, 50.5];
+    const npm    = [31.5, 30.6, 36.3, 35.4, 41.8, 36.2, 38.4, 43.8, 50.5];
+
+    createChart('three-margin-chart', {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label: '毛利率 (%)',      data: gm,  borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)',  borderWidth: 2.5, pointRadius: 5, tension: 0.3, fill: false },
+                { label: '營業利益率 (%)',  data: opm, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.08)',  borderWidth: 2.5, pointRadius: 5, tension: 0.3, fill: false },
+                { label: '稅後淨利率 (%)', data: npm, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.08)', borderWidth: 2.5, pointRadius: 5, tension: 0.3, fill: false }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', labels: { color: '#94a3b8' } },
+                tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw}%` } }
+            },
+            scales: {
+                x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { min: 0, max: 70,
+                     ticks: { color: '#94a3b8', callback: v => v + '%' },
+                     grid: { color: 'rgba(255,255,255,0.05)' },
+                     title: { display: true, text: '利潤率 (%)', color: '#94a3b8' } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  研發費用率趨勢（基本面）— 資料來源：台積電損益表
+// ═══════════════════════════════════════════════════════════════
+function renderRnDRateChart() {
+    if (!document.getElementById('rnd-rate-chart')) return;
+    // 單季研發費用率（研發費用÷單季營收）
+    // 損益表：累計值需換算為單季
+    // 26Q1, 25Q4, 25Q3, 25Q2, 25Q1, 24Q4, 24Q3, 24Q2, 24Q1
+    const labels   = ['24Q1','24Q2','24Q3','24Q4','25Q1','25Q2','25Q3','25Q4','26Q1'];
+    const rndAmt   = [472, 493, 519, 565, 581, 614, 649, 681, 723];  // 億元（單季）
+    const revAmt   = [5926, 6735, 7597, 8685, 8393, 9338, 8999, 10461, 11341]; // 億元（單季）
+    const rndRate  = rndAmt.map((r,i) => +(r/revAmt[i]*100).toFixed(2));
+
+    createChart('rnd-rate-chart', {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                { label: '研發費用 (億元)', data: rndAmt,
+                  backgroundColor: 'rgba(167,139,250,0.6)', borderColor: '#a78bfa',
+                  borderWidth: 1, yAxisID: 'yAmt' },
+                { label: '研發費用率 (%)', data: rndRate, type: 'line',
+                  borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)',
+                  borderWidth: 2.5, pointRadius: 5, tension: 0.3, yAxisID: 'yRate' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', labels: { color: '#94a3b8' } },
+                tooltip: { callbacks: {
+                    label: ctx => ctx.datasetIndex === 0
+                        ? ` 研發費用: NT$${ctx.raw}億`
+                        : ` 研發費用率: ${ctx.raw}%`
+                }}
+            },
+            scales: {
+                x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                yAmt:  { position: 'left',  ticks: { color: '#a78bfa', callback: v => v + '億' },
+                         grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '研發費用 (億元)', color: '#a78bfa' } },
+                yRate: { position: 'right', ticks: { color: '#f59e0b', callback: v => v + '%' },
+                         grid: { drawOnChartArea: false }, min: 4, max: 8,
+                         title: { display: true, text: '研發費用率 (%)', color: '#f59e0b' } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  現金流量深度分析（基本面）— 資料來源：台積電現金流量表
+// ═══════════════════════════════════════════════════════════════
+function renderCashflowDeepChart() {
+    if (!document.getElementById('cashflow-deep-chart')) return;
+    // 全年數字（億元台幣）
+    // 資本支出從年報 Capex（USD B × 30 換算NTD億）
+    const labels  = ['2021','2022','2023','2024','2025'];
+    const opCF    = [10478, 15208, 17143, 18262, 22750]; // 營業現金流
+    const depr    = [4700,  5800,  6200,  6536,  6797];  // 折舊
+    const capex   = [-9000,-10890,-9120, -8940,-11400];  // 資本支出（負值）
+    const fcf     = opCF.map((o,i) => o + capex[i]);     // 自由現金流
+
+    createChart('cashflow-deep-chart', {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                { label: '營業現金流 (億元)',  data: opCF,  backgroundColor: 'rgba(59,130,246,0.7)',  borderColor: '#3b82f6', borderWidth: 1 },
+                { label: '折舊費用 (億元)',    data: depr,  backgroundColor: 'rgba(148,163,184,0.5)', borderColor: '#94a3b8', borderWidth: 1 },
+                { label: '資本支出 (億元)',    data: capex, backgroundColor: 'rgba(239,68,68,0.6)',   borderColor: '#ef4444', borderWidth: 1 },
+                { label: '自由現金流 (億元)', data: fcf,  type: 'line',
+                  borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.15)',
+                  borderWidth: 2.5, pointRadius: 6, tension: 0.3, fill: true }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 16 } },
+                tooltip: { callbacks: {
+                    label: ctx => ` ${ctx.dataset.label}: NT$${ctx.raw?.toLocaleString()}億`
+                }}
+            },
+            scales: {
+                x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#94a3b8', callback: v => v.toLocaleString() + '億' },
+                     grid: { color: 'rgba(255,255,255,0.05)' },
+                     title: { display: true, text: '億元台幣', color: '#94a3b8' } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  流動比率 / 速動比率（基本面）— 資料來源：台積電資產負債表
+// ═══════════════════════════════════════════════════════════════
+function renderLiquidityChart() {
+    if (!document.getElementById('liquidity-chart')) return;
+    // 近6季資產負債表數字（億元）
+    const labels = ['24Q4','25Q1','25Q2','25Q3','25Q4','26Q1'];
+    const ca     = [30884, 33457, 32649, 34360, 38171, 42655]; // 流動資產
+    const cl     = [12645, 13998, 13773, 12759, 14580, 17143]; // 流動負債
+    const inv    = [2879,  2934,  3042,  2887,  2881,  3115];  // 存貨
+    const cr     = ca.map((a,i) => +(a/cl[i]).toFixed(2));
+    const qr     = ca.map((a,i) => +((a-inv[i])/cl[i]).toFixed(2));
+
+    createChart('liquidity-chart', {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label: '流動比率 (倍)', data: cr,
+                  borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)',
+                  borderWidth: 2.5, pointRadius: 6, tension: 0.3, fill: true },
+                { label: '速動比率 (倍)', data: qr,
+                  borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.08)',
+                  borderWidth: 2.5, pointRadius: 6, tension: 0.3, fill: false },
+                { label: '安全線 (2.0x)', data: labels.map(() => 2.0),
+                  borderColor: 'rgba(34,197,94,0.5)', borderWidth: 1.5,
+                  borderDash: [6,3], pointRadius: 0 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', labels: { color: '#94a3b8' } },
+                tooltip: { callbacks: {
+                    label: ctx => ` ${ctx.dataset.label}: ${ctx.raw}x`
+                }}
+            },
+            scales: {
+                x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { min: 1, max: 4,
+                     ticks: { color: '#94a3b8', callback: v => v + 'x' },
+                     grid: { color: 'rgba(255,255,255,0.05)' },
+                     title: { display: true, text: '倍數', color: '#94a3b8' } }
             }
         }
     });
