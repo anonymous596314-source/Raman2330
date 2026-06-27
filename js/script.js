@@ -2811,11 +2811,11 @@ function renderRatePEChart(us10yData, perHistory) {
 // ═══════════════════════════════════════════════════════════════
 function renderThreeMarginChart() {
     if (!document.getElementById('three-margin-chart')) return;
-    // 年報數字（2018–26Q1）
+    // 資料來源：台積電年報（Report__4_.xls）
     const labels = ['2018','2019','2020','2021','2022','2023','2024','2025','26Q1'];
-    const gm     = [37.2, 34.8, 42.3, 40.9, 49.5, 42.6, 45.7, 50.8, 58.1];
-    const opm    = [27.0, 23.1, 33.0, 30.3, 40.7, 31.0, 35.3, 42.8, 50.5];
-    const npm    = [31.5, 30.6, 36.3, 35.4, 41.8, 36.2, 38.4, 43.8, 50.5];
+    const gm     = [48.3, 46.0, 53.1, 51.6, 59.6, 54.4, 56.1, 59.9, 66.2];
+    const opm    = [37.2, 34.8, 42.3, 40.9, 49.5, 42.6, 45.7, 50.8, 58.1];
+    const npm    = [34.0, 32.3, 38.7, 37.6, 44.9, 38.8, 40.5, 45.0, 50.5];
 
     createChart('three-margin-chart', {
         type: 'line',
@@ -2853,9 +2853,12 @@ function renderRnDRateChart() {
     // 單季研發費用率（研發費用÷單季營收）
     // 損益表：累計值需換算為單季
     // 26Q1, 25Q4, 25Q3, 25Q2, 25Q1, 24Q4, 24Q3, 24Q2, 24Q1
+    // 資料來源：台積電損益表（Report__1_.xls）
+    // 24Q1~Q4：2024全年研發2042億÷全年營收28943億=7.05%，按季營收均攤
+    // 25Q1+：從損益表累計值反推單季，677.6/11341=5.97%（26Q1）
     const labels   = ['24Q1','24Q2','24Q3','24Q4','25Q1','25Q2','25Q3','25Q4','26Q1'];
-    const rndAmt   = [472, 493, 519, 565, 581, 614, 649, 681, 723];  // 億元（單季）
-    const revAmt   = [5926, 6735, 7597, 8685, 8393, 9338, 8999, 10461, 11341]; // 億元（單季）
+    const rndAmt   = [417.8, 474.8, 535.6, 612.3, 565.5, 612.5, 638.0, 648.0, 677.6]; // 億元
+    const revAmt   = [5926,  6735,  7597,  8685,  8393,  9337,  9900, 10461, 11341];  // 億元
     const rndRate  = rndAmt.map((r,i) => +(r/revAmt[i]*100).toFixed(2));
 
     createChart('rnd-rate-chart', {
@@ -2901,10 +2904,12 @@ function renderCashflowDeepChart() {
     if (!document.getElementById('cashflow-deep-chart')) return;
     // 全年數字（億元台幣）
     // 資本支出從年報 Capex（USD B × 30 換算NTD億）
+    // 資料來源：台積電現金流量表（Report__2_.xls），億元台幣
+    // 24Q1累計無法取得，用24全年數字
     const labels  = ['2021','2022','2023','2024','2025'];
-    const opCF    = [10478, 15208, 17143, 18262, 22750]; // 營業現金流
-    const depr    = [4700,  5800,  6200,  6536,  6797];  // 折舊
-    const capex   = [-9000,-10890,-9120, -8940,-11400];  // 資本支出（負值）
+    const opCF    = [10479, 13985, 18011, 18262, 22750]; // 營業活動現金流入
+    const depr    = [4673,  5459,  5942,  6536,  6797];  // 折舊費用
+    const capex   = [-9029,-10890,-9175, -9551,-12716];  // 固定資產增加（負值）
     const fcf     = opCF.map((o,i) => o + capex[i]);     // 自由現金流
 
     createChart('cashflow-deep-chart', {
@@ -2945,12 +2950,15 @@ function renderCashflowDeepChart() {
 function renderLiquidityChart() {
     if (!document.getElementById('liquidity-chart')) return;
     // 近6季資產負債表數字（億元）
+    // 資料來源：台積電資產負債表（Report.xls），億元台幣
+    // 速動比率 = (現金及約當現金 + 應收帳款) / 流動負債
     const labels = ['24Q4','25Q1','25Q2','25Q3','25Q4','26Q1'];
-    const ca     = [30884, 33457, 32649, 34360, 38171, 42655]; // 流動資產
-    const cl     = [12645, 13998, 13773, 12759, 14580, 17143]; // 流動負債
-    const inv    = [2879,  2934,  3042,  2887,  2881,  3115];  // 存貨
+    const ca     = [30884, 33457, 32649, 34360, 38171, 42655]; // 流動資產合計
+    const cl     = [12645, 13998, 13773, 12759, 14580, 17143]; // 流動負債合計
+    const cash   = [21276, 23948, 23645, 24708, 27679, 30356]; // 現金及約當現金
+    const ar     = [2707,  2417,  2334,  3055,  2791,  3577];  // 應收帳款
     const cr     = ca.map((a,i) => +(a/cl[i]).toFixed(2));
-    const qr     = ca.map((a,i) => +((a-inv[i])/cl[i]).toFixed(2));
+    const qr     = cash.map((c,i) => +((c + ar[i])/cl[i]).toFixed(2)); // 速動=(現金+應收)/流動負債
 
     createChart('liquidity-chart', {
         type: 'line',
@@ -2974,7 +2982,13 @@ function renderLiquidityChart() {
             plugins: {
                 legend: { position: 'top', labels: { color: '#94a3b8' } },
                 tooltip: { callbacks: {
-                    label: ctx => ` ${ctx.dataset.label}: ${ctx.raw}x`
+                    title: items => labels[items[0].dataIndex],
+                    label: ctx => {
+                        const i = ctx.dataIndex;
+                        if (ctx.datasetIndex === 0) return ` 流動比率: ${ctx.raw}x（流動資產÷流動負債）`;
+                        if (ctx.datasetIndex === 1) return ` 速動比率: ${ctx.raw}x（(現金+應收帳款)÷流動負債）`;
+                        return ` ${ctx.dataset.label}`;
+                    }
                 }}
             },
             scales: {
