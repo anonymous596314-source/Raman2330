@@ -309,14 +309,14 @@ function showChartFallback(ctxId, msg) {
 // ─── 基本面圖表 ────────────────────────────────────────────────
 const QUARTER_LABELS = ['24Q1','24Q2','24Q3','24Q4','25Q1','25Q2','25Q3','25Q4','26Q1'];
 const REVENUES_B     = [592.64, 673.51, 759.69, 868.46, 839.25, 933.79, 989.92, 1046.09, 1134.10];
-const GROSS_MARGINS  = [53.1, 53.2, 57.8, 59.0, 58.8, 58.6, 59.5, 62.3, 66.2];
-const EPS_QUARTERLY  = [7.98, 9.56, 12.55, 14.45, 13.95, 15.36, 17.44, 19.51, 22.08];
-const OPERATING_MARGINS = [42.0, 42.5, 47.5, 49.0, 48.5, 49.6, 50.6, 54.0, 58.1];
-const NET_MARGINS = [38.0, 36.8, 42.8, 43.1, 43.1, 44.3, 45.7, 48.4, 50.5];
+const GROSS_MARGINS  = [53.1, 53.2, 57.8, 59.0, 58.8, 58.6, 59.5, 62.3, 66.2]; // 合併報表，來源：SEC 6-K / TSMC官方新聞稿
+const EPS_QUARTERLY  = [8.70, 9.56, 12.54, 14.45, 13.94, 15.36, 17.44, 19.50, 22.08]; // 合併報表，來源：SEC 6-K
+const OPERATING_MARGINS = [42.0, 42.5, 47.5, 49.0, 48.5, 49.6, 50.6, 54.0, 58.1]; // 合併報表，來源：SEC 6-K
+const NET_MARGINS = [38.0, 36.8, 42.8, 43.1, 43.1, 42.7, 45.7, 48.3, 50.5]; // 合併報表，來源：SEC 6-K
 const ANNUAL_LABELS = ['2021', '2022', '2023', '2024', '2025'];
 const ANNUAL_REVENUE_B = [15874, 22639, 21617, 28943, 38091]; // 億元台幣（年報數字）
-const ANNUAL_CAPEX_USD_B = [30.0, 36.3, 30.4, 29.8, 38.0]; // 2025 法說指引 USD 38-42B
-const ANNUAL_DIVIDEND = [10.5, 11.0, 11.5, 15.0, 19.0]; // 依年報：2021=10.5, 2022=11.0, 2023=11.5, 2024=15.0, 2025=19.0
+const ANNUAL_CAPEX_USD_B = [30.0, 36.3, 30.4, 29.8, 41.0]; // 2025 實際執行約US$41B（NT$12716億/31.0匯率）
+const ANNUAL_DIVIDEND = [10.25, 11.0, 11.25, 14.0, 18.0]; // 依年報：2021=10.25, 2022=11.0, 2023=11.25, 2024=14.0, 2025=18.0（Q4法說會公告）
 
 function renderFundamentalChart() {
     createChart('fundamental-chart', {
@@ -1008,7 +1008,7 @@ function renderIndustryChart() {
         data: {
             labels: ['3奈米 (N3/N2)', '5奈米 (N5)', '7奈米 (N7)', '16/20奈米', '28奈米以上'],
             datasets: [{
-                data: [26, 34, 16, 9, 15],
+                data: [24, 36, 14, 9, 17],
                 backgroundColor: ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#e0f2fe'],
                 borderWidth: 0
             }]
@@ -1026,7 +1026,7 @@ function renderIndustryChart() {
         data: {
             labels: ['TSMC (台積電)', 'Samsung', 'SMIC (中芯)', 'UMC (聯電)', 'GlobalFoundries', 'Others'],
             datasets: [{
-                data: [61.7, 11.0, 5.7, 5.7, 5.1, 10.8],
+                data: [69.9, 7.2, 5.32, 4.35, 3.87, 9.36],
                 backgroundColor: ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#64748b'],
                 borderWidth: 0
             }]
@@ -1045,9 +1045,9 @@ function renderIndustryChart() {
         data: {
             labels: ['2020', '2021', '2022', '2023', '2024', '2025', '2026(E)'],
             datasets: [
-                { label: 'HPC (AI/高效能運算)', data: [33, 41, 42, 43, 51, 59, 63], backgroundColor: 'rgba(59,130,246,0.85)', borderRadius: 4 },
-                { label: '智慧型手機', data: [48, 44, 38, 38, 33, 28, 26], backgroundColor: 'rgba(245,158,11,0.85)', borderRadius: 4 },
-                { label: 'IoT / 汽車電子 / 其他', data: [19, 15, 20, 19, 16, 13, 11], backgroundColor: 'rgba(100,116,139,0.85)', borderRadius: 4 }
+                { label: 'HPC (AI/高效能運算)', data: [33, 37, 41, 43, 51, 58, 63], backgroundColor: 'rgba(59,130,246,0.85)', borderRadius: 4 },
+                { label: '智慧型手機', data: [48, 44, 39, 38, 33, 29, 26], backgroundColor: 'rgba(245,158,11,0.85)', borderRadius: 4 },
+                { label: 'IoT / 汽車電子 / 其他', data: [19, 19, 20, 19, 16, 13, 11], backgroundColor: 'rgba(100,116,139,0.85)', borderRadius: 4 }
             ]
         },
         options: {
@@ -1859,8 +1859,8 @@ function renderCustomerConcentration() {
 
     // Apple/NVIDIA/AMD/Qualcomm/其他（依 2025 年報近似佔比）
     const customers = [
-        { name: 'Apple',    pct: 25, color: '#3b82f6', note: 'A18/M4 系列晶片' },
-        { name: 'NVIDIA',   pct: 17, color: '#10b981', note: 'Blackwell GB200' },
+        { name: 'NVIDIA',   pct: 23, color: '#10b981', note: 'Blackwell GB200/B300' },
+        { name: 'Apple',    pct: 20, color: '#3b82f6', note: 'A18/M4 系列晶片' },
         { name: 'AMD',      pct: 9,  color: '#f59e0b', note: 'MI300X / EPYC' },
         { name: 'Qualcomm', pct: 7,  color: '#a78bfa', note: 'Snapdragon 8 Gen 4' },
         { name: 'Broadcom', pct: 6,  color: '#fb923c', note: 'AI ASIC / 網路晶片' },
@@ -1905,8 +1905,8 @@ function renderCustomerConcentration() {
         noteEl.innerHTML = `
             <p class="source-note">
                 資料來源：台積電 2025 年報及法說會。前五大客戶合計約佔營收 <strong>64%</strong>，
-                客戶集中度高，Apple 佔比最大（約 25%），NVIDIA AI 晶片訂單快速成長，
-                已成為第二大客戶。<br>
+                客戶集中度高，NVIDIA AI 晶片訂單快速成長，已成為第一大客戶（約 23%），
+                Apple 為第二大客戶（約 20%）。<br>
                 <span style="color:var(--text-secondary);font-size:12px">* 實際比例為估算，各季有所波動</span>
             </p>
         `;
@@ -2559,14 +2559,14 @@ function renderEPSBeatChart() {
 
     // 公開法說會資料：分析師共識預估 vs 實際
     const data = [
-        { q:'24Q1', est:7.50,  act:7.98  },
+        { q:'24Q1', est:7.50,  act:8.70  },
         { q:'24Q2', est:8.90,  act:9.56  },
         { q:'24Q3', est:11.60, act:12.54 },
         { q:'24Q4', est:13.20, act:14.45 },
         { q:'25Q1', est:12.80, act:13.94 },
         { q:'25Q2', est:14.20, act:15.36 },
         { q:'25Q3', est:16.10, act:17.44 },
-        { q:'25Q4', est:18.20, act:19.51 },
+        { q:'25Q4', est:18.20, act:19.50 },
         { q:'26Q1', est:20.10, act:22.08 },
     ];
 
@@ -2637,7 +2637,7 @@ function renderROEChart() {
         { yr:'2020', roe:29.8, ni:5179  },
         { yr:'2021', roe:29.7, ni:5965  },
         { yr:'2022', roe:39.6, ni:10165 },
-        { yr:'2023', roe:26.0, ni:8385  },
+        { yr:'2023', roe:26.9, ni:8385  },
         { yr:'2024', roe:30.0, ni:11733 },
         { yr:'2025', roe:35.1, ni:17179 },
     ];
@@ -2688,9 +2688,9 @@ function renderBalanceSheetChart() {
     // 資料來源：台積電年報（億元台幣）
     // 有息負債 = 應付公司債 + 長期借款
     const data = [
-        { yr:'2021', cash:11108, debt:8470,  equity:21680, netCash:11108-8470  },
-        { yr:'2022', cash:14050, debt:9260,  equity:29460, netCash:14050-9260  },
-        { yr:'2023', cash:17180, debt:9040,  equity:34590, netCash:17180-9040  },
+        { yr:'2021', cash:10650, debt:6134,  equity:21707, netCash:10650-6134  },
+        { yr:'2022', cash:13428, debt:8391,  equity:29605, netCash:13428-8391  },
+        { yr:'2023', cash:14654, debt:9183,  equity:34833, netCash:14654-9183  },
         { yr:'2024', cash:21276, debt:9584,  equity:43236, netCash:21276-9584  },
         { yr:'2025', cash:27679, debt:8960,  equity:54608, netCash:27679-8960  },
     ];
@@ -2813,9 +2813,9 @@ function renderThreeMarginChart() {
     if (!document.getElementById('three-margin-chart')) return;
     // 資料來源：台積電年報（Report__4_.xls）
     const labels = ['2018','2019','2020','2021','2022','2023','2024','2025','26Q1'];
-    const gm     = [48.3, 46.0, 53.1, 51.6, 59.6, 54.4, 56.1, 59.9, 66.2];
+    const gm     = [48.3, 46.0, 53.1, 51.6, 59.6, 54.4, 56.1, 59.9, 66.2]; // 2018-2026Q1，2024/2025為合併年度值
     const opm    = [37.2, 34.8, 42.3, 40.9, 49.5, 42.6, 45.7, 50.8, 58.1];
-    const npm    = [34.0, 32.3, 38.7, 37.6, 44.9, 38.8, 40.5, 45.0, 50.5];
+    const npm    = [34.0, 32.3, 38.7, 37.6, 44.9, 38.8, 40.5, 45.1, 50.5];
 
     createChart('three-margin-chart', {
         type: 'line',
@@ -2907,9 +2907,9 @@ function renderCashflowDeepChart() {
     // 資料來源：台積電現金流量表（Report__2_.xls），億元台幣
     // 24Q1累計無法取得，用24全年數字
     const labels  = ['2021','2022','2023','2024','2025'];
-    const opCF    = [10479, 13985, 18011, 18262, 22750]; // 營業活動現金流入
-    const depr    = [4673,  5459,  5942,  6536,  6797];  // 折舊費用
-    const capex   = [-9029,-10890,-9175, -9551,-12716];  // 固定資產增加（負值）
+    const opCF    = [11122, 16106, 12420, 18262, 22750]; // 營業活動現金流入（Report__4_.xls）
+    const depr    = [4142,  4285,  5229,  6536,  6797];  // 折舊費用（Report__4_.xls）
+    const capex   = [-8388,-10817,-9491, -9551,-12716];  // 固定資產增加（Report__4_.xls）
     const fcf     = opCF.map((o,i) => o + capex[i]);     // 自由現金流
 
     createChart('cashflow-deep-chart', {
@@ -2951,14 +2951,17 @@ function renderLiquidityChart() {
     if (!document.getElementById('liquidity-chart')) return;
     // 近6季資產負債表數字（億元）
     // 資料來源：台積電資產負債表（Report.xls），億元台幣
-    // 速動比率 = (現金及約當現金 + 應收帳款) / 流動負債
+    // 速動比率 = (現金及約當現金 + 應收款項合計 + 流動金融資產FVTPL + FVOCI + AC) / 流動負債
     const labels = ['24Q4','25Q1','25Q2','25Q3','25Q4','26Q1'];
     const ca     = [30884, 33457, 32649, 34360, 38171, 42655]; // 流動資產合計
     const cl     = [12645, 13998, 13773, 12759, 14580, 17143]; // 流動負債合計
     const cash   = [21276, 23948, 23645, 24708, 27679, 30356]; // 現金及約當現金
-    const ar     = [2707,  2417,  2334,  3055,  2791,  3577];  // 應收帳款
+    const ar     = [2721,  2439,  2383,  3079,  2821,  3647];  // 應收款項合計
+    const fvtpl  = [2.08,  0.54,  17.66, 0.21,  1,     0.054]; // FVTPL流動金融資產
+    const fvoci  = [1922,  1899,  1636,  1718,  1757,  1949];  // FVOCI流動金融資產
+    const ac     = [1020,  1183,  1045,  1085,  1249,  1530];  // 按攤銷後成本衡量流動金融資產
     const cr     = ca.map((a,i) => +(a/cl[i]).toFixed(2));
-    const qr     = cash.map((c,i) => +((c + ar[i])/cl[i]).toFixed(2)); // 速動=(現金+應收)/流動負債
+    const qr     = cash.map((c,i) => +((c + ar[i] + fvtpl[i] + fvoci[i] + ac[i])/cl[i]).toFixed(2)); // 速動=(現金+應收+流動金融資產)/流動負債
 
     createChart('liquidity-chart', {
         type: 'line',
