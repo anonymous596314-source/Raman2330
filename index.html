@@ -89,7 +89,7 @@
                         </div>
                         <div class="card stat-card span-3">
                             <h4>2025 EPS</h4>
-                            <div class="stat-value">66.25</div>
+                            <div class="stat-value">66.26</div>
                             <div class="stat-sub">新台幣 / 股，年增 46.4%</div>
                         </div>
                         <div class="card stat-card span-3">
@@ -403,9 +403,17 @@
                             <div class="chart-container"><canvas id="advanced-node-chart"></canvas></div>
                         </div>
                         <div class="card chart-card">
-                            <h4>先進封裝能力組合</h4>
-                            <p class="text-muted">CoWoS、SoIC、InFO 與矽光子是 AI 供應鏈的第二成長曲線</p>
+                            <h4>CoWoS 先進封裝產能擴張</h4>
+                            <p class="text-muted">近4年逼近4倍擴產，仍供不應求；缺口預估從現在約20%收斂至2026年底約10%</p>
                             <div class="chart-container"><canvas id="packaging-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card" id="cowos-note">
+                            <h4>CoWoS 瓶頸與 AI 加速器營收貢獻</h4>
+                            <p>
+                                先進封裝（CoWoS）是目前 AI 晶片供應鏈最關鍵的瓶頸，而非晶圓製造本身。台積電 CoWoS 月產能從 2024 年底約 <strong>3.5 萬片</strong>，擴張至 2025 年底約 <strong>7.5 萬片</strong>，2026 年底目標達 <strong>12.8-13 萬片</strong>，近兩年產能成長近 4 倍。<br><br>
+                                即便如此，據業界調查，CoWoS 供需缺口目前約 <strong>20%</strong>，預估隨產能開出，2026 年底可望收斂至約 <strong>10%</strong>，2027 年才有機會接近平衡。NVIDIA 是最大用戶，據摩根士丹利估計已預訂 2026 年約 60% 的 CoWoS 產能（含 Blackwell Ultra 與下一代 Rubin 架構），其餘由 Broadcom、AMD、Marvell 與 Google TPU 等瓜分。<br><br>
+                                AI 加速器相關營收已佔台積電 2025 年總晶圓營收約 <strong>17-19%</strong>，公司預期 2024-2029 年 AI 加速器營收年複合成長率上修至 <strong>54-56%</strong>（先前預估約45%）。2026 年資本支出中，約 <strong>10-20%</strong> 將投入先進封裝產能。
+                            </p>
                         </div>
                         <div class="card chart-card full-width">
                             <h4>同業競爭能力雷達</h4>
@@ -414,7 +422,7 @@
                         </div>
                         <div class="card chart-card wide">
                             <h4>前五大客戶集中度（2025 年報）</h4>
-                            <p class="text-muted">Apple、NVIDIA 合計約佔 42%，AI 晶片客戶比重持續擴大</p>
+                            <p class="text-muted">NVIDIA、Apple 合計約佔 37%，2025年NVIDIA首度超車成第一大客戶</p>
                             <div class="chart-container"><canvas id="customer-pie-chart"></canvas></div>
                         </div>
                         <div class="card text-card" id="customer-note"></div>
@@ -502,8 +510,21 @@
                             <p class="text-muted">分數越高代表需要更頻繁追蹤，並非單純代表利空</p>
                             <div class="chart-container"><canvas id="risk-radar-chart"></canvas></div>
                         </div>
+                        <div class="card chart-card">
+                            <h4>本益比歷史定位</h4>
+                            <p class="text-muted">當前本益比相對過去5年區間的位置</p>
+                            <div class="chart-container"><canvas id="pe-band-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>本益比評價說明</h4>
+                            <p>
+                                台積電近10年平均本益比約 <strong>20-22倍</strong>，歷史低點出現在2022年Q3~Q4（約9.7-12倍，受半導體去庫存與升息壓力影響），歷史高點則在2021年Q1~Q2（約28.7-32.8倍，當時市場炒作5G與晶片缺貨題材）。<br><br>
+                                以近四季EPS合計約NT$74.4元計算，2026年中股價區間對應本益比約 <strong>29-35倍</strong>，已高於10年均值，接近過去5年的相對高位，但尚未觸及2021年的歷史天花板。市場目前願意給予較高評價，主要反映AI需求結構性成長、CoWoS稼動率滿載與毛利率持續創高的基本面支撐，而非單純情緒性追高。
+                            </p>
+                        </div>
                         <div class="card text-card">
                             <h4>估值敏感度矩陣</h4>
+                            <p class="text-muted" style="margin-bottom:8px;">P/E 倍數依10年歷史均值(21倍)上下調整，非單一機構預測</p>
                             <table class="data-table">
                                 <thead>
                                     <tr><th>情境</th><th>EPS 假設</th><th>P/E</th><th>合理價區</th></tr>
@@ -514,6 +535,28 @@
                                     <tr><td>樂觀</td><td>NT$ 102</td><td>26x</td><td>2,650</td></tr>
                                 </tbody>
                             </table>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>營收地理結構轉移</h4>
+                            <p class="text-muted">北美佔比攀升、中國佔比急降，反映地緣政治再平衡</p>
+                            <div class="chart-container"><canvas id="geo-revenue-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>海外廠獲利現況（2025年報）</h4>
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>廠區</th><th>2025損益</th><th>備註</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>南京 (中國)</td><td style="color:var(--up-color)">淨利 27.6億</td><td>16/28nm成熟製程，已折舊完畢</td></tr>
+                                    <tr><td>上海 (中國)</td><td style="color:var(--up-color)">淨利 11.6億</td><td>同上，現金流貢獻穩定</td></tr>
+                                    <tr><td>Arizona (美國)</td><td style="color:var(--up-color)">淨利 16.1億</td><td>2025年首度轉盈，2024年虧14.3億</td></tr>
+                                    <tr><td>熊本 (日本)</td><td style="color:var(--down-color)">虧損 9.8億</td><td>JASM第一座廠剛量產，仍處爬坡期</td></tr>
+                                </tbody>
+                            </table>
+                            <p style="margin-top:12px;font-size:13px;color:var(--text-secondary);">
+                                單位：億元新台幣。中國兩座成熟製程廠雖營收佔比已降至個位數，但因設備折舊完畢、成本極低，獲利貢獻仍相對突出；海外新建先進廠（美國、日本、德國）短期內將持續處於虧損或低利潤爬坡階段，是稀釋整體毛利率的主要結構性因素。
+                            </p>
                         </div>
                         <div class="card text-card full-width">
                             <h4>關鍵催化與監控清單</h4>
