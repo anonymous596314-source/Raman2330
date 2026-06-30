@@ -259,6 +259,8 @@ async function refreshData(partial = false) {
     try { renderIndustryChart(); }        catch(e) { console.error('[renderIndustryChart]', e); }
     try { renderOutlookChart(); }         catch(e) { console.error('[renderOutlookChart]', e); }
     try { renderRiskChart(); }            catch(e) { console.error('[renderRiskChart]', e); }
+    try { renderPEBandChart(); }          catch(e) { console.error('[renderPEBandChart]', e); }
+    try { renderGeoRevenueChart(); }      catch(e) { console.error('[renderGeoRevenueChart]', e); }
     try { renderValuationCalculator(); }  catch(e) { console.error('[renderValuationCalculator]', e); }
 }
 
@@ -1085,22 +1087,24 @@ function renderIndustryChart() {
     createChart('packaging-chart', {
         type: 'bar',
         data: {
-            labels: ['CoWoS', 'SoIC', 'InFO', '矽光子', '特殊製程'],
+            labels: ['2024年底', '2025年底', '2026年底(目標)'],
             datasets: [{
-                label: '策略重要性',
-                data: [95, 82, 72, 64, 68],
-                backgroundColor: ['#ef4444', '#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'],
+                label: 'CoWoS 月產能（千片）',
+                data: [35, 75, 128],
+                backgroundColor: ['#94a3b8', '#3b82f6', '#ef4444'],
                 borderRadius: 4
             }]
         },
         options: {
-            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `約 ${ctx.raw},000 片/月` } }
+            },
             scales: {
-                x: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { grid: { color: 'rgba(255,255,255,0.03)' } }
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '千片/月' } },
+                x: { grid: { display: false } }
             }
         }
     });
@@ -1245,6 +1249,57 @@ function renderRiskChart() {
                     grid: { color: 'rgba(255,255,255,0.08)' },
                     pointLabels: { color: '#cbd5e1', font: { size: 12 } }
                 }
+            }
+        }
+    });
+}
+
+// 本益比歷史定位圖（來源：財報狗/wisesheets/financecharts 公開資料整理）
+function renderPEBandChart() {
+    createChart('pe-band-chart', {
+        type: 'bar',
+        data: {
+            labels: ['10年均值', '2022Q3-Q4 歷史低點', '2021Q1-Q2 歷史高點', '2026Q2 目前估算'],
+            datasets: [{
+                label: '本益比 (倍)',
+                data: [21, 11, 31, 32],
+                backgroundColor: ['#94a3b8', '#10b981', '#ef4444', '#3b82f6'],
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `約 ${ctx.raw} 倍` } }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'P/E 倍數' } },
+                x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+            }
+        }
+    });
+}
+
+// 營收地理結構轉移圖（來源：TSMC SEC 6-K / The Motley Fool 整理）
+function renderGeoRevenueChart() {
+    createChart('geo-revenue-chart', {
+        type: 'line',
+        data: {
+            labels: ['2020Q1', '2022', '2024Q4', '2025全年'],
+            datasets: [
+                { label: '北美', data: [56, 65, 75, 75], borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.3 },
+                { label: '中國', data: [22, 11, 9, 9], borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.3 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '營收佔比 %' } },
+                x: { grid: { display: false } }
             }
         }
     });
@@ -1863,8 +1918,8 @@ function renderCustomerConcentration() {
 
     // Apple/NVIDIA/AMD/Qualcomm/其他（依 2025 年報近似佔比）
     const customers = [
-        { name: 'NVIDIA',   pct: 23, color: '#10b981', note: 'Blackwell GB200/B300' },
-        { name: 'Apple',    pct: 20, color: '#3b82f6', note: 'A18/M4 系列晶片' },
+        { name: 'NVIDIA',   pct: 19, color: '#10b981', note: 'Blackwell GB200/B300（2025年報：19%，正式超越Apple成第一大客戶）' },
+        { name: 'Apple',    pct: 18, color: '#3b82f6', note: 'A18/M4 系列晶片' },
         { name: 'AMD',      pct: 9,  color: '#f59e0b', note: 'MI300X / EPYC' },
         { name: 'Qualcomm', pct: 7,  color: '#a78bfa', note: 'Snapdragon 8 Gen 4' },
         { name: 'Broadcom', pct: 6,  color: '#fb923c', note: 'AI ASIC / 網路晶片' },
@@ -1909,7 +1964,7 @@ function renderCustomerConcentration() {
         noteEl.innerHTML = `
             <p class="source-note">
                 資料來源：台積電 2025 年報及法說會。前五大客戶合計約佔營收 <strong>64%</strong>，
-                客戶集中度高，NVIDIA AI 晶片訂單快速成長，已成為第一大客戶（約 23%），
+                客戶集中度高，NVIDIA AI 晶片訂單快速成長，2025年正式超越Apple成為第一大客戶（19%），
                 Apple 為第二大客戶（約 20%）。<br>
                 <span style="color:var(--text-secondary);font-size:12px">* 實際比例為估算，各季有所波動</span>
             </p>
