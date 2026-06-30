@@ -1583,18 +1583,22 @@ function renderVIXChart(tsmData, vixData) {
 }
 
 // ── 5. 外資法人目標價（消息面）─────────────────────────────────
-// 公開資料：各大外資最新目標價（截至 2026 Q1）
+// 公開資料：各大外資最新目標價（2026Q1法說會後調升，截至2026年4月）
 const ANALYST_TARGETS = [
-    { firm: 'Morgan Stanley', rating: 'Overweight', target: 2200, date: '2026-05' },
-    { firm: 'Goldman Sachs',  rating: 'Buy',        target: 2400, date: '2026-04' },
-    { firm: 'JP Morgan',      rating: 'Overweight', target: 2350, date: '2026-04' },
-    { firm: 'CLSA',           rating: 'Buy',        target: 2500, date: '2026-03' },
-    { firm: 'UBS',            rating: 'Buy',        target: 2100, date: '2026-05' },
-    { firm: 'Citi',           rating: 'Buy',        target: 2300, date: '2026-04' },
-    { firm: 'Bernstein',      rating: 'Outperform', target: 2450, date: '2026-03' },
-    { firm: 'Macquarie',      rating: 'Outperform', target: 2600, date: '2026-05' },
-    { firm: 'HSBC',           rating: 'Buy',        target: 2250, date: '2026-04' },
-    { firm: 'Deutsche Bank',  rating: 'Buy',        target: 2180, date: '2026-03' },
+    { firm: 'CLSA (里昂)',           rating: 'Buy',        target: 3030, date: '2026-04' },
+    { firm: 'Citigroup (花旗)',      rating: 'Buy',        target: 2875, date: '2026-04' },
+    { firm: 'Nomura (野村)',         rating: 'Buy',        target: 2820, date: '2026-04' },
+    { firm: 'HSBC (滙豐)',           rating: 'Buy',        target: 2800, date: '2026-04' },
+    { firm: 'Goldman Sachs (高盛)',  rating: 'Buy',        target: 2750, date: '2026-04' },
+    { firm: 'UBS (瑞銀)',            rating: 'Buy',        target: 2650, date: '2026-04' },
+    { firm: 'Morgan Stanley (大摩)', rating: 'Overweight', target: 2588, date: '2026-04' },
+    { firm: 'Bank of America (美銀)',rating: 'Buy',        target: 2560, date: '2026-04' },
+    { firm: 'Macquarie (麥格理)',    rating: 'Outperform', target: 2550, date: '2026-04' },
+    { firm: 'BNP Paribas (法巴)',    rating: 'Buy',        target: 2520, date: '2026-04' },
+    { firm: 'Mizuho (瑞穗)',         rating: 'Buy',        target: 2450, date: '2026-04' },
+    { firm: 'JP Morgan (小摩)',      rating: 'Overweight', target: 2400, date: '2026-04' },
+    { firm: 'Aletheia Capital',      rating: 'Buy',        target: 2400, date: '2026-04' },
+    { firm: 'Daiwa (大和)',          rating: 'Buy',        target: 2330, date: '2026-04' },
 ];
 
 function renderAnalystTargets(currentPrice) {
@@ -1606,7 +1610,7 @@ function renderAnalystTargets(currentPrice) {
     const upside = currentPrice ? ((avgTarget - currentPrice) / currentPrice * 100).toFixed(1) : null;
 
     el.innerHTML = `
-        <h4>外資法人目標價（截至 2026 Q2）</h4>
+        <h4>外資法人目標價（2026Q1法說會後，截至2026年4月）</h4>
         <p class="text-muted" style="margin-bottom:16px;">
             共 ${sorted.length} 家機構，平均目標價 <strong style="color:#3b82f6">NT$${avgTarget.toLocaleString()}</strong>
             ${upside ? `，較現價潛在 ${upside > 0 ? '+' : ''}${upside}%` : ''}
