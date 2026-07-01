@@ -167,6 +167,16 @@
                             <p class="text-muted">現金水位持續提升，負債比率下降，財務體質逐年改善</p>
                             <div class="chart-container"><canvas id="balance-sheet-chart"></canvas></div>
                         </div>
+                        <div class="card chart-card">
+                            <h4>每股淨值 (BPS) 歷史趨勢</h4>
+                            <p class="text-muted">股東權益 / 流通股數，反映帳面價值成長軌跡；來源：TSMC 歷年年報</p>
+                            <div class="chart-container"><canvas id="bps-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>股價淨值比 (P/B) 歷史區間</h4>
+                            <p class="text-muted">目前 P/B 約 10x，為歷史新高，反映市場對 AI 時代台積電定價權的重新評估</p>
+                            <div class="chart-container"><canvas id="pb-chart"></canvas></div>
+                        </div>
                     </div>
                 </section>
 
@@ -472,13 +482,13 @@
                             <div class="chart-container"><canvas id="outlook-capex-chart"></canvas></div>
                         </div>
                         <div class="card chart-card">
-                            <h4>長期營收預測 (2024~2030)</h4>
-                            <p class="text-muted">以年均複合成長率 CAGR ~20% 推估</p>
+                            <h4>長期營收預測 (2022~2030)</h4>
+                            <p class="text-muted">藍線=基準(CAGR 25%，以2025實際為起點)；橘虛線=官方CAGR 25%基年2024；灰虛線=保守CAGR 15%。來源：台積電Q1 2026法說會官方指引</p>
                             <div class="chart-container"><canvas id="outlook-revenue-chart"></canvas></div>
                         </div>
                         <div class="card chart-card full-width">
                             <h4>2030 營收情境分析</h4>
-                            <p class="text-muted">以 AI/HPC 滲透率、先進封裝供給與資本支出效率分為保守、基準、樂觀三情境</p>
+                            <p class="text-muted">保守=CAGR 15%、基準=CAGR 25%（官方指引）、樂觀=CAGR 35%（AI ASIC+封裝全面爆發）；以2025實際NT$3,809B為起點</p>
                             <div class="chart-container"><canvas id="outlook-scenario-chart"></canvas></div>
                         </div>
                         <div class="card chart-card full-width">
