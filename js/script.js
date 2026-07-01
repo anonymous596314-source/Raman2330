@@ -1147,10 +1147,12 @@ function renderOutlookChart() {
             labels: ['2021', '2022', '2023', '2024', '2025', '2026(E)', '2027(E)', '2028(E)'],
             datasets: [{
                 label: '資本支出 (十億美元)',
-                data: [30.0, 36.3, 30.4, 30.0, 38.0, 42.0, 46.0, 52.0],
+                data: [30.0, 36.3, 30.4, 29.8, 41.0, 54.0, 60.0, 65.0],
+                // 實際：2021-2025 已驗證（R4.xls + 匯率換算）；2026E=法說會指引US$52-56B中值；2027-2028E為市場預估
                 backgroundColor: (ctx) => {
-                    const v = ctx.raw;
-                    return v > 40 ? 'rgba(239,68,68,0.8)' : 'rgba(16,185,129,0.8)';
+                    const idx = ctx.dataIndex;
+                    if (idx >= 5) return 'rgba(239,68,68,0.6)'; // 預估值用半透明紅
+                    return ctx.raw > 40 ? 'rgba(239,68,68,0.8)' : 'rgba(16,185,129,0.8)';
                 },
                 borderRadius: 4
             }]
@@ -1159,7 +1161,10 @@ function renderOutlookChart() {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { display: false } },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `US$${ctx.raw}B${ctx.dataIndex >= 5 ? '（預估）' : '（實際）'}` } }
+            },
             scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '十億美元 (USD B)' } } }
         }
     });
@@ -1945,7 +1950,7 @@ function renderCustomerConcentration() {
         { name: 'Qualcomm', pct: 7,  color: '#a78bfa', note: 'Snapdragon 8 Gen 4' },
         { name: 'Broadcom', pct: 6,  color: '#fb923c', note: 'AI ASIC / 網路晶片' },
         { name: 'Intel',    pct: 5,  color: '#94a3b8', note: 'Lunar Lake 外包' },
-        { name: '其他',     pct: 31, color: '#475569', note: '車用、IoT、HPC 等' },
+        { name: '其他',     pct: 36, color: '#475569', note: '車用、IoT、HPC 等（前六大客戶合計64%，其餘36%）' },
     ];
 
     const total = customers.reduce((s, c) => s + c.pct, 0);
@@ -2002,9 +2007,9 @@ function renderCustomerConcentration() {
 const SCENARIO_DATA = {
     // EPS 預估（三種假設）
     eps: {
-        bear: { label: '悲觀 EPS', values: { 2025:87, 2026:88, 2027:92, 2028:95, 2029:98,  2030:100 } },
-        base: { label: '基準 EPS', values: { 2025:87, 2026:98, 2027:115,2028:132,2029:150, 2030:168 } },
-        bull: { label: '樂觀 EPS', values: { 2025:87, 2026:112,2027:142,2028:175,2029:210, 2030:248 } },
+        bear: { label: '悲觀 EPS', values: { 2025:66.26, 2026:72.9,  2027:80.2,  2028:88.2,  2029:97.0,  2030:106.7 } }, // CAGR ~10%
+        base: { label: '基準 EPS', values: { 2025:66.26, 2026:86.1,  2027:112.0, 2028:145.6, 2029:189.2, 2030:246.0 } }, // CAGR ~30%（分析師共識）
+        bull: { label: '樂觀 EPS', values: { 2025:66.26, 2026:99.4,  2027:149.1, 2028:223.6, 2029:335.4, 2030:503.2 } }, // CAGR ~50%（AI全面爆發）
     },
     // P/E 假設（三種市場估值）
     pe: {
@@ -2283,8 +2288,9 @@ function renderProcessRoadmapChart() {
             { year: 2021, node: 'Intel 7',    density: 100,   status: 'done' },
             { year: 2023, node: 'Intel 4',    density: 151,   status: 'done' },
             { year: 2024, node: 'Intel 3',    density: 238,   status: 'done' },
-            { year: 2025, node: '14A (2nm級)', density: 260,  status: 'current' },
-            { year: 2027, node: '10A',        density: 380,   status: 'future' },
+            { year: 2025, node: '18A (1.8nm級)', density: 260, status: 'current' }, // HVM 2025年底，良率55%，2026年持續爬坡
+            { year: 2026, node: '18A-P',      density: 285,   status: 'future' },   // 2026H2 量產，增強版
+            { year: 2028, node: '14A',        density: 380,   status: 'future' },
         ],
     };
 
