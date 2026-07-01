@@ -194,6 +194,8 @@ async function refreshData(partial = false) {
     // ROE + 資產負債表（靜態資料）
     try { renderROEChart(); }          catch(e) { console.error('[renderROEChart]', e); }
     try { renderBalanceSheetChart(); } catch(e) { console.error('[renderBalanceSheetChart]', e); }
+    try { renderBPSChart(); }          catch(e) { console.error('[renderBPSChart]', e); }
+    try { renderPBChart(); }           catch(e) { console.error('[renderPBChart]', e); }
 
     // 美債10Y vs P/E（需要 us10yData + perHistory）
     if (us10yData?.length && perHistory?.length) {
@@ -315,10 +317,10 @@ const GROSS_MARGINS  = [53.1, 53.2, 57.8, 59.0, 58.8, 58.6, 59.5, 62.3, 66.2]; /
 const EPS_QUARTERLY  = [8.70, 9.56, 12.54, 14.45, 13.94, 15.36, 17.44, 19.50, 22.08]; // 合併報表，來源：SEC 6-K
 const OPERATING_MARGINS = [42.0, 42.5, 47.5, 49.0, 48.5, 49.6, 50.6, 54.0, 58.1]; // 合併報表，來源：SEC 6-K
 const NET_MARGINS = [38.0, 36.8, 42.8, 43.1, 43.1, 42.7, 45.7, 48.3, 50.5]; // 合併報表，來源：SEC 6-K
-const ANNUAL_LABELS = ['2021', '2022', '2023', '2024', '2025'];
-const ANNUAL_REVENUE_B = [15874, 22639, 21617, 28943, 38091]; // 億元台幣（年報數字）
-const ANNUAL_CAPEX_USD_B = [30.0, 36.3, 30.4, 29.8, 41.0]; // 2025 實際執行約US$41B（NT$12716億/31.0匯率）
-const ANNUAL_DIVIDEND = [10.25, 11.0, 11.25, 14.0, 18.0]; // 依年報：2021=10.25, 2022=11.0, 2023=11.25, 2024=14.0, 2025=18.0（Q4法說會公告）
+const ANNUAL_LABELS = ['2021', '2022', '2023', '2024', '2025', '2026(E)'];
+const ANNUAL_REVENUE_B = [15874, 22639, 21617, 28943, 38091, null]; // 億元台幣；2026E 法說展望但未公告，留空
+const ANNUAL_CAPEX_USD_B = [30.0, 36.3, 30.4, 29.8, 41.0, 54.0]; // 2025實際；2026E=指引US$52-56B中值（Q1 2026法說會）
+const ANNUAL_DIVIDEND = [10.25, 11.0, 11.25, 14.0, 18.0, null]; // 2026E尚未公告
 
 function renderFundamentalChart() {
     createChart('fundamental-chart', {
@@ -1163,25 +1165,38 @@ function renderOutlookChart() {
     });
 
     // 長期營收預測
+    // 實際值：來源年報；預測值：依台積電官方指引 CAGR 25%（2024-2029）計算
+    // 2025實際NT$3809B已超過官方CAGR 25%預測(NT$3618B)，代表AI需求持續超預期
     createChart('outlook-revenue-chart', {
         type: 'line',
         data: {
             labels: ['2022', '2023', '2024', '2025', '2026(E)', '2027(E)', '2028(E)', '2029(E)', '2030(E)'],
             datasets: [{
-                label: '年度營收 (十億台幣)',
-                data: [2264, 2161, 2894, 3809, 4700, 5500, 6500, 7600, 9000],
+                label: '實際/基準預測 (CAGR 25%)',
+                data: [2264, 2161, 2894, 3809, 4761, 5952, 7439, 9299, 11624],
                 borderColor: '#3b82f6',
                 backgroundColor: 'rgba(59,130,246,0.15)',
                 fill: true,
                 borderWidth: 3,
                 tension: 0.4,
                 pointRadius: 5,
+                pointBackgroundColor: data => data.dataIndex <= 3 ? '#3b82f6' : 'transparent',
+                pointStyle: data => data.dataIndex <= 3 ? 'circle' : 'rectRot',
                 pointBackgroundColor: '#3b82f6'
             }, {
-                label: '保守預估',
-                data: [2264, 2161, 2894, 3809, 4400, 5000, 5700, 6500, 7500],
+                label: '官方CAGR 25%（基年2024）',
+                data: [null, null, 2894, 3618, 4522, 5652, 7065, 8832, 11040],
+                borderColor: '#f59e0b',
+                borderDash: [6, 3],
+                borderWidth: 2,
+                tension: 0.4,
+                pointRadius: 0,
+                fill: false
+            }, {
+                label: '保守情境 (CAGR 15%)',
+                data: [null, null, null, 3809, 4380, 5037, 5793, 6662, 7661],
                 borderColor: '#94a3b8',
-                borderDash: [5, 5],
+                borderDash: [3, 4],
                 borderWidth: 2,
                 tension: 0.4,
                 pointRadius: 0,
@@ -1192,7 +1207,10 @@ function renderOutlookChart() {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { position: 'top' } },
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx => ctx.raw ? `NT$${ctx.raw.toLocaleString()}B` : '—' } }
+            },
             scales: {
                 x: { grid: { color: 'rgba(255,255,255,0.05)' } },
                 y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '十億台幣' } }
@@ -1205,16 +1223,19 @@ function renderOutlookChart() {
         data: {
             labels: ['2025', '2026(E)', '2027(E)', '2028(E)', '2029(E)', '2030(E)'],
             datasets: [
-                { label: '保守：AI 放緩但製程升級延續', data: [3809, 4400, 5000, 5700, 6500, 7500], borderColor: '#94a3b8', borderDash: [5, 4], borderWidth: 2, tension: 0.35, pointRadius: 3 },
-                { label: '基準：AI/HPC 持續擴產', data: [3809, 4700, 5500, 6500, 7600, 9000], borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.13)', fill: true, borderWidth: 3, tension: 0.35, pointRadius: 4 },
-                { label: '樂觀：ASIC 與先進封裝供給釋放', data: [3809, 5000, 6100, 7600, 9300, 11200], borderColor: '#ef4444', borderWidth: 3, tension: 0.35, pointRadius: 4 }
+                { label: '保守：CAGR ~15%（AI 放緩）',      data: [3809, 4380, 5037, 5793, 6662, 7661], borderColor: '#94a3b8', borderDash: [5, 4], borderWidth: 2, tension: 0.35, pointRadius: 3 },
+                { label: '基準：CAGR ~25%（官方指引延續）', data: [3809, 4761, 5952, 7439, 9299, 11624], borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.13)', fill: true, borderWidth: 3, tension: 0.35, pointRadius: 4 },
+                { label: '樂觀：CAGR ~35%（ASIC+封裝爆發）', data: [3809, 5143, 6943, 9373, 12654, 17083], borderColor: '#ef4444', borderWidth: 3, tension: 0.35, pointRadius: 4 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { position: 'top' } },
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx => `NT$${ctx.raw.toLocaleString()}B` } }
+            },
             scales: {
                 y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '十億台幣' } }
             }
@@ -2782,6 +2803,71 @@ function renderBalanceSheetChart() {
                 y: { ticks: { color: '#94a3b8', callback: v => v + 'B' },
                      grid: { color: 'rgba(255,255,255,0.05)' },
                      title: { display: true, text: '億元台幣', color: '#94a3b8' } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  每股淨值 (BPS) 與 股價淨值比 (P/B) — 來源：TSMC歷年年報計算
+// ═══════════════════════════════════════════════════════════════
+function renderBPSChart() {
+    // BPS = 股東權益（億元）× 100 ÷ 25930百萬股
+    // 來源：R5.xls & R1.xls 已驗證股東權益；年均股價從 Yahoo Finance 季均價推算
+    const labels = ['2020', '2021', '2022', '2023', '2024', '2025', '26Q1(估)'];
+    const bps    = [71.4,   83.7,  114.2,  134.3,  166.7,  210.6,  226.7];
+    createChart('bps-chart', {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: '每股淨值 (NT$)',
+                data: bps,
+                backgroundColor: '#3b82f6',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `NT$${ctx.raw} 元` } } },
+            scales: {
+                y: { beginAtZero: false, grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'NT$ / 股' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+function renderPBChart() {
+    // P/B = 年均股價 ÷ 年末BPS；來源：年均股價參考Yahoo Finance季均價; BPS同上
+    const labels   = ['2020', '2021', '2022', '2023', '2024', '2025', '26Q1(估)'];
+    const pb       = [5.57,   7.41,   4.48,   4.01,   4.76,   5.08,   10.28];
+    const avgPB    = 5.34; // 2020-2025 平均
+    createChart('pb-chart', {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'P/B 倍數',
+                    data: pb,
+                    backgroundColor: pb.map(v => v > 8 ? '#ef4444' : v > 6 ? '#f59e0b' : '#3b82f6'),
+                    borderRadius: 4
+                },
+                {
+                    label: `歷史均值 ${avgPB}x`,
+                    data: Array(labels.length).fill(avgPB),
+                    type: 'line', borderColor: '#94a3b8', borderDash: [5,3],
+                    borderWidth: 2, pointRadius: 0, fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: ctx => `${ctx.raw}x` } } },
+            scales: {
+                y: { beginAtZero: false, grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'P/B 倍數' } },
+                x: { grid: { display: false } }
             }
         }
     });
