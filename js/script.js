@@ -1069,7 +1069,7 @@ function renderIndustryChart() {
     createChart('advanced-node-chart', {
         type: 'line',
         data: {
-            labels: ['2021', '2022', '2023', '2024', '2025', '2026(E)'],
+            labels: ['2021', '2022', '2023', '2024', '2025', '2026(E,預估)'],
             datasets: [
                 { label: '7nm 以下先進製程', data: [50, 53, 58, 69, 74, 78], borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.14)', fill: true, borderWidth: 3, tension: 0.35, pointRadius: 4 },
                 { label: '成熟/特殊製程', data: [50, 47, 42, 31, 26, 22], borderColor: '#64748b', borderDash: [5, 4], borderWidth: 2, tension: 0.35, pointRadius: 0 }
@@ -1285,7 +1285,7 @@ function renderPEBandChart() {
     createChart('pe-band-chart', {
         type: 'bar',
         data: {
-            labels: ['10年均值', '2022Q3-Q4 歷史低點', '2021Q1-Q2 歷史高點', '2026Q2 目前估算'],
+            labels: ['10年均值', '2022Q3-Q4 歷史低點', '2021Q1-Q2 歷史高點', '2026Q2 約31-34x'],
             datasets: [{
                 label: '本益比 (倍)',
                 data: [21, 11, 31, 32],
@@ -1733,9 +1733,9 @@ function renderValuationCalculator() {
             <div>
                 <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
                     <label style="color:var(--text-secondary);font-size:14px;">預估 EPS (NT$/股)</label>
-                    <span id="calc-eps-val" style="color:#3b82f6;font-weight:600">88</span>
+                    <span id="calc-eps-val" style="color:#3b82f6;font-weight:600">92</span>
                 </div>
-                <input type="range" id="calc-eps" min="60" max="140" value="88" step="2"
+                <input type="range" id="calc-eps" min="60" max="140" value="92" step="2"
                     style="width:100%;accent-color:#3b82f6;cursor:pointer"
                     oninput="updateCalc()">
                 <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-top:4px;">
@@ -1756,7 +1756,7 @@ function renderValuationCalculator() {
             </div>
             <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:20px;text-align:center;">
                 <div style="color:var(--text-secondary);font-size:13px;margin-bottom:8px;">合理價格估算</div>
-                <div id="calc-result" style="font-size:48px;font-weight:700;color:#f8fafc">NT$2,112</div>
+                <div id="calc-result" style="font-size:48px;font-weight:700;color:#f8fafc">NT$2,208</div>
                 <div id="calc-range" style="color:var(--text-secondary);font-size:13px;margin-top:8px;">保守 NT$1,760 ～ 樂觀 NT$2,640</div>
                 <div id="calc-updown" style="font-size:14px;margin-top:8px;font-weight:600"></div>
             </div>
@@ -1766,7 +1766,7 @@ function renderValuationCalculator() {
 }
 
 function updateCalc() {
-    const eps = parseFloat(document.getElementById('calc-eps')?.value || 88);
+    const eps = parseFloat(document.getElementById('calc-eps')?.value || 92);
     const pe  = parseFloat(document.getElementById('calc-pe')?.value  || 24);
     const fair = Math.round(eps * pe);
     const low  = Math.round(eps * (pe * 0.8));
@@ -1802,8 +1802,9 @@ function renderDividendChart(data) {
     // 殖利率 = 全年股息 / 年均股價（更合理，非年底收盤）
     // 年均股價（用於殖利率計算，比年底收盤更合理）
     const avgPrices = {
-        '2018':215, '2019':270, '2020':400, '2021':580,
-        '2022':500, '2023':535, '2024':820, '2025':1200
+        // 年均股價（各季收盤均值，來源：Yahoo Finance / 財報狗）
+        '2018':220, '2019':258, '2020':398, '2021':620,
+        '2022':500, '2023':538, '2024':793, '2025':1069
     };
     const yields = data.map(r => {
         const p = avgPrices[r.year];
@@ -1950,7 +1951,7 @@ function renderCustomerConcentration() {
         { name: 'Qualcomm', pct: 7,  color: '#a78bfa', note: 'Snapdragon 8 Gen 4' },
         { name: 'Broadcom', pct: 6,  color: '#fb923c', note: 'AI ASIC / 網路晶片' },
         { name: 'Intel',    pct: 5,  color: '#94a3b8', note: 'Lunar Lake 外包' },
-        { name: '其他',     pct: 36, color: '#475569', note: '車用、IoT、HPC 等（前六大客戶合計64%，其餘36%）' },
+        { name: '其他',     pct: 36, color: '#475569', note: '車用、IoT、HPC 等（前六大(NVIDIA+Apple+AMD+Qualcomm+Broadcom+Intel)合計64%，其餘36%）' },
     ];
 
     const total = customers.reduce((s, c) => s + c.pct, 0);
@@ -1989,9 +1990,9 @@ function renderCustomerConcentration() {
     if (noteEl) {
         noteEl.innerHTML = `
             <p class="source-note">
-                資料來源：台積電 2025 年報及法說會。前五大客戶合計約佔營收 <strong>64%</strong>，
+                資料來源：台積電 2025 年報及法說會。前六大客戶（含Intel）合計約佔營收 <strong>64%</strong>，前五大（不含Intel）約 <strong>59%</strong>，
                 客戶集中度高，NVIDIA AI 晶片訂單快速成長，2025年正式超越Apple成為第一大客戶（19%），
-                Apple 為第二大客戶（約 20%）。<br>
+                Apple 為第二大客戶（約 18%）。<br>
                 <span style="color:var(--text-secondary);font-size:12px">* 實際比例為估算，各季有所波動</span>
             </p>
         `;
@@ -2737,7 +2738,7 @@ function renderROEChart() {
                   borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.12)',
                   borderWidth: 2.5, pointRadius: 6, pointHoverRadius: 8,
                   fill: true, tension: 0.3 },
-                { label: '行業平均 ~20%', data: data.map(() => 20),
+                { label: '半導體大廠平均 ~18%', data: data.map(() => 18),
                   borderColor: 'rgba(148,163,184,0.5)', borderWidth: 1.5,
                   borderDash: [6,3], pointRadius: 0 }
             ]
@@ -3009,7 +3010,7 @@ function renderRnDRateChart() {
     // 25Q1+：從損益表累計值反推單季，677.6/11341=5.97%（26Q1）
     const labels   = ['24Q1','24Q2','24Q3','24Q4','25Q1','25Q2','25Q3','25Q4','26Q1'];
     const rndAmt   = [417.8, 474.8, 535.6, 612.3, 565.5, 612.5, 638.0, 648.0, 677.6]; // 億元
-    const revAmt   = [5926,  6735,  7597,  8685,  8393,  9337,  9900, 10461, 11341];  // 億元
+    const revAmt   = [5926.4, 6735.1, 7596.9, 8684.6, 8393,  9337,  9900, 10461, 11341];  // 億元
     const rndRate  = rndAmt.map((r,i) => +(r/revAmt[i]*100).toFixed(2));
 
     createChart('rnd-rate-chart', {
