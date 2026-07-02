@@ -1664,21 +1664,21 @@ function renderVIXChart(tsmData, vixData) {
 }
 
 // ── 5. 外資法人目標價（消息面）─────────────────────────────────
-// 公開資料：各大外資最新目標價（2026Q1法說會後調升，截至2026年4月）
+// 公開資料：各大外資最新目標價（截至 2026 年 6 月底，7 月法說前調升潮）
 const ANALYST_TARGETS = [
-    { firm: 'CLSA (里昂)',           rating: 'Buy',        target: 3030, date: '2026-04' },
+    { firm: 'Aletheia Capital',      rating: 'Buy',        target: 3500, date: '2026-06' },
+    { firm: 'UBS (瑞銀)',            rating: 'Buy',        target: 3400, date: '2026-06-29' },
+    { firm: 'Macquarie (麥格理)',    rating: 'Outperform', target: 3380, date: '2026-06' },
+    { firm: 'CLSA (里昂)',           rating: 'Buy',        target: 3330, date: '2026-06' },
     { firm: 'Citigroup (花旗)',      rating: 'Buy',        target: 2875, date: '2026-04' },
     { firm: 'Nomura (野村)',         rating: 'Buy',        target: 2820, date: '2026-04' },
     { firm: 'HSBC (滙豐)',           rating: 'Buy',        target: 2800, date: '2026-04' },
     { firm: 'Goldman Sachs (高盛)',  rating: 'Buy',        target: 2750, date: '2026-04' },
-    { firm: 'UBS (瑞銀)',            rating: 'Buy',        target: 2650, date: '2026-04' },
     { firm: 'Morgan Stanley (大摩)', rating: 'Overweight', target: 2588, date: '2026-04' },
     { firm: 'Bank of America (美銀)',rating: 'Buy',        target: 2560, date: '2026-04' },
-    { firm: 'Macquarie (麥格理)',    rating: 'Outperform', target: 2550, date: '2026-04' },
     { firm: 'BNP Paribas (法巴)',    rating: 'Buy',        target: 2520, date: '2026-04' },
     { firm: 'Mizuho (瑞穗)',         rating: 'Buy',        target: 2450, date: '2026-04' },
     { firm: 'JP Morgan (小摩)',      rating: 'Overweight', target: 2400, date: '2026-04' },
-    { firm: 'Aletheia Capital',      rating: 'Buy',        target: 2400, date: '2026-04' },
     { firm: 'Daiwa (大和)',          rating: 'Buy',        target: 2330, date: '2026-04' },
 ];
 
@@ -1691,7 +1691,7 @@ function renderAnalystTargets(currentPrice) {
     const upside = currentPrice ? ((avgTarget - currentPrice) / currentPrice * 100).toFixed(1) : null;
 
     el.innerHTML = `
-        <h4>外資法人目標價（2026Q1法說會後，截至2026年4月）</h4>
+        <h4>外資法人目標價（截至 2026 年 6 月底，7 月法說前調升潮）</h4>
         <p class="text-muted" style="margin-bottom:16px;">
             共 ${sorted.length} 家機構，平均目標價 <strong style="color:#3b82f6">NT$${avgTarget.toLocaleString()}</strong>
             ${upside ? `，較現價潛在 ${upside > 0 ? '+' : ''}${upside}%` : ''}
@@ -2534,7 +2534,7 @@ function renderImportantDates() {
     const events = [
         { date: '2026-07-09', label: 'Q1股利發放 (NT$6/股)', icon: 'fa-coins',      type: 'success' },
         { date: '2026-07-10', label: 'Q2 初步營收公告',       icon: 'fa-chart-bar',  type: 'info'    },
-        { date: '2026-07-17', label: '2026 Q2 法說會',        icon: 'fa-microphone', type: 'primary' },
+        { date: '2026-07-16', label: '2026 Q2 法說會',        icon: 'fa-microphone', type: 'primary' },
         { date: '2026-09-16', label: 'Q2 除息日',             icon: 'fa-scissors',   type: 'warning' },
         { date: '2026-10-08', label: 'Q2股利發放 (預計)',     icon: 'fa-coins',      type: 'success' },
         { date: '2026-10-15', label: '2026 Q3 法說會',        icon: 'fa-microphone', type: 'primary' },
