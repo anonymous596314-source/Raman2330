@@ -33,6 +33,10 @@
                 <button class="nav-item" data-panel="industry"><i class="fa-solid fa-industry"></i> 產業面分析</button>
                 <button class="nav-item" data-panel="outlook"><i class="fa-solid fa-rocket"></i> 未來 10 年展望</button>
                 <button class="nav-item" data-panel="risk"><i class="fa-solid fa-scale-balanced"></i> 風險情境</button>
+                <button class="nav-item" data-panel="monthly"><i class="fa-solid fa-calendar-days"></i> 月營收追蹤</button>
+                <button class="nav-item" data-panel="supplier"><i class="fa-solid fa-link"></i> 供應商生態</button>
+                <button class="nav-item" data-panel="asp"><i class="fa-solid fa-tag"></i> 晶圓定價 ASP</button>
+                <button class="nav-item" data-panel="flow-revenue"><i class="fa-solid fa-arrows-left-right"></i> 外資×月營收</button>
             </nav>
         </aside>
 
@@ -602,6 +606,149 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- ════════════════════════════════════════════ -->
+                <!-- 月營收追蹤面板                               -->
+                <!-- ════════════════════════════════════════════ -->
+                <section id="panel-monthly" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-calendar-days"></i> 月營收追蹤</h3>
+                        <p class="panel-desc">每月 10 日公告，是季報前最即時的先行指標；年增率加速/減速是法人調倉最重要的觸發訊號</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>月合併營收趨勢（2025/01 ~ 2026/05）</h4>
+                            <p class="text-muted">藍柱 = 當月營收（億元），折線 = 年增率 YoY (%)；資料來源：TSMC 官方月報，與季報交叉驗證一致</p>
+                            <div class="chart-container large"><canvas id="monthly-rev-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>近12個月 YoY 加速/減速趨勢</h4>
+                            <p class="text-muted">YoY 持續 > 30% 且加速，通常是外資進場訊號；YoY 轉負是最重要的風險預警</p>
+                            <div class="chart-container"><canvas id="monthly-yoy-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>月營收判讀重點</h4>
+                            <table class="data-table">
+                                <thead><tr><th>指標</th><th>當前狀況</th><th>意涵</th></tr></thead>
+                                <tbody>
+                                    <tr><td>2026/05 YoY</td><td style="color:var(--up-color)">+30.1%</td><td>連續成長，AI需求持續</td></tr>
+                                    <tr><td>1-5月累計 YoY</td><td style="color:var(--up-color)">+30.0%</td><td>符合法說指引 "30%+ USD growth"</td></tr>
+                                    <tr><td>季節性</td><td>2月為傳統淡季</td><td>2月環比下滑屬正常，不需過度解讀</td></tr>
+                                    <tr><td>26Q2 隱含</td><td>估 NT$1.26兆+</td><td>三個月合計將超越 25Q4 高點</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ════════════════════════════════════════════ -->
+                <!-- 供應商生態面板                               -->
+                <!-- ════════════════════════════════════════════ -->
+                <section id="panel-supplier" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-link"></i> 上游供應商生態</h3>
+                        <p class="panel-desc">ASML、AMAT、Lam Research、Tokyo Electron 的營收動向是台積電資本支出計畫的最佳驗證，也是 AI 建設週期的上游先行指標</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>四大設備商年度營收趨勢（USD B）</h4>
+                            <p class="text-muted">來源：各公司年報（ASML FY=日曆年；AMAT FY=10月底；LRCX FY=6月底；TEL FY=3月底）。2025年四家合計 US$106B，較2022年成長 24%</p>
+                            <div class="chart-container large"><canvas id="supplier-rev-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>設備商營收 vs 台積電 Capex（相關性）</h4>
+                            <p class="text-muted">台積電 Capex 加速時，設備商營收通常滯後 6-12 個月反映；可作為 Capex 落實進度的交叉驗證</p>
+                            <div class="chart-container"><canvas id="supplier-capex-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>各供應商定位與台積電依賴度</h4>
+                            <table class="data-table">
+                                <thead><tr><th>公司</th><th>核心技術</th><th>2025 Rev</th><th>台積電佔比(估)</th></tr></thead>
+                                <tbody>
+                                    <tr><td>ASML</td><td>EUV/ArF 曝光機</td><td>US$37.7B</td><td>~15-17%</td></tr>
+                                    <tr><td>Applied Materials</td><td>CVD/PVD/CMP/蝕刻</td><td>US$29.9B</td><td>~12-15%</td></tr>
+                                    <tr><td>Lam Research</td><td>ALD/蝕刻/清洗</td><td>US$18.4B</td><td>~10-12%</td></tr>
+                                    <tr><td>Tokyo Electron</td><td>塗佈顯影/CVD/蝕刻</td><td>US$20.0B</td><td>~10-12%</td></tr>
+                                </tbody>
+                            </table>
+                            <p style="margin-top:12px;font-size:13px;color:var(--text-secondary)">
+                                * 台積電佔比為估算，各設備商未單獨揭露客戶集中度。ASML 為唯一 EUV 光刻機供應商，對台積電 N3/N2/A16 製程有不可替代性。2026 年隨 TSMC Capex 由 US$41B 跳升至 US$54B，設備商出貨量預計在 2026H2 明顯加速。
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ════════════════════════════════════════════ -->
+                <!-- 晶圓 ASP 面板                               -->
+                <!-- ════════════════════════════════════════════ -->
+                <section id="panel-asp" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-tag"></i> 晶圓定價能力（ASP）</h3>
+                        <p class="panel-desc">台積電不公布正式 ASP，但可從季度晶圓收入 ÷ 出貨片數反推。ASP 是最直接的定價能力指標，也是毛利率能否持續提升的核心驅動力</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>12吋等效晶圓平均售價（ASP，USD/片）</h4>
+                            <p class="text-muted">來源：SemiAnalysis、Tom's Hardware、TrendForce；2019-2025 年 ASP 年複合成長率 15.9%（EUV 時代結構性提價週期）</p>
+                            <div class="chart-container large"><canvas id="wafer-asp-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>各製程節點定價水準（USD/片，估）</h4>
+                            <p class="text-muted">來源：Bernstein Research、TrendForce、Commercial Times；N2/A16 定價預估每年隨量產規模調整</p>
+                            <div class="chart-container"><canvas id="node-price-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>ASP 成長驅動因素分析</h4>
+                            <p>
+                                台積電 12 吋晶圓加權平均售價從 2019 年約 <strong>US$3,700</strong> 成長至 2025 年約 <strong>US$9,500</strong>，年複合成長率 <strong>15.9%</strong>（Tom's Hardware / SemiAnalysis）。<br><br>
+                                <strong>主要驅動因素：</strong><br>
+                                ① <strong>製程節點升級</strong>：N3 定價約 US$20,000/片、N2 預計 US$20,000-25,000/片，遠高於 N7（約 US$5,000-6,000/片）。每當先進製程佔比提升 1%，ASP 就上升約 0.3-0.5%。<br>
+                                ② <strong>定期調價</strong>：台積電於 2022 年對全製程調漲 6%，2025 年再對 N4/N5 調漲 ~10%，2027 年初市場預期再調漲 5-10%（瑞銀報告）。<br>
+                                ③ <strong>CoWoS 定價進入高值區</strong>：每片 CoWoS 封裝價格約 <strong>US$10,000</strong>，接近 7nm 晶圓水準，為台積電封裝毛利率帶來結構性提升。
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ════════════════════════════════════════════ -->
+                <!-- 外資買賣超 vs 月營收面板                     -->
+                <!-- ════════════════════════════════════════════ -->
+                <section id="panel-flow-revenue" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-arrows-left-right"></i> 外資動向 × 月營收共振</h3>
+                        <p class="panel-desc">外資布局台積電通常領先月營收 YoY 加速 1-4 週；月營收公告後的外資反應是最重要的短線籌碼信號</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>外資累計買賣超 vs 月營收 YoY（近12個月）</h4>
+                            <p class="text-muted">橘線 = 月營收 YoY%（右軸）；藍柱 = 外資當月累計買賣超（億元，左軸）；資料來源：FinMind API + TSMC官方月報</p>
+                            <div class="chart-container large"><canvas id="flow-revenue-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>歷史規律觀察</h4>
+                            <table class="data-table">
+                                <thead><tr><th>時期</th><th>月營收 YoY</th><th>外資動向</th><th>隱含信號</th></tr></thead>
+                                <tbody>
+                                    <tr><td>2025 Q1</td><td style="color:var(--up-color)">+33-36%</td><td>持續買超</td><td>AI 需求確認，加碼</td></tr>
+                                    <tr><td>2025 Q2</td><td style="color:#f59e0b">+17-30%</td><td>震盪偏賣</td><td>關稅不確定性避險</td></tr>
+                                    <tr><td>2025 Q3-Q4</td><td style="color:var(--up-color)">+16-24%</td><td>回補</td><td>N2 量產確認後進場</td></tr>
+                                    <tr><td>2026 Q1</td><td style="color:var(--up-color)">+36-45%</td><td>強力買超</td><td>26Q1 法說大超預期</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card text-card">
+                            <h4>月營收公告後的外資反應模式</h4>
+                            <p>
+                                根據近 12 個月的規律，台積電月營收公告日（每月 10 日）前後外資的操作模式：<br><br>
+                                <strong>YoY &gt; 30%（超預期）：</strong> 公告後 1-3 個交易日外資通常轉為買超，且買超金額與 YoY 超出幅度正相關。<br><br>
+                                <strong>YoY 15-30%（符合預期）：</strong> 外資反應中性，以換手為主，較少出現大方向買賣。<br><br>
+                                <strong>YoY &lt; 15% 或 YoY 減速：</strong> 外資傾向賣超，尤其是連續兩個月 YoY 下行時，容易觸發程式化賣盤。<br><br>
+                                <span style="color:var(--text-secondary);font-size:12px">* 此為統計規律，非必然。個別月份可能受匯率、地緣政治、美股走勢等因素干擾而偏離。動態數據來自 FinMind API。</span>
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
             </div>
         </main>
     </div>
