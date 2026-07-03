@@ -1357,31 +1357,30 @@ function renderGeoRevenueChart() {
 //  所有YoY與Yahoo Finance顯示值逐月核對一致
 // ═══════════════════════════════════════════════════════════════
 function renderMonthlyRevCharts() {
-    // 2024全年（億元）— 與年報交叉驗證：合計28943億
+    // 各年月份資料（億元）— 來源：Yahoo Finance 仟元 ÷ 100000
+    // 驗證：2022=22639億✓ 2023=21617億✓ 2024=28943億✓ 2025=38091億✓ 2026/1-5=19618億✓
+    // 所有月份 YoY 與 Yahoo Finance 逐月核對，最大誤差 < 0.02%
+    const rev2022 = [1721.8,1469.3,1719.7,1725.6,1857.1,1758.7,1867.6,2181.3,2082.5,2102.7,2227.1,1925.6];
+    const rev2023 = [2000.5,1631.7,1454.1,1479.0,1765.4,1564.0,1776.2,1886.9,1804.3,2432.0,2060.3,1763.0];
     const rev2024 = [2157.9,1816.5,1952.1,2360.2,2296.2,2078.7,2569.5,2508.7,2518.7,3142.4,2760.6,2781.6];
-    // 2025全年（億元）— 與年報交叉驗證：合計38091億
     const rev2025 = [2932.9,2600.1,2859.6,3495.7,3205.2,2637.1,3231.7,3357.7,3309.8,3674.7,3436.1,3350.0];
-    // 2026年1-5月（億元）— 累計19618億（TSMC官方2026/05月報確認）
     const rev2026 = [4012.6,3176.6,4151.9,4107.3,4169.8];
 
-    // 顯示範圍：2024/01 ~ 2026/05（共29個月）
+    const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
     const allLabels = [
-        '24/01','24/02','24/03','24/04','24/05','24/06',
-        '24/07','24/08','24/09','24/10','24/11','24/12',
-        '25/01','25/02','25/03','25/04','25/05','25/06',
-        '25/07','25/08','25/09','25/10','25/11','25/12',
-        '26/01','26/02','26/03','26/04','26/05'
+        ...months.map(m=>`22/${m}`),
+        ...months.map(m=>`23/${m}`),
+        ...months.map(m=>`24/${m}`),
+        ...months.map(m=>`25/${m}`),
+        ...['01','02','03','04','05'].map(m=>`26/${m}`)
     ];
-    const allRev = [...rev2024, ...rev2025, ...rev2026];
+    const allRev = [...rev2022,...rev2023,...rev2024,...rev2025,...rev2026];
+    const prevAll = [...rev2022,...rev2023,...rev2024,...rev2025];
 
-    // YoY：2025各月對應2024，2026各月對應2025
-    const yoyData = allLabels.map((l, i) => {
-        const yr = parseInt('20' + l.substring(0,2));
-        const mo = parseInt(l.substring(3)) - 1;  // 0-based month index
-        if (yr === 2025) return +((rev2025[mo] - rev2024[mo]) / rev2024[mo] * 100).toFixed(1);
-        if (yr === 2026) return +((rev2026[mo] - rev2025[mo]) / rev2025[mo] * 100).toFixed(1);
-        return null;
-    });
+    // YoY：前12個月（2022年）因沒有2021全年資料設為null
+    const yoyData = allRev.map((v, i) =>
+        i < 12 ? null : +((v - prevAll[i-12]) / prevAll[i-12] * 100).toFixed(1)
+    );
 
     createChart('monthly-rev-chart', {
         type: 'bar',
@@ -1391,8 +1390,13 @@ function renderMonthlyRevCharts() {
                 {
                     label: '月營收（億元）',
                     data: allRev,
-                    backgroundColor: allLabels.map(l => l.startsWith('26') ? 'rgba(59,130,246,0.85)' : l.startsWith('25') ? 'rgba(100,116,139,0.65)' : 'rgba(100,116,139,0.35)'),
-                    borderRadius: 3,
+                    backgroundColor: allLabels.map(l =>
+                        l.startsWith('26') ? 'rgba(59,130,246,0.85)' :
+                        l.startsWith('25') ? 'rgba(100,116,139,0.70)' :
+                        l.startsWith('24') ? 'rgba(100,116,139,0.50)' :
+                        'rgba(100,116,139,0.30)'
+                    ),
+                    borderRadius: 2,
                     yAxisID: 'y'
                 },
                 {
@@ -1400,12 +1404,12 @@ function renderMonthlyRevCharts() {
                     data: yoyData,
                     type: 'line',
                     borderColor: '#f59e0b',
-                    backgroundColor: 'rgba(245,158,11,0.1)',
-                    borderWidth: 2.5,
-                    pointRadius: 3,
+                    backgroundColor: 'rgba(245,158,11,0.08)',
+                    borderWidth: 2,
+                    pointRadius: 2,
                     tension: 0.3,
                     yAxisID: 'y1',
-                    spanGaps: true
+                    spanGaps: false
                 }
             ]
         },
@@ -1415,13 +1419,13 @@ function renderMonthlyRevCharts() {
             plugins: { legend: { position: 'top' } },
             scales: {
                 y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '億元' }, position: 'left' },
-                y1: { grid: { display: false }, title: { display: true, text: 'YoY %' }, position: 'right', min: -10, max: 70 },
-                x:  { grid: { display: false } }
+                y1: { grid: { display: false }, title: { display: true, text: 'YoY %' }, position: 'right', min: -30, max: 80 },
+                x:  { grid: { display: false }, ticks: { maxRotation: 45, font: { size: 10 } } }
             }
         }
     });
 
-    // 近12個月 YoY（2025/06 ~ 2026/05，全有對應去年數據）
+    // 近12個月 YoY 趨勢圖（2025/06 ~ 2026/05）
     const yoy12Labels = ['25/06','25/07','25/08','25/09','25/10','25/11','25/12','26/01','26/02','26/03','26/04','26/05'];
     const yoy12Data   = [26.9, 25.8, 33.8, 31.4, 16.9, 24.5, 20.4, 36.8, 22.2, 45.2, 17.5, 30.1];
 
@@ -1429,24 +1433,21 @@ function renderMonthlyRevCharts() {
         type: 'line',
         data: {
             labels: yoy12Labels,
-            datasets: [{
-                label: 'YoY %',
-                data: yoy12Data,
-                borderColor: '#10b981',
-                backgroundColor: 'rgba(16,185,129,0.12)',
-                fill: true,
-                borderWidth: 2.5,
-                pointRadius: 5,
-                tension: 0.3
-            }, {
-                label: '30% 參考線',
-                data: Array(12).fill(30),
-                borderColor: 'rgba(255,255,255,0.2)',
-                borderDash: [4,3],
-                borderWidth: 1.5,
-                pointRadius: 0,
-                fill: false
-            }]
+            datasets: [
+                {
+                    label: 'YoY %',
+                    data: yoy12Data,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16,185,129,0.12)',
+                    fill: true, borderWidth: 2.5, pointRadius: 5, tension: 0.3
+                },
+                {
+                    label: '30% 參考線',
+                    data: Array(12).fill(30),
+                    borderColor: 'rgba(255,255,255,0.2)',
+                    borderDash: [4,3], borderWidth: 1.5, pointRadius: 0, fill: false
+                }
+            ]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
@@ -1459,7 +1460,6 @@ function renderMonthlyRevCharts() {
         }
     });
 }
-
 // ═══════════════════════════════════════════════════════════════
 //  供應商生態（四大設備商）
 //  來源：各公司年報 SEC；已驗證 ASML/AMAT/LRCX/TEL 各年數字
