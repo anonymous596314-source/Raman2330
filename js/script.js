@@ -1352,42 +1352,46 @@ function renderGeoRevenueChart() {
 
 // ═══════════════════════════════════════════════════════════════
 //  月營收追蹤（月營收面板）
-//  來源：TSMC 官方月報 + Yahoo Finance；2025全年與年報38091億交叉驗證一致
+//  來源：Yahoo Finance / TSMC官方月報（仟元轉億元）
+//  驗證：2024合計=28943億✓ 2025合計=38091億✓ 2026/1-5累計=19618億✓
+//  所有YoY與Yahoo Finance顯示值逐月核對一致
 // ═══════════════════════════════════════════════════════════════
 function renderMonthlyRevCharts() {
-    const labels = [
+    // 2024全年（億元）— 與年報交叉驗證：合計28943億
+    const rev2024 = [2157.9,1816.5,1952.1,2360.2,2296.2,2078.7,2569.5,2508.7,2518.7,3142.4,2760.6,2781.6];
+    // 2025全年（億元）— 與年報交叉驗證：合計38091億
+    const rev2025 = [2932.9,2600.1,2859.6,3495.7,3205.2,2637.1,3231.7,3357.7,3309.8,3674.7,3436.1,3350.0];
+    // 2026年1-5月（億元）— 累計19618億（TSMC官方2026/05月報確認）
+    const rev2026 = [4012.6,3176.6,4151.9,4107.3,4169.8];
+
+    // 顯示範圍：2024/01 ~ 2026/05（共29個月）
+    const allLabels = [
+        '24/01','24/02','24/03','24/04','24/05','24/06',
+        '24/07','24/08','24/09','24/10','24/11','24/12',
         '25/01','25/02','25/03','25/04','25/05','25/06',
         '25/07','25/08','25/09','25/10','25/11','25/12',
         '26/01','26/02','26/03','26/04','26/05'
     ];
-    // 億元台幣，與季報交叉驗證：
-    // 25Q1=8393(2932.9+2600.1+2859.6=8392.6✓), 25Q2=9337, 25Q3=9900, 25Q4=10461, 合計=38091✓
-    // 2026/01-05 累計=19618億（TSMC官方2026/05月報確認）
-    const revData = [
-        2932.9, 2600.1, 2859.6, 3495.7, 3205.2, 2636.1,
-        3308.0, 3041.9, 3550.1, 3674.7, 3436.1, 3350.2,
-        4012.6, 3176.6, 4151.9, 4107.3, 4169.8
-    ];
-    const prevYearData = [
-        // 2024年對應月份（從Q1-Q4反推）：24Q1=5926.4, Q2=9337-...不完整，用近似值
-        null, null, null, null, null, null,
-        null, null, null, null, null, null,
-        2932.9, 2600.1, 2859.6, 3495.7, 3205.2  // 2026月份的去年同期 = 2025月份
-    ];
-    const yoyData = labels.map((_, i) =>
-        prevYearData[i] ? +((revData[i] - prevYearData[i]) / prevYearData[i] * 100).toFixed(1) : null
-    );
+    const allRev = [...rev2024, ...rev2025, ...rev2026];
 
-    // 主圖：月營收 + YoY
+    // YoY：2025各月對應2024，2026各月對應2025
+    const yoyData = allLabels.map((l, i) => {
+        const yr = parseInt('20' + l.substring(0,2));
+        const mo = parseInt(l.substring(3)) - 1;  // 0-based month index
+        if (yr === 2025) return +((rev2025[mo] - rev2024[mo]) / rev2024[mo] * 100).toFixed(1);
+        if (yr === 2026) return +((rev2026[mo] - rev2025[mo]) / rev2025[mo] * 100).toFixed(1);
+        return null;
+    });
+
     createChart('monthly-rev-chart', {
         type: 'bar',
         data: {
-            labels,
+            labels: allLabels,
             datasets: [
                 {
                     label: '月營收（億元）',
-                    data: revData,
-                    backgroundColor: labels.map(l => l.startsWith('26') ? 'rgba(59,130,246,0.85)' : 'rgba(100,116,139,0.6)'),
+                    data: allRev,
+                    backgroundColor: allLabels.map(l => l.startsWith('26') ? 'rgba(59,130,246,0.85)' : l.startsWith('25') ? 'rgba(100,116,139,0.65)' : 'rgba(100,116,139,0.35)'),
                     borderRadius: 3,
                     yAxisID: 'y'
                 },
@@ -1396,9 +1400,9 @@ function renderMonthlyRevCharts() {
                     data: yoyData,
                     type: 'line',
                     borderColor: '#f59e0b',
-                    backgroundColor: 'rgba(245,158,11,0.15)',
+                    backgroundColor: 'rgba(245,158,11,0.1)',
                     borderWidth: 2.5,
-                    pointRadius: 4,
+                    pointRadius: 3,
                     tension: 0.3,
                     yAxisID: 'y1',
                     spanGaps: true
@@ -1411,37 +1415,45 @@ function renderMonthlyRevCharts() {
             plugins: { legend: { position: 'top' } },
             scales: {
                 y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '億元' }, position: 'left' },
-                y1: { grid: { display: false }, title: { display: true, text: 'YoY %' }, position: 'right', min: 0, max: 60 },
+                y1: { grid: { display: false }, title: { display: true, text: 'YoY %' }, position: 'right', min: -10, max: 70 },
                 x:  { grid: { display: false } }
             }
         }
     });
 
-    // 近12個月 YoY 單獨圖
-    const yoy12 = labels.slice(5).map((l, i) => yoyData[i + 5]);
-    const lab12 = labels.slice(5);
+    // 近12個月 YoY（2025/06 ~ 2026/05，全有對應去年數據）
+    const yoy12Labels = ['25/06','25/07','25/08','25/09','25/10','25/11','25/12','26/01','26/02','26/03','26/04','26/05'];
+    const yoy12Data   = [26.9, 25.8, 33.8, 31.4, 16.9, 24.5, 20.4, 36.8, 22.2, 45.2, 17.5, 30.1];
+
     createChart('monthly-yoy-chart', {
         type: 'line',
         data: {
-            labels: lab12,
+            labels: yoy12Labels,
             datasets: [{
                 label: 'YoY %',
-                data: yoy12,
+                data: yoy12Data,
                 borderColor: '#10b981',
                 backgroundColor: 'rgba(16,185,129,0.12)',
                 fill: true,
                 borderWidth: 2.5,
                 pointRadius: 5,
-                tension: 0.3,
-                spanGaps: true
+                tension: 0.3
+            }, {
+                label: '30% 參考線',
+                data: Array(12).fill(30),
+                borderColor: 'rgba(255,255,255,0.2)',
+                borderDash: [4,3],
+                borderWidth: 1.5,
+                pointRadius: 0,
+                fill: false
             }]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false },
-                tooltip: { callbacks: { label: ctx => ctx.raw != null ? `YoY: ${ctx.raw}%` : '—' } } },
+            plugins: { legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx => `YoY: ${ctx.raw}%` } } },
             scales: {
-                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'YoY %' } },
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'YoY %' }, min: 0, max: 60 },
                 x: { grid: { display: false } }
             }
         }
@@ -1579,13 +1591,15 @@ function renderASPCharts() {
 
 // ═══════════════════════════════════════════════════════════════
 //  外資動向 × 月營收（靜態月份資料；即時外資數據由 API 提供）
+//  月營收YoY全部已與Yahoo Finance逐月核對
 // ═══════════════════════════════════════════════════════════════
 function renderFlowRevenueChart() {
-    // 月營收 YoY（靜態，已與季報驗證）
+    // 近12個月：2025/06 ~ 2026/05（全有對應去年數據，YoY完整）
     const labels  = ['25/06','25/07','25/08','25/09','25/10','25/11','25/12','26/01','26/02','26/03','26/04','26/05'];
-    const yoyData = [null, null, null, null, null, null, null, 36.8, 22.2, 45.2, 17.5, 30.1];
-    // 外資買賣超（以近似月合計，億元；從 FinMind 動態載入，此為 placeholder）
-    const foreignFlow = [null, null, null, null, null, null, null, 320, -180, 450, 80, 210];
+    // YoY：全部已驗證，與Yahoo Finance一致
+    const yoyData = [26.9,   25.8,   33.8,   31.4,   16.9,   24.5,   20.4,   36.8,   22.2,   45.2,   17.5,   30.1];
+    // 外資買賣超（月合計，億元；placeholder，實際由 FinMind API 提供）
+    const foreignFlow = [-85, 120, 95, 180, -210, 65, 135, 320, -180, 450, 80, 210];
 
     createChart('flow-revenue-chart', {
         type: 'bar',
@@ -1595,7 +1609,7 @@ function renderFlowRevenueChart() {
                 {
                     label: '外資月買賣超（億元）',
                     data: foreignFlow,
-                    backgroundColor: foreignFlow.map(v => v == null ? 'transparent' : v >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)'),
+                    backgroundColor: foreignFlow.map(v => v >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)'),
                     borderRadius: 3,
                     yAxisID: 'y'
                 },
@@ -1608,25 +1622,17 @@ function renderFlowRevenueChart() {
                     pointRadius: 4,
                     tension: 0.3,
                     fill: false,
-                    yAxisID: 'y1',
-                    spanGaps: true
+                    yAxisID: 'y1'
                 }
             ]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { position: 'top' },
-                annotation: {
-                    annotations: { line1: { type: 'line', yScaleID: 'y1', yMin: 30, yMax: 30,
-                        borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderDash: [4,3],
-                        label: { content: '30% 基準線', display: true, position: 'start', color: '#94a3b8', font: { size: 11 } }
-                    }}
-                }
-            },
+            plugins: { legend: { position: 'top' } },
             scales: {
                 y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '億元（外資）' }, position: 'left' },
-                y1: { grid: { display: false }, title: { display: true, text: 'YoY %' }, position: 'right' },
+                y1: { grid: { display: false }, title: { display: true, text: 'YoY %' }, position: 'right', min: 0, max: 60 },
                 x:  { grid: { display: false } }
             }
         }
