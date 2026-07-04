@@ -280,6 +280,10 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         if (panel === 'supplier')     initNewPanelOnce('supplier',     renderSupplierCharts);
         if (panel === 'asp')          initNewPanelOnce('asp',          renderASPCharts);
         if (panel === 'flow-revenue') initNewPanelOnce('flow-revenue', renderFlowRevenueChart);
+        if (panel === 'semimkt')      initNewPanelOnce('semimkt',      renderSemiMktCharts);
+        if (panel === 'roadmap2')     initNewPanelOnce('roadmap2',     renderRoadmap2Charts);
+        if (panel === 'fcf')          initNewPanelOnce('fcf',          renderFCFCharts);
+        if (panel === 'esg')          initNewPanelOnce('esg',          renderESGCharts);
     });
 });
     try { renderValuationCalculator(); }  catch(e) { console.error('[renderValuationCalculator]', e); }
@@ -1634,6 +1638,234 @@ function renderFlowRevenueChart() {
                 y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '億元（外資）' }, position: 'left' },
                 y1: { grid: { display: false }, title: { display: true, text: 'YoY %' }, position: 'right', min: 0, max: 60 },
                 x:  { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  5. 全球半導體市場 vs TSMC 滲透率
+//  來源：WSTS Autumn 2025 Forecast + TSMC 官方年報
+// ═══════════════════════════════════════════════════════════════
+function renderSemiMktCharts() {
+    const years = ['2021','2022','2023','2024','2025','2026E'];
+    const wsts  = [555.9, 574.1, 526.8, 630.5, 772.0, 975.5]; // WSTS USD B
+    const tsmc  = [ 56.8,  75.9,  69.7,  90.2, 122.9, 160.0]; // TSMC USD B（2026E法說>30%）
+    const share = tsmc.map((t,i)=>+(t/wsts[i]*100).toFixed(1));
+
+    createChart('semimkt-chart', {
+        type: 'bar',
+        data: {
+            labels: years,
+            datasets: [
+                { label: '全球半導體市場 (WSTS, USD B)', data: wsts,
+                  backgroundColor: 'rgba(100,116,139,0.4)', borderRadius: 3, yAxisID: 'y' },
+                { label: 'TSMC 營收 (USD B)', data: tsmc,
+                  backgroundColor: years.map(y=>y.includes('E')?'rgba(59,130,246,0.5)':'rgba(59,130,246,0.85)'),
+                  borderRadius: 3, yAxisID: 'y' },
+                { label: 'TSMC 市場份額 (%)', data: share, type: 'line',
+                  borderColor: '#f59e0b', borderWidth: 2.5, pointRadius: 5, tension: 0.3,
+                  fill: false, yAxisID: 'y1' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'USD Billion' }, position: 'left' },
+                y1: { grid: { display: false }, title: { display: true, text: '市場份額 %' }, position: 'right', min: 8, max: 20 },
+                x:  { grid: { display: false } }
+            }
+        }
+    });
+
+    createChart('semimkt-share-chart', {
+        type: 'line',
+        data: {
+            labels: years,
+            datasets: [{ label: 'TSMC 市場份額 (%)', data: share,
+                borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.12)',
+                fill: true, borderWidth: 3, pointRadius: 6, tension: 0.3,
+                pointBackgroundColor: years.map(y=>y.includes('E')?'transparent':'#3b82f6') }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `市場份額：${ctx.raw}%` } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '%' }, min: 8, max: 20 },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  6. 製程藍圖精確版
+//  來源：Q4 2025 / Q1 2026 法說會逐字稿、TSMC Tech Symposium 2026
+// ═══════════════════════════════════════════════════════════════
+function renderRoadmap2Charts() {
+    // 產能爬坡相對指數（以 N3 2023年=100 為基準，估算）
+    const labels = ['2023', '2024', '2025', '2026E', '2027E', '2028E'];
+    createChart('roadmap2-chart', {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label: 'N3 家族產能指數',  data: [100, 160, 190, 200, 185, 160],
+                  borderColor: '#94a3b8', borderWidth: 2, tension: 0.3, pointRadius: 4, fill: false },
+                { label: 'N2/N2P 產能指數', data: [0, 0, 20, 80, 160, 250],
+                  borderColor: '#3b82f6', borderWidth: 2.5, tension: 0.3, pointRadius: 4,
+                  backgroundColor: 'rgba(59,130,246,0.1)', fill: true },
+                { label: 'A16 產能指數',    data: [0, 0, 0, 0, 15, 60],
+                  borderColor: '#f59e0b', borderWidth: 2, tension: 0.3, pointRadius: 4, fill: false,
+                  borderDash: [4,3] }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw}（相對指數）` } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '產能指數（N3 2023=100）' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  7. FCF Yield
+//  來源：MacroTrends / finbox / BusinessQuant；FCF=opCF-Capex
+//  已與R4.xls現金流量表交叉驗證（2024/2025數字完全一致）
+// ═══════════════════════════════════════════════════════════════
+function renderFCFCharts() {
+    const years = ['2020','2021','2022','2023','2024','2025'];
+    const fcf   = [17.4, 9.8, 17.2, 9.6, 26.6, 40.5]; // USD B; MacroTrends/BusinessQuant
+    const yield_pct = [4.2, 1.9, 4.5, 1.4, 3.0, 2.2];  // finbox FCF Yield %
+    // 股利殖利率（歷史均股價，已驗證股利數字）
+    const div_yield = [
+        10.25/398*100, 10.25/620*100, 11.0/500*100,
+        11.25/538*100, 14.0/793*100, 18.0/1069*100
+    ].map(v=>+v.toFixed(2));
+
+    createChart('fcf-yield-chart', {
+        type: 'bar',
+        data: {
+            labels: years,
+            datasets: [
+                { label: 'FCF (USD B)', data: fcf,
+                  backgroundColor: 'rgba(59,130,246,0.75)', borderRadius: 4, yAxisID: 'y' },
+                { label: 'FCF Yield (%)', data: yield_pct, type: 'line',
+                  borderColor: '#f59e0b', borderWidth: 2.5, pointRadius: 5, tension: 0.3,
+                  fill: false, yAxisID: 'y1' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'USD Billion' }, position: 'left' },
+                y1: { grid: { display: false }, title: { display: true, text: 'FCF Yield %' }, position: 'right', min: 0, max: 6 },
+                x:  { grid: { display: false } }
+            }
+        }
+    });
+
+    createChart('fcf-div-compare-chart', {
+        type: 'line',
+        data: {
+            labels: years,
+            datasets: [
+                { label: 'FCF Yield (%)', data: yield_pct,
+                  borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)',
+                  fill: true, borderWidth: 2.5, pointRadius: 5, tension: 0.3 },
+                { label: '現金殖利率 (%)', data: div_yield,
+                  borderColor: '#10b981', borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '%' }, min: 0, max: 5.5 },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  8. 電力/用水 ESG
+//  來源：TSMC ESG 永續報告書（2020-2024年版）
+// ═══════════════════════════════════════════════════════════════
+function renderESGCharts() {
+    const years = ['2020','2021','2022','2023','2024'];
+    const electricity = [145, 167, 195, 210, 255]; // 億度 kWh
+    const water       = [ 60,  72,  85,  94, 102]; // 百萬立方米
+    const renewable   = [  7,   9,  10,  12,  13]; // 再生能源比例 %
+
+    createChart('electricity-chart', {
+        type: 'bar',
+        data: {
+            labels: years,
+            datasets: [
+                { label: '總用電量（億度）', data: electricity,
+                  backgroundColor: 'rgba(239,68,68,0.75)', borderRadius: 4 },
+                { label: '台灣佔比(%)', data: electricity.map(e=>+(e/2500*100).toFixed(1)),
+                  type: 'line', borderColor: '#f59e0b', borderWidth: 2, pointRadius: 4,
+                  fill: false, yAxisID: 'y1' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '億度 kWh' }, position: 'left' },
+                y1: { grid: { display: false }, title: { display: true, text: '佔台灣全島 %' }, position: 'right', min: 0, max: 15 },
+                x:  { grid: { display: false } }
+            }
+        }
+    });
+
+    createChart('water-chart', {
+        type: 'line',
+        data: {
+            labels: years,
+            datasets: [{ label: '用水量（百萬立方米）', data: water,
+                borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.12)',
+                fill: true, borderWidth: 2.5, pointRadius: 5, tension: 0.3 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '百萬立方米' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    createChart('renewable-chart', {
+        type: 'bar',
+        data: {
+            labels: [...years, '2030目標', '2040目標'],
+            datasets: [{ label: '再生能源比例 (%)',
+                data: [...renewable, 60, 100],
+                backgroundColor: [...years.map(()=>'rgba(16,185,129,0.7)'), 'rgba(245,158,11,0.6)', 'rgba(59,130,246,0.6)'],
+                borderRadius: 4 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `${ctx.raw}%` } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '%' }, min: 0, max: 105 },
+                x: { grid: { display: false } }
             }
         }
     });
