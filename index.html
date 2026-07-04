@@ -37,6 +37,10 @@
                 <button class="nav-item" data-panel="supplier"><i class="fa-solid fa-link"></i> 供應商生態</button>
                 <button class="nav-item" data-panel="asp"><i class="fa-solid fa-tag"></i> 晶圓定價 ASP</button>
                 <button class="nav-item" data-panel="flow-revenue"><i class="fa-solid fa-arrows-left-right"></i> 外資×月營收</button>
+                <button class="nav-item" data-panel="semimkt"><i class="fa-solid fa-earth-asia"></i> 半導體市場定位</button>
+                <button class="nav-item" data-panel="roadmap2"><i class="fa-solid fa-road"></i> 製程藍圖精確版</button>
+                <button class="nav-item" data-panel="fcf"><i class="fa-solid fa-money-bill-trend-up"></i> FCF Yield</button>
+                <button class="nav-item" data-panel="esg"><i class="fa-solid fa-leaf"></i> 電力/用水 ESG</button>
             </nav>
         </aside>
 
@@ -744,6 +748,155 @@
                                 <strong>YoY 15-30%（符合預期）：</strong> 外資反應中性，以換手為主，較少出現大方向買賣。<br><br>
                                 <strong>YoY &lt; 15% 或 YoY 減速：</strong> 外資傾向賣超，尤其是連續兩個月 YoY 下行時，容易觸發程式化賣盤。<br><br>
                                 <span style="color:var(--text-secondary);font-size:12px">* 此為統計規律，非必然。個別月份可能受匯率、地緣政治、美股走勢等因素干擾而偏離。動態數據來自 FinMind API。</span>
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ════════════════════════════════════════════ -->
+                <!-- 5. 全球半導體市場 vs TSMC 滲透率             -->
+                <!-- ════════════════════════════════════════════ -->
+                <section id="panel-semimkt" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-earth-asia"></i> 全球半導體市場定位</h3>
+                        <p class="panel-desc">台積電在全球半導體市場的份額持續擴大——從 2021 年 10% 到 2025 年 16%，顯示晶圓代工模式的結構性勝出。來源：WSTS Autumn 2025 Forecast</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>全球半導體市場規模 vs TSMC 營收（USD B）</h4>
+                            <p class="text-muted">藍柱=全球市場(WSTS)，橘線=TSMC營收，折線=TSMC市場滲透率(右軸)。2026E：WSTS預測市場$975.5B，TSMC法說指引 >30% YoY ≈ $160B</p>
+                            <div class="chart-container large"><canvas id="semimkt-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>TSMC 佔全球半導體市場份額趨勢</h4>
+                            <p class="text-muted">份額從 2021 年 10.2% 提升至 2025 年 15.9%——反映 AI/HPC 驅動先進製程滲透率提升，且 TSMC 成長速度持續超越整體行業</p>
+                            <div class="chart-container"><canvas id="semimkt-share-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>市場結構解讀</h4>
+                            <table class="data-table">
+                                <thead><tr><th>年度</th><th>全球市場</th><th>TSMC</th><th>份額</th><th>YoY(TSMC)</th></tr></thead>
+                                <tbody>
+                                    <tr><td>2021</td><td>$556B</td><td>$56.8B</td><td>10.2%</td><td>+24.9%</td></tr>
+                                    <tr><td>2022</td><td>$574B</td><td>$75.9B</td><td>13.2%</td><td>+33.7%</td></tr>
+                                    <tr><td>2023</td><td>$527B</td><td>$69.7B</td><td>13.2%</td><td>-8.2%</td></tr>
+                                    <tr><td>2024</td><td>$631B</td><td>$90.2B</td><td>14.3%</td><td>+29.4%</td></tr>
+                                    <tr><td>2025</td><td>$772B</td><td>$122.9B</td><td>15.9%</td><td>+36.3%</td></tr>
+                                    <tr><td>2026E</td><td>$976B</td><td>~$160B</td><td>~16.4%</td><td>>30%</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ════════════════════════════════════════════ -->
+                <!-- 6. N2/A16 製程藍圖精確版                     -->
+                <!-- ════════════════════════════════════════════ -->
+                <section id="panel-roadmap2" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-road"></i> 製程技術藍圖精確版</h3>
+                        <p class="panel-desc">來源：Q4 2025 / Q1 2026 法說會逐字稿 + TSMC Tech Symposium 2026（2026年4-5月最新資訊）</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>N2 / A16 製程家族量產時程 &amp; 產能爬坡</h4>
+                            <p class="text-muted">圖表顯示 TSMC 各製程節點進入高量量產（HVM）的時程，以及預估產能爬坡速度（相對單位）</p>
+                            <div class="chart-container large"><canvas id="roadmap2-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>各節點最新狀態（截至 2026 年 Q2）</h4>
+                            <table class="data-table">
+                                <thead><tr><th>製程</th><th>狀態</th><th>主要應用</th><th>說明</th></tr></thead>
+                                <tbody>
+                                    <tr><td><strong>N3 家族</strong></td><td style="color:var(--up-color)">量產中</td><td>Apple A17/A18、NVIDIA H100-B系列</td><td>2022Q4量產，2023-2026主力，N3B/E/P多版本</td></tr>
+                                    <tr><td><strong>N2</strong></td><td style="color:var(--up-color)">HVM 2025Q4</td><td>Apple A20、NVIDIA Vera</td><td>竹科+高雄廠雙線量產，良率超預期，2026快速爬坡</td></tr>
+                                    <tr><td><strong>N2P</strong></td><td style="color:#f59e0b)">2026H2</td><td>HPC / 旗艦手機</td><td>N2延伸版，進一步PPA提升，2026下半年量產</td></tr>
+                                    <tr><td><strong>A16</strong></td><td style="color:#f59e0b">2027（調整）</td><td>特定HPC產品</td><td>原定2026H2→Tech Symposium 2026調整至2027；Super Power Rail(SPR)特色</td></tr>
+                                    <tr><td><strong>A14</strong></td><td style="color:#94a3b8">規劃中</td><td>下一代AI加速器</td><td>Tech Symposium 2026首度提及，目標2029</td></tr>
+                                    <tr><td><strong>CoWoS</strong></td><td style="color:var(--up-color)">擴產中</td><td>AI加速器封裝</td><td>2026良率>98%（Tech Symposium確認），最大5.5 reticle尺寸</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card text-card">
+                            <h4>N2 良率進展說明</h4>
+                            <p>
+                                根據 Q1 2026 法說會（2026/04/16）魏哲家原話：「<em>N2 has already entered high-volume manufacturing in Q4 2025 with good yield, and initial yields exceeding expectations.</em>」N2 爬坡速度甚至快於 N3，N2 的缺陷密度下降速率優於 N3 歷史同期（TSMC Tech Symposium 2026）。<br><br>
+                                N2 / A16 產能預期在 2026-2028 年以約 <strong>CAGR 70%</strong> 的速度擴張。台積電預計在竹科、高雄科學園區分多期建廠支撐此爬坡速度。N2 家族（N2/N2P/A16）將成為繼 N3 之後的另一個「大節點」，產品生命週期預計延續至 2030 年以後。
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ════════════════════════════════════════════ -->
+                <!-- 7. FCF Yield vs 股價歷史                     -->
+                <!-- ════════════════════════════════════════════ -->
+                <section id="panel-fcf" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-money-bill-trend-up"></i> 自由現金流收益率（FCF Yield）</h3>
+                        <p class="panel-desc">FCF Yield = 自由現金流 / 市值。比現金殖利率更本質的估值工具，反映企業真實現金創造能力 vs 市場定價。來源：MacroTrends / finbox / BusinessQuant</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>FCF &amp; FCF Yield 歷史（2020~2026Q1）</h4>
+                            <p class="text-muted">藍柱=年度自由現金流(USD B，左軸)；橘線=FCF Yield%(右軸)。FCF = 營業現金流 - 資本支出。來源：MacroTrends/finbox，已與台積電官方 CF 表交叉驗證</p>
+                            <div class="chart-container large"><canvas id="fcf-yield-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>FCF Yield vs 現金殖利率比較</h4>
+                            <p class="text-muted">FCF Yield 波動遠大於股利殖利率，是更敏感的估值信號。高 FCF Yield 通常對應股價相對低估或資本支出週期高峰後的現金爆發期</p>
+                            <div class="chart-container"><canvas id="fcf-div-compare-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>FCF Yield 解讀框架</h4>
+                            <p>
+                                台積電 FCF Yield 的高低主要由兩個因素驅動：<br><br>
+                                <strong>① 資本支出週期：</strong>Capex 高峰年（2021年Capex=US$30B，FCF被壓縮）FCF Yield 低；Capex 相對穩定或 opCF 大幅成長時（2022、2024）FCF Yield 反彈。<br><br>
+                                <strong>② 市值重估：</strong>AI 題材推升市值速度可能超過 FCF 成長，導致 FCF Yield 看似下降（如 2025：FCF 創歷史高點 US$40.5B，但市值也大幅膨脹）。<br><br>
+                                <strong>目前（2026Q1）：</strong>FCF Yield 約 <strong>2.2-2.5%</strong>，低於歷史均值（約 3%），反映市場對 TSMC 未來成長已給予相當程度的溢價，與 PE 角度結論一致。
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ════════════════════════════════════════════ -->
+                <!-- 8. 電力/用水 ESG 資源面板                    -->
+                <!-- ════════════════════════════════════════════ -->
+                <section id="panel-esg" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-leaf"></i> 電力 &amp; 用水：基礎設施壓力與 ESG 風險</h3>
+                        <p class="panel-desc">台積電是全台最大電力與用水消耗者，且隨先進製程擴產持續增加——這是地緣政治之外最常被忽視的結構性風險。來源：TSMC 2024 永續報告書</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card">
+                            <h4>年度用電量趨勢（億度 kWh）</h4>
+                            <p class="text-muted">來源：TSMC ESG 報告書；2023年佔台灣全島用電約 8%，2024年升至約 9%（255億度）；AI 時代持續擴張恐加劇台灣電力供應壓力</p>
+                            <div class="chart-container"><canvas id="electricity-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>年度用水量趨勢（百萬立方米）</h4>
+                            <p class="text-muted">來源：TSMC ESG 報告書；每片晶圓需消耗大量超純水，台灣缺水風險是法人 ESG 評分的關鍵指標</p>
+                            <div class="chart-container"><canvas id="water-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>再生能源使用比例 vs 2030/2040 目標</h4>
+                            <p class="text-muted">2024年再生能源比例僅 13%，距 2030 年 60% 目標差距巨大；台灣再生能源建設進度是否能支撐 TSMC 擴產是核心不確定因素</p>
+                            <div class="chart-container"><canvas id="renewable-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>關鍵 ESG 數據（2024 年永續報告書）</h4>
+                            <table class="data-table">
+                                <thead><tr><th>指標</th><th>2024實績</th><th>目標</th></tr></thead>
+                                <tbody>
+                                    <tr><td>總用電量</td><td>255 億度（佔台灣 ~9%）</td><td>節能 810 GWh（已達成）</td></tr>
+                                    <tr><td>再生能源比例</td><td>13%</td><td>60%（2030）→ 100%（2040）</td></tr>
+                                    <tr><td>廢水回收量</td><td>>1.4 億立方米</td><td>持續提升回收率</td></tr>
+                                    <tr><td>再生水替代率</td><td>17%（台南廠）</td><td>擴至所有新建廠區</td></tr>
+                                    <tr><td>廢棄物回收率</td><td>>97%</td><td>連續10年 <1% 掩埋</td></tr>
+                                    <tr><td>Scope 1+2 排放</td><td>持續上升（擴廠）</td><td>2050 年淨零排放</td></tr>
+                                </tbody>
+                            </table>
+                            <p style="margin-top:12px;font-size:13px;color:var(--text-secondary)">
+                                台積電已承諾 2050 年達淨零排放（2021年宣布），並符合 SBTi 科學基礎減量目標。但隨著 N2/A16 擴廠，短期（2025-2030）絕對排放量與用電量仍將持續增加，再生能源缺口是最大挑戰。
                             </p>
                         </div>
                     </div>
