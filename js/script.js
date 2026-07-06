@@ -1969,29 +1969,36 @@ function renderVolumeASPCharts() {
         }
     });
 
-    // 量 vs 價貢獻拆分（YoY pp 貢獻）
-    // 量/價貢獻 = 各自YoY% × 加權，以修正後年報出貨量計算
-    const volContrib   = [null, 9.2,  7.7,  -21.6, 7.5,  16.3]; // 量的貢獻（出貨量YoY%）
-    const priceContrib = [null, 14.3, 25.0, 16.0,  20.7, 17.1]; // 價的貢獻（ASP YoY%）
+    // 出貨量 YoY% vs ASP YoY% vs 總收入 YoY%
+    // 2020 為基準年（無 YoY），2021-2025 均有官方年報出貨量原文支撐
+    const yoyLabels   = ['2021', '2022', '2023', '2024', '2025'];
+    const volYoY      = [ 9.2,   7.7,  -21.6,   7.5,  16.3]; // 出貨量YoY%（年報）
+    const aspYoY      = [14.3,  25.0,   17.1,  20.4,  17.2]; // ASP YoY%（已驗證）
+    const revYoY      = [24.8,  33.6,   -8.2,  29.4,  36.3]; // 總收入YoY%（已驗證）
 
     createChart('volume-price-split-chart', {
         type: 'bar',
         data: {
-            labels: years,
+            labels: yoyLabels,
             datasets: [
-                { label: '量的貢獻（pp）', data: volContrib,
-                  backgroundColor: 'rgba(59,130,246,0.8)', borderRadius: 3 },
-                { label: '價的貢獻（pp）', data: priceContrib,
-                  backgroundColor: 'rgba(245,158,11,0.8)', borderRadius: 3 }
+                { label: '出貨量 YoY (%)', data: volYoY,
+                  backgroundColor: volYoY.map(v => v>=0 ? 'rgba(59,130,246,0.75)' : 'rgba(239,68,68,0.75)'),
+                  borderRadius: 3, yAxisID: 'y' },
+                { label: 'ASP YoY (%)', data: aspYoY,
+                  backgroundColor: 'rgba(245,158,11,0.75)', borderRadius: 3, yAxisID: 'y' },
+                { label: '總收入 YoY (%)', data: revYoY,
+                  type: 'line', borderColor: '#10b981', borderWidth: 2.5,
+                  pointRadius: 5, tension: 0.2, fill: false, yAxisID: 'y' }
             ]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
             plugins: { legend: { position: 'top' },
-                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw}pp` } } },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw > 0 ? '+' : ''}${ctx.raw}%` } } },
             scales: {
-                x: { stacked: false, grid: { display: false } },
-                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '百分點（pp）貢獻' } }
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'YoY 成長率 (%)' } },
+                x: { stacked: false, grid: { display: false } }
             }
         }
     });
