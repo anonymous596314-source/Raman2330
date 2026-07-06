@@ -41,6 +41,11 @@
                 <button class="nav-item" data-panel="roadmap2"><i class="fa-solid fa-road"></i> 製程藍圖精確版</button>
                 <button class="nav-item" data-panel="fcf"><i class="fa-solid fa-money-bill-trend-up"></i> FCF Yield</button>
                 <button class="nav-item" data-panel="esg"><i class="fa-solid fa-leaf"></i> 電力/用水 ESG</button>
+                <button class="nav-item" data-panel="downstream"><i class="fa-solid fa-diagram-project"></i> 下游客戶指標</button>
+                <button class="nav-item" data-panel="volume-asp"><i class="fa-solid fa-scale-unbalanced-flip"></i> 量價拆分</button>
+                <button class="nav-item" data-panel="seasonal"><i class="fa-solid fa-snowflake"></i> 季節性分析</button>
+                <button class="nav-item" data-panel="stress"><i class="fa-solid fa-bomb"></i> 黑天鵝壓測</button>
+                <button class="nav-item" data-panel="people"><i class="fa-solid fa-people-group"></i> 員工人才</button>
             </nav>
         </aside>
 
@@ -869,7 +874,7 @@
                     <div class="grid">
                         <div class="card chart-card">
                             <h4>年度用電量趨勢（億度 kWh）</h4>
-                            <p class="text-muted">來源：TSMC ESG 報告書；2023年佔台灣全島用電約 8%，2024年升至約 9%（255億度）；AI 時代持續擴張恐加劇台灣電力供應壓力</p>
+                            <p class="text-muted">來源：TSMC ESG 報告書 + CommonWealth雜誌。2023=247.8億度（佔台灣8.9%，CommonWealth確認），2024=255億度（ESG報告）；2020-2022為趨勢估算</p>
                             <div class="chart-container"><canvas id="electricity-chart"></canvas></div>
                         </div>
                         <div class="card chart-card">
@@ -888,7 +893,7 @@
                                 <thead><tr><th>指標</th><th>2024實績</th><th>目標</th></tr></thead>
                                 <tbody>
                                     <tr><td>總用電量</td><td>255 億度（佔台灣 ~9%）</td><td>節能 810 GWh（已達成）</td></tr>
-                                    <tr><td>再生能源比例</td><td>13%</td><td>60%（2030）→ 100%（2040）</td></tr>
+                                    <tr><td>再生能源比例</td><td>14%</td><td>60%（2030）→ 100%（2040）</td></tr>
                                     <tr><td>廢水回收量</td><td>>1.4 億立方米</td><td>持續提升回收率</td></tr>
                                     <tr><td>再生水替代率</td><td>17%（台南廠）</td><td>擴至所有新建廠區</td></tr>
                                     <tr><td>廢棄物回收率</td><td>>97%</td><td>連續10年 <1% 掩埋</td></tr>
@@ -897,6 +902,178 @@
                             </table>
                             <p style="margin-top:12px;font-size:13px;color:var(--text-secondary)">
                                 台積電已承諾 2050 年達淨零排放（2021年宣布），並符合 SBTi 科學基礎減量目標。但隨著 N2/A16 擴廠，短期（2025-2030）絕對排放量與用電量仍將持續增加，再生能源缺口是最大挑戰。
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ═══════════════════════════ 1. 下游客戶交叉驗證 ═══════════════════════════ -->
+                <section id="panel-downstream" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-diagram-project"></i> 下游客戶需求先行指標</h3>
+                        <p class="panel-desc">NVIDIA 資料中心營收與四大超大規模雲商 Capex，是台積電訂單能見度的最佳領先指標。上游 IC 設計廠商的營收加速，通常領先台積電晶圓出貨量 1-2 季反映。</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>NVIDIA 資料中心營收 vs 四大超大規模雲商 Capex（USD B）</h4>
+                            <p class="text-muted">橘線=NVIDIA DC 營收（左軸，FY ends Jan）；藍柱=Amazon+Google+Microsoft+Meta Capex 合計（右軸）。來源：各公司 10-K/20-F。兩者高度正相關，NVIDIA 業績是台積電 N3/N2/CoWoS 訂單的最直接先行指標。</p>
+                            <div class="chart-container large"><canvas id="downstream-nvidia-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>Broadcom AI 晶片營收趨勢（USD B）</h4>
+                            <p class="text-muted">Broadcom 為台積電第五大客戶（Google TPU、Meta MFCA 等 ASIC），AI 晶片營收爆發反映 TSMC CoWoS 需求；來源：Broadcom 季報</p>
+                            <div class="chart-container"><canvas id="downstream-broadcom-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>需求先行指標解讀</h4>
+                            <table class="data-table">
+                                <thead><tr><th>指標</th><th>2024</th><th>2025</th><th>2026E</th><th>台積電意涵</th></tr></thead>
+                                <tbody>
+                                    <tr><td>NVIDIA DC 營收</td><td>$115B</td><td>$193.7B</td><td>$280B+</td><td>N3/N2/CoWoS 滿載（FY2026官方 SEC 8-K）</td></tr>
+                                    <tr><td>超大規模 Capex 合計</td><td>$251B</td><td>$427B</td><td>$725B</td><td>HPC 平台需求持續（Goldman Sachs 2026E）</td></tr>
+                                    <tr><td>Broadcom AI 晶片</td><td>$12.2B</td><td>$20.0B</td><td>~$38B</td><td>CoWoS 訂單能見度（FY2027E=$60B，Hock Tan聲明）</td></tr>
+                                    <tr><td>Apple A系列出貨</td><td>~230M台</td><td>~240M台</td><td>~250M台</td><td>N3 稼動率基本盤</td></tr>
+                                </tbody>
+                            </table>
+                            <p style="margin-top:12px;font-size:13px;color:var(--text-secondary)">Jensen Huang（NVIDIA CEO）法說會提到 Blackwell + Vera Rubin 2025-2027 銷售能見度達 <strong>US$1兆</strong>，意味著台積電 N2/CoWoS 未來2年訂單幾乎確定。</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ═══════════════════════════ 2. 晶圓量 vs 價拆分 ═══════════════════════════ -->
+                <section id="panel-volume-asp" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-scale-unbalanced-flip"></i> 晶圓出貨量 vs ASP 貢獻拆分</h3>
+                        <p class="panel-desc">台積電的營收成長來自「量」與「價」兩個引擎。拆分後可看出：2022 年是漲價驅動，2023 年量價齊跌，2024-2025 年量價雙升——這是最健康的成長模式。來源：TSMC 官方年報</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>年度出貨量（百萬片 12 吋等效）vs 加權平均 ASP（千 USD/片）</h4>
+                            <p class="text-muted">藍柱=出貨量（左軸）；橘線=ASP（右軸）。來源：TSMC 年報官方揭露出貨量；ASP = 年度晶圓收入 ÷ 出貨片數。2024年報：12.9M片 ✓，2025年報：15.0M片 ✓</p>
+                            <div class="chart-container large"><canvas id="volume-asp-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>量 vs 價對營收成長的貢獻度拆分</h4>
+                            <p class="text-muted">量的貢獻 = 出貨量 YoY × 前期 ASP；價的貢獻 = ASP YoY × 當期出貨量。2022年是漲價年，2025年是量大於價的健康成長。</p>
+                            <div class="chart-container"><canvas id="volume-price-split-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>量價拆分解讀</h4>
+                            <table class="data-table">
+                                <thead><tr><th>年度</th><th>出貨量</th><th>YoY</th><th>ASP</th><th>YoY</th><th>主要驅動</th></tr></thead>
+                                <tbody>
+                                    <tr><td>2022</td><td>13.6M片</td><td>+5.4%</td><td>$5.6K</td><td>+26.7%</td><td>漲價主導</td></tr>
+                                    <tr><td>2023</td><td>12.0M片</td><td>-11.8%</td><td>$5.8K</td><td>+4.1%</td><td>量跌＋微漲價</td></tr>
+                                    <tr><td>2024</td><td>12.9M片</td><td>+7.5%</td><td>$7.0K</td><td>+20.4%</td><td>量價雙升</td></tr>
+                                    <tr><td>2025</td><td>15.0M片</td><td>+16.3%</td><td>$8.2K</td><td>+17.2%</td><td>量價均衡</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ═══════════════════════════ 3. 季節性分析 ═══════════════════════════ -->
+                <section id="panel-seasonal" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-snowflake"></i> 季節性模式分析</h3>
+                        <p class="panel-desc">台積電有明顯季節性——Q1 因農曆年為傳統淡季，Q4 受 iPhone 出貨拉貨效應最強。理解季節性有助於區分「正常季節性下滑」與「真正需求惡化」。來源：已驗證月營收數據計算</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>各年度季度營收佔全年比例（%）</h4>
+                            <p class="text-muted">每條折線代表一年；Q1 通常為全年最低，Q4 通常最高。2025 年 AI 需求使得季節性差距縮小，顯示全年需求更均衡。</p>
+                            <div class="chart-container large"><canvas id="seasonal-pct-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>季節性指數（各季相對全年均值）</h4>
+                            <p class="text-muted">2022-2025 年四年平均季節性指數。指數>1代表高於年均，<1代表低於年均。</p>
+                            <div class="chart-container"><canvas id="seasonal-index-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>季節性判讀重點</h4>
+                            <table class="data-table">
+                                <thead><tr><th>季度</th><th>歷史平均佔比</th><th>季節性指數</th><th>主要影響因素</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Q1</td><td>22.0%</td><td>0.88x</td><td>農曆年停工、客戶拉貨淡季</td></tr>
+                                    <tr><td>Q2</td><td>23.4%</td><td>0.94x</td><td>回溫，Android 旗艦開始備貨</td></tr>
+                                    <tr><td>Q3</td><td>26.0%</td><td>1.04x</td><td>iPhone 拉貨高峰期</td></tr>
+                                    <tr><td>Q4</td><td>28.6%</td><td>1.14x</td><td>iPhone 出貨旺季、HPC 年底衝量</td></tr>
+                                </tbody>
+                            </table>
+                            <p style="margin-top:12px;font-size:13px;color:var(--text-secondary)">2025年Q1/Q4比例差縮小（22% vs 27.5%），顯示AI/HPC 需求已逐步平滑掉傳統手機季節性。若 2026 年後 Q1 佔比能維持 22%+，代表 AI 需求取代手機季節性成功。</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ═══════════════════════════ 4. 黑天鵝壓力測試 ═══════════════════════════ -->
+                <section id="panel-stress" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-bomb"></i> 黑天鵝情境壓力測試</h3>
+                        <p class="panel-desc">台積電面臨的極端風險是「低概率、高衝擊」——不是「是否發生」，而是「發生時的下跌幅度」。以下情境採用法人風險委員會的壓力測試框架，數字基於歷史案例與業界估算。</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>黑天鵝情境 — EPS 與股價衝擊估算</h4>
+                            <p class="text-muted">橫軸=各情境；左軸=EPS 影響幅度(%)；右軸=股價隱含目標(NT$)。基準EPS=92元，基準股價=2330元。注意：情境並非預測，而是壓力測試的邊界條件。</p>
+                            <div class="chart-container large"><canvas id="stress-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>各情境說明與歷史參照</h4>
+                            <table class="data-table">
+                                <thead><tr><th>情境</th><th>機率估算</th><th>EPS影響</th><th>股價壓力</th><th>歷史參照</th></tr></thead>
+                                <tbody>
+                                    <tr><td>921 級地震</td><td>3-5%（10年）</td><td>-40%</td><td>~NT$775</td><td>製造中斷3-6個月，供應鏈替代效應</td></tr>
+                                    <tr><td>台海封鎖</td><td>2-5%（10年）</td><td>-30%</td><td>~NT$908</td><td>客戶分散化，但短期無法替代</td></tr>
+                                    <tr><td>美國全面制裁</td><td>5-10%（5年）</td><td>-35%</td><td>~NT$1,200</td><td>假設情境</td></tr>
+                                    <tr><td>AI 需求腰斬</td><td>10-20%（3年）</td><td>-20%</td><td>~NT$1,600</td><td>2022年庫存去化類比</td></tr>
+                                    <tr><td>台幣大幅升值</td><td>15-25%（3年）</td><td>-12%</td><td>~NT$1,950</td><td>2002年台幣升值期</td></tr>
+                                    <tr><td>N2 良率崩潰</td><td>5-8%（1年）</td><td>-12%</td><td>~NT$1,950</td><td>三星 3nm 良率問題類比</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card text-card">
+                            <h4>壓力測試結論</h4>
+                            <p>
+                                即便在最極端的地緣政治情境（台海封鎖），台積電股價的理論支撐位仍在 <strong>NT$1,000-1,200</strong> 左右（對應 2022-2023 谷底估值水準）。這意味著從當前 2,330 元計算，最壞情境的下行空間約 <strong>-45 至 -55%</strong>。<br><br>
+                                機率最高但市場最常忽略的風險是 <strong>AI 需求腰斬</strong>——Hyperscaler 削減 Capex 的歷史案例（2022 年雲端資本支出突然下滑）顯示這可以在 1-2 季內快速發生。此情境的 EPS 衝擊雖相對小（-20%），但可能觸發本益比壓縮（從 32x 壓縮回 20x），導致股價腰斬。<br><br>
+                                <span style="color:var(--text-secondary);font-size:12px">* 本壓力測試僅供參考，非投資建議。情境假設高度簡化，實際衝擊取決於事件規模、持續時間和政策回應。</span>
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ═══════════════════════════ 5. 員工與人才 ═══════════════════════════ -->
+                <section id="panel-people" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-people-group"></i> 員工與人才資本</h3>
+                        <p class="panel-desc">人才是台積電護城河的隱形支柱——製程良率的提升、設備維護、製程整合，都依賴高密度的工程師文化。海外廠擴張的人力成本是短期毛利率稀釋的真實來源之一。來源：MacroTrends / TSMC ESG 報告書</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card">
+                            <h4>員工人數趨勢（人）</h4>
+                            <p class="text-muted">來源：TSMC年報 + MacroTrends。2025年 90,557 人（年報確認）；2022=73,090、2024=83,825 亦來自年報 ESG；2020年報說>56,000，2021年報說>65,000。較 2020 年增加 58.8%。</p>
+                            <div class="chart-container"><canvas id="employee-count-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card">
+                            <h4>人均營收趨勢（百萬 NT$ / 人）</h4>
+                            <p class="text-muted">人均營收是人才效率的最直接指標。2022→2023 下滑（庫存去化）；2024→2025 創歷史新高，代表 AI 驅動的營收成長速度快於人員擴張速度。</p>
+                            <div class="chart-container"><canvas id="revenue-per-employee-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>人才競爭與海外廠挑戰</h4>
+                            <table class="data-table">
+                                <thead><tr><th>面向</th><th>數據</th><th>說明</th></tr></thead>
+                                <tbody>
+                                    <tr><td>2025 全球員工</td><td>90,557 人</td><td>YoY +8.0%（MacroTrends）</td></tr>
+                                    <tr><td>台灣員工比例</td><td>~80%</td><td>其餘分布美日德各廠</td></tr>
+                                    <tr><td>理工碩博士比例</td><td>>50%</td><td>ESG 報告：持續維持高學歷占比</td></tr>
+                                    <tr><td>員工流動率</td><td><5%（台灣）</td><td>低流動率是製程良率穩定的關鍵</td></tr>
+                                    <tr><td>Arizona 廠薪資溢價</td><td>~2-3x</td><td>海外員工成本遠高於台灣，是毛利率壓力來源</td></tr>
+                                    <tr><td>2026-2028 招募目標</td><td>+15,000 人</td><td>主要為海外廠工程師，培訓成本高</td></tr>
+                                </tbody>
+                            </table>
+                            <p style="margin-top:12px;font-size:13px;color:var(--text-secondary)">
+                                台積電的「人才外流」風險通常被低估——魏哲家法說會多次強調海外廠員工需要在台灣受訓 1-1.5 年。Arizona 廠 2025 年轉盈，部分原因是初期外派員工補貼的一次性成本已攤銷完畢。隨著新廠陸續開出，2026-2027 年人力成本仍是毛利率的結構性下行壓力。
                             </p>
                         </div>
                     </div>
