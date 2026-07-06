@@ -284,6 +284,11 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         if (panel === 'roadmap2')     initNewPanelOnce('roadmap2',     renderRoadmap2Charts);
         if (panel === 'fcf')          initNewPanelOnce('fcf',          renderFCFCharts);
         if (panel === 'esg')          initNewPanelOnce('esg',          renderESGCharts);
+        if (panel === 'downstream')   initNewPanelOnce('downstream',   renderDownstreamCharts);
+        if (panel === 'volume-asp')   initNewPanelOnce('volume-asp',   renderVolumeASPCharts);
+        if (panel === 'seasonal')     initNewPanelOnce('seasonal',     renderSeasonalCharts);
+        if (panel === 'stress')       initNewPanelOnce('stress',       renderStressChart);
+        if (panel === 'people')       initNewPanelOnce('people',       renderPeopleCharts);
     });
 });
     try { renderValuationCalculator(); }  catch(e) { console.error('[renderValuationCalculator]', e); }
@@ -1805,9 +1810,12 @@ function renderFCFCharts() {
 // ═══════════════════════════════════════════════════════════════
 function renderESGCharts() {
     const years = ['2020','2021','2022','2023','2024'];
-    const electricity = [145, 167, 195, 210, 255]; // 億度 kWh
+    // 來源：2023/2024=CommonWealth雜誌+ESG報告（247.8億/255億）；2020-2022估算趨勢
+    // 來源：2023=CommonWealth/BestBrokers=247.8億度; 2022=CommonWealth反推224.5億度; 2024=ESG報告255億度
+    //       2020/2021=ESG PDF官方(148/164百GWh，含再生後約148/167億度)
+    const electricity = [148, 167, 225, 248, 255]; // 億度 kWh
     const water       = [ 60,  72,  85,  94, 102]; // 百萬立方米
-    const renewable   = [  7,   9,  10,  12,  13]; // 再生能源比例 %
+    const renewable   = [  7,   9,  10,  12,  14]; // 再生能源比例 %（2024=14%，來源：TSMC ESG報告官方聲明）
 
     createChart('electricity-chart', {
         type: 'bar',
@@ -1865,6 +1873,288 @@ function renderESGCharts() {
                 tooltip: { callbacks: { label: ctx => `${ctx.raw}%` } } },
             scales: {
                 y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '%' }, min: 0, max: 105 },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  下游客戶需求先行指標
+//  來源：NVIDIA 10-K（FY ends Jan）、Broadcom 8-K；四大超大規模雲商 Capex：RBC Wealth Mgmt
+// ═══════════════════════════════════════════════════════════════
+function renderDownstreamCharts() {
+    const years = ['2022', '2023', '2024', '2025', '2026E'];
+    const nvidiadc = [15.0, 47.5, 115.2, 193.7, 280];  // NVIDIA DC 營收 USD B（FY2022-2026E，FY ends Jan；FY2026=$193.7B官方SEC 8-K）
+    const hyperCap = [155, 155, 251, 427, 725];           // 四大超大規模(Amazon+Google+Microsoft+Meta) Capex USD B（2026E=$725B，Goldman Sachs確認）
+
+    createChart('downstream-nvidia-chart', {
+        type: 'bar',
+        data: {
+            labels: years,
+            datasets: [
+                { label: '超大規模雲商 Capex 合計（USD B）', data: hyperCap,
+                  backgroundColor: years.map(y=>y.includes('E')?'rgba(100,116,139,0.4)':'rgba(100,116,139,0.65)'),
+                  borderRadius: 3, yAxisID: 'y' },
+                { label: 'NVIDIA 資料中心營收（USD B）', data: nvidiadc,
+                  type: 'line', borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)',
+                  borderWidth: 3, pointRadius: 5, tension: 0.3, fill: false, yAxisID: 'y1',
+                  pointStyle: years.map(y=>y.includes('E')?'triangle':'circle') }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'Hyperscaler Capex (USD B)' }, position: 'left' },
+                y1: { grid: { display: false }, title: { display: true, text: 'NVIDIA DC Rev (USD B)' }, position: 'right', min: 0 },
+                x:  { grid: { display: false } }
+            }
+        }
+    });
+
+    const bcomYears  = ['FY2023', 'FY2024', 'FY2025', 'FY2026E'];
+    const bcomAI     = [4.2, 12.2, 20.0, 38.0];  // FY2025=$20B(SEC 8-K Q1-Q4累計)；FY2026E≈$38B(Q1指引$8.2B×4+成長)；$60B是FY2027E(Hock Tan公開聲明)
+    createChart('downstream-broadcom-chart', {
+        type: 'bar',
+        data: {
+            labels: bcomYears,
+            datasets: [{ label: 'Broadcom AI 晶片營收（USD B）', data: bcomAI,
+                backgroundColor: bcomYears.map(y=>y.includes('E')?'rgba(59,130,246,0.5)':'rgba(59,130,246,0.85)'),
+                borderRadius: 4 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `US$${ctx.raw}B${ctx.dataIndex>=3?' (估)':''}` } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'USD Billion' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  晶圓出貨量 vs ASP 貢獻拆分
+//  來源：TSMC 官方年報（2024：12.9M片✓，2025：15.0M片✓）
+// ═══════════════════════════════════════════════════════════════
+function renderVolumeASPCharts() {
+    const years    = ['2020', '2021', '2022', '2023', '2024', '2025'];
+    const shipment = [13.0, 14.2, 15.3, 12.0, 12.9, 15.0]; // 百萬片 12吋等效（官方年報：2021=14.2M, 2022=15.3M, 2023=12.0M, 2024=12.9M, 2025=15.0M均有年報原文）
+    const asp_k    = [3.5,  4.0,  5.0,  5.8,  7.0,  8.2];  // 千 USD/片（= revenue_usd / shipment，已驗證）
+
+    createChart('volume-asp-chart', {
+        type: 'bar',
+        data: {
+            labels: years,
+            datasets: [
+                { label: '出貨量（百萬片）', data: shipment,
+                  backgroundColor: 'rgba(59,130,246,0.75)', borderRadius: 4, yAxisID: 'y' },
+                { label: 'ASP（千 USD/片）', data: asp_k,
+                  type: 'line', borderColor: '#f59e0b', borderWidth: 2.5, pointRadius: 5,
+                  tension: 0.3, fill: false, yAxisID: 'y1' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '百萬片（M wafers）' }, position: 'left', min: 8 },
+                y1: { grid: { display: false }, title: { display: true, text: '千 USD/片' }, position: 'right', min: 0 },
+                x:  { grid: { display: false } }
+            }
+        }
+    });
+
+    // 量 vs 價貢獻拆分（YoY pp 貢獻）
+    // 量/價貢獻 = 各自YoY% × 加權，以修正後年報出貨量計算
+    const volContrib   = [null, 9.2,  7.7,  -21.6, 7.5,  16.3]; // 量的貢獻（出貨量YoY%）
+    const priceContrib = [null, 14.3, 25.0, 16.0,  20.7, 17.1]; // 價的貢獻（ASP YoY%）
+
+    createChart('volume-price-split-chart', {
+        type: 'bar',
+        data: {
+            labels: years,
+            datasets: [
+                { label: '量的貢獻（pp）', data: volContrib,
+                  backgroundColor: 'rgba(59,130,246,0.8)', borderRadius: 3 },
+                { label: '價的貢獻（pp）', data: priceContrib,
+                  backgroundColor: 'rgba(245,158,11,0.8)', borderRadius: 3 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw}pp` } } },
+            scales: {
+                x: { stacked: false, grid: { display: false } },
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '百分點（pp）貢獻' } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  季節性模式分析
+//  來源：已驗證月營收數據計算（2022-2025合計誤差<1億）
+// ═══════════════════════════════════════════════════════════════
+function renderSeasonalCharts() {
+    const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+    // 各年季度佔全年比例（已驗證月營收推算）
+    const pcts = {
+        2022: [22.1, 23.5, 26.4, 28.0],
+        2023: [23.5, 22.3, 25.3, 28.9],
+        2024: [20.5, 23.3, 26.2, 30.0],
+        2025: [22.0, 24.5, 26.0, 27.5],
+    };
+    const colors = ['#94a3b8','#60a5fa','#3b82f6','#1d4ed8'];
+    const years  = Object.keys(pcts);
+
+    createChart('seasonal-pct-chart', {
+        type: 'line',
+        data: {
+            labels: quarters,
+            datasets: years.map((yr, i) => ({
+                label: yr, data: pcts[yr],
+                borderColor: colors[i], backgroundColor: 'transparent',
+                borderWidth: 2, pointRadius: 5, tension: 0.2
+            }))
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw}%` } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '佔全年比例 %' }, min: 18, max: 32 },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // 季節性指數（4年平均）
+    const avgPcts = quarters.map((_, qi) =>
+        years.reduce((s, yr) => s + pcts[yr][qi], 0) / years.length
+    );
+    const annualAvg = avgPcts.reduce((s, v) => s + v, 0) / 4;
+    const seasonIdx = avgPcts.map(p => +(p / annualAvg).toFixed(3));
+
+    createChart('seasonal-index-chart', {
+        type: 'bar',
+        data: {
+            labels: quarters,
+            datasets: [
+                { label: '季節性指數（4年均）', data: seasonIdx,
+                  backgroundColor: seasonIdx.map(v => v >= 1 ? 'rgba(16,185,129,0.8)' : 'rgba(239,68,68,0.7)'),
+                  borderRadius: 4 },
+                { label: '基準線（1.0）', data: [1,1,1,1],
+                  type: 'line', borderColor: 'rgba(255,255,255,0.3)', borderDash: [4,3],
+                  borderWidth: 1.5, pointRadius: 0, fill: false }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx => `指數：${ctx.raw}x` } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '季節性指數' }, min: 0.7, max: 1.3 },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  黑天鵝情境壓力測試
+// ═══════════════════════════════════════════════════════════════
+function renderStressChart() {
+    const scenarios  = ['921 地震', '台海封鎖', '美國制裁', 'AI 需求腰斬', '台幣升值', 'N2 良率崩潰'];
+    const epsImpact  = [-40, -30, -35, -20, -12, -12]; // EPS 影響 %
+    const baseEPS    = 92;  // 2026E EPS NT$
+    const basePE     = 26;
+    const priceImpact = epsImpact.map(e => {
+        const newEPS = baseEPS * (1 + e/100);
+        // 壓力情境下 PE 也同步壓縮（恐慌折價）
+        const newPE  = e < -30 ? 14 : e < -20 ? 18 : 22;
+        return Math.round(newEPS * newPE);
+    });
+
+    createChart('stress-chart', {
+        type: 'bar',
+        data: {
+            labels: scenarios,
+            datasets: [
+                { label: 'EPS 影響（%）', data: epsImpact,
+                  backgroundColor: epsImpact.map(v => v < -30 ? 'rgba(239,68,68,0.9)' : v < -20 ? 'rgba(239,68,68,0.7)' : 'rgba(245,158,11,0.7)'),
+                  borderRadius: 3, yAxisID: 'y' },
+                { label: '壓力情境隱含股價（NT$）', data: priceImpact,
+                  type: 'line', borderColor: '#94a3b8', backgroundColor: 'rgba(148,163,184,0.1)',
+                  borderWidth: 2, pointRadius: 6, tension: 0.1, fill: false, yAxisID: 'y1' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' },
+                tooltip: { callbacks: {
+                    afterBody: ctx => {
+                        const i = ctx[0].dataIndex;
+                        return `隱含股價：NT$${priceImpact[i].toLocaleString()}（較現價${((priceImpact[i]-2330)/2330*100).toFixed(0)}%）`;
+                    }
+                } } },
+            scales: {
+                y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'EPS 影響 (%)' }, position: 'left', max: 0 },
+                y1: { grid: { display: false }, title: { display: true, text: '隱含股價（NT$）' }, position: 'right', min: 0, max: 2600 },
+                x:  { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  員工與人才資本
+//  來源：MacroTrends（員工人數）、TSMC 年報（人均營收）
+// ═══════════════════════════════════════════════════════════════
+function renderPeopleCharts() {
+    const years      = ['2020','2021','2022','2023','2024','2025'];
+    // 員工人數：2020/2021來自年報說明（2020>56K, 2021>65K）；2022-2025來自MacroTrends/年報ESG
+    const headcount  = [57026, 65152, 73090, 76478, 83825, 90557];
+    const revPerEmp  = [23.5, 24.4, 31.0, 28.3, 34.5, 42.1]; // 百萬NT$/人（已驗證：年度NT$營收÷員工數）
+
+    createChart('employee-count-chart', {
+        type: 'bar',
+        data: {
+            labels: years,
+            datasets: [{ label: '員工人數', data: headcount,
+                backgroundColor: 'rgba(59,130,246,0.75)', borderRadius: 4 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `${ctx.raw.toLocaleString()} 人` } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '人' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    createChart('revenue-per-employee-chart', {
+        type: 'line',
+        data: {
+            labels: years,
+            datasets: [{ label: '人均營收（百萬NT$/人）', data: revPerEmp,
+                borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.12)',
+                fill: true, borderWidth: 2.5, pointRadius: 5, tension: 0.3 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `${ctx.raw}百萬NT$/人` } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '百萬NT$/人' } },
                 x: { grid: { display: false } }
             }
         }
