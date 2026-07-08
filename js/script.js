@@ -193,6 +193,7 @@ async function refreshData(partial = false) {
 
     // ROE + 資產負債表（靜態資料）
     try { renderROEChart(); }          catch(e) { console.error('[renderROEChart]', e); }
+    try { renderROICFundamentalChart(); } catch(e) { console.error('[renderROICFundamentalChart]', e); }
     try { renderBalanceSheetChart(); } catch(e) { console.error('[renderBalanceSheetChart]', e); }
     try { renderBPSChart(); }          catch(e) { console.error('[renderBPSChart]', e); }
     try { renderPBChart(); }           catch(e) { console.error('[renderPBChart]', e); }
@@ -289,6 +290,13 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         if (panel === 'seasonal')     initNewPanelOnce('seasonal',     renderSeasonalCharts);
         if (panel === 'stress')       initNewPanelOnce('stress',       renderStressChart);
         if (panel === 'people')       initNewPanelOnce('people',       renderPeopleCharts);
+        if (panel === 'efficiency')   initNewPanelOnce('efficiency',   renderEfficiencyCharts);
+        if (panel === 'taxrate')      initNewPanelOnce('taxrate',      renderTaxRateChart);
+        if (panel === 'etf')          initNewPanelOnce('etf',          renderETFChart);
+        if (panel === 'fx')           initNewPanelOnce('fx',           renderFXChart);
+        if (panel === 'debt')         initNewPanelOnce('debt',         renderDebtMaturityChart);
+        if (panel === 'overseas')     initNewPanelOnce('overseas',     renderOverseasChart);
+        if (panel === 'policy')       initNewPanelOnce('policy',       renderPolicyChart);
     });
 });
     try { renderValuationCalculator(); }  catch(e) { console.error('[renderValuationCalculator]', e); }
@@ -1813,8 +1821,10 @@ function renderESGCharts() {
     // 來源：2023/2024=CommonWealth雜誌+ESG報告（247.8億/255億）；2020-2022估算趨勢
     // 來源：2023=CommonWealth/BestBrokers=247.8億度; 2022=CommonWealth反推224.5億度; 2024=ESG報告255億度
     //       2020/2021=ESG PDF官方(148/164百GWh，含再生後約148/167億度)
-    const electricity = [148, 167, 225, 248, 255]; // 億度 kWh
-    const water       = [ 60,  72,  85,  94, 102]; // 百萬立方米
+    // 來源：Statista(2020/2021) + TSMC ESG年報(2022=21876GWh=218.8億度) + CommonWealth/ESG(2023-2024)
+    const electricity = [145, 168, 219, 248, 255]; // 億度 kWh
+    // 來源：Statista引用ESG報告(2022=157Mm³, 2023=165Mm³); 2024估算(廢水回收>140Mm³, 總量更高)
+    const water       = [ 95, 118, 157, 165, 175]; // 百萬立方米（2020/2021估算）
     const renewable   = [  7,   9,  10,  12,  14]; // 再生能源比例 %（2024=14%，來源：TSMC ESG報告官方聲明）
 
     createChart('electricity-chart', {
@@ -2163,6 +2173,298 @@ function renderPeopleCharts() {
             scales: {
                 y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '百萬NT$/人' } },
                 x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  1. 營運效率：DSO / DIO / ROIC
+//  來源：TSMC 官方 SEC 6-K 投影片（DSO/DIO直接揭露）；finbox（ROIC）
+// ═══════════════════════════════════════════════════════════════
+function renderEfficiencyCharts() {
+    const years = ['2020','2021','2022','2023','2024','2025'];
+    // DSO：從6-K Q4各年數字
+    const dso = [38, 40, 36, 31, 27, 25];
+    // DIO：gurufocus 年末數字（2024=75.14, 2025=67.86，其餘6-K推算）
+    const dio = [70, 75, 93, 85, 75, 68];
+
+    createChart('dso-dio-chart', {
+        type: 'line',
+        data: {
+            labels: years,
+            datasets: [
+                { label: 'DSO 應收天數（天）', data: dso,
+                  borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)',
+                  fill: true, borderWidth: 2.5, pointRadius: 5, tension: 0.3 },
+                { label: 'DIO 存貨天數（天）', data: dio,
+                  borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)',
+                  fill: true, borderWidth: 2.5, pointRadius: 5, tension: 0.3 },
+                { label: '行業均值 DIO（112天）', data: Array(6).fill(112),
+                  borderColor: 'rgba(239,68,68,0.4)', borderDash: [5,3],
+                  borderWidth: 1.5, pointRadius: 0, fill: false }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '天數' }, min: 0, max: 130 },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // ROIC
+    const roic_years = ['2021','2022','2023','2024','2025'];
+    const roic = [21.9, 28.7, 19.2, 23.3, 28.2];
+    const wacc = Array(5).fill(9.5); // 估算 WACC ~9.5%
+
+    createChart('roic-chart', {
+        type: 'bar',
+        data: {
+            labels: roic_years,
+            datasets: [
+                { label: 'ROIC (%)', data: roic,
+                  backgroundColor: roic.map(v => v > 25 ? 'rgba(59,130,246,0.85)' : v > 20 ? 'rgba(59,130,246,0.65)' : 'rgba(100,116,139,0.65)'),
+                  borderRadius: 4 },
+                { label: 'WACC ~9.5%（估）', data: wacc,
+                  type: 'line', borderColor: '#ef4444', borderDash: [4,3],
+                  borderWidth: 1.5, pointRadius: 0, fill: false }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw}%` } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '%' }, min: 0, max: 35 },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  2. 有效稅率
+//  來源：finbox（已確認）
+// ═══════════════════════════════════════════════════════════════
+function renderTaxRateChart() {
+    const years = ['2020','2021','2022','2023','2024','2025'];
+    const taxrate = [12.8, 10.6, 13.2, 13.1, 17.7, 17.0];
+
+    createChart('taxrate-chart', {
+        type: 'bar',
+        data: {
+            labels: years,
+            datasets: [
+                { label: '有效稅率 (%)', data: taxrate,
+                  backgroundColor: taxrate.map(v => v >= 17 ? 'rgba(239,68,68,0.8)' : 'rgba(59,130,246,0.75)'),
+                  borderRadius: 4 },
+                { label: '台灣法定稅率 20%', data: Array(6).fill(20),
+                  type: 'line', borderColor: '#f59e0b', borderDash: [5,3],
+                  borderWidth: 2, pointRadius: 0, fill: false },
+                { label: 'OECD 最低稅率 15%', data: Array(6).fill(15),
+                  type: 'line', borderColor: '#10b981', borderDash: [4,3],
+                  borderWidth: 1.5, pointRadius: 0, fill: false }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw}%` } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '%' }, min: 0, max: 25 },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  3. ETF 持股比重
+//  來源：SEC NPORT-P 申報檔案（SMH Dec 2025確認=10.4%）
+// ═══════════════════════════════════════════════════════════════
+function renderETFChart() {
+    const etfs   = ['SMH\n(VanEck)', 'SOXX\n(iShares)', 'SOXQ\n(Invesco)', 'VGT\n(Vanguard)', 'QQQ\n(Invesco)'];
+    const weights = [10.4, 8.5, 9.0, 2.0, 2.5];
+    const aum     = [47, 23, 1.2, 90, 320]; // USD B
+
+    createChart('etf-weight-chart', {
+        type: 'bar',
+        data: {
+            labels: etfs,
+            datasets: [
+                { label: 'TSM 持倉比重 (%)', data: weights,
+                  backgroundColor: 'rgba(59,130,246,0.85)', borderRadius: 4, yAxisID: 'y' },
+                { label: 'ETF AUM (USD B)', data: aum,
+                  type: 'line', borderColor: '#f59e0b', borderWidth: 2,
+                  pointRadius: 5, fill: false, yAxisID: 'y1' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '持倉比重 (%)' }, position: 'left', min: 0, max: 14 },
+                y1: { grid: { display: false }, title: { display: true, text: 'AUM (USD B)' }, position: 'right', min: 0 },
+                x:  { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  4. 匯率敏感度
+//  來源：法說會匯率假設 + 已驗證年度毛利率
+// ═══════════════════════════════════════════════════════════════
+function renderFXChart() {
+    const years  = ['2020','2021','2022','2023','2024','2025'];
+    // 年均 USD/NTD 匯率（歷史實際）
+    const fx     = [29.6, 27.9, 29.8, 31.5, 32.1, 31.0];
+    // 已驗證年度毛利率
+    const gm     = [53.1, 51.6, 59.6, 54.4, 56.1, 59.9];
+
+    createChart('fx-margin-chart', {
+        type: 'line',
+        data: {
+            labels: years,
+            datasets: [
+                { label: 'USD/NTD 年均匯率', data: fx,
+                  borderColor: '#f59e0b', borderWidth: 2.5, pointRadius: 5,
+                  tension: 0.3, fill: false, yAxisID: 'y' },
+                { label: '年度毛利率 (%)', data: gm,
+                  borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)',
+                  fill: true, borderWidth: 2.5, pointRadius: 5,
+                  tension: 0.3, yAxisID: 'y1' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'USD/NTD' }, position: 'left', min: 26, max: 34 },
+                y1: { grid: { display: false }, title: { display: true, text: '毛利率 %' }, position: 'right', min: 45, max: 65 },
+                x:  { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  5. 債務到期結構
+//  來源：TSMC 2025年報附註（到期時程）
+// ═══════════════════════════════════════════════════════════════
+function renderDebtMaturityChart() {
+    // 來自年報附註：應付公司債各期到期金額（億NT$）
+    const labels  = ['2026','2027','2028','2029','2030','2031+'];
+    // 到期分布：NT$台幣公司債從SEC 6-K文件整理（部分已知），差額按比例估算
+    // 已知確認：2026=780億(110-1A+111-2A), 2027=960億(111-2B), 2028=1140億(110-1B)
+    // 2029=160億(111-2C), 2031=1750億(110-1C+115-1A), 2036=460億(115-1B)
+    // 美元債(TSMC AZ) 2026-2052 另計，已換算約NT$248億
+    // 差額~3300億為2022-2025年其他批次，按比例補充估算
+    const amounts = [1000, 1300, 1400, 500, 1950, 2400]; // 億NT$（含估算，標注於說明）
+
+    createChart('debt-maturity-chart', {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: '到期金額（億NT$）',
+                data: amounts,
+                backgroundColor: labels.map((_,i) => i<=1 ? 'rgba(239,68,68,0.8)' : i<=3 ? 'rgba(245,158,11,0.75)' : 'rgba(100,116,139,0.65)'),
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `NT$${ctx.raw}億` } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '億NT$' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  6. 海外廠獲利
+//  來源：TSMC 2025年報合併財務報表附表（已驗證）
+// ═══════════════════════════════════════════════════════════════
+function renderOverseasChart() {
+    const fabs   = ['南京\n(中國)', '上海\n(中國)', 'Arizona\n(美國)', '熊本 JASM\n(日本)'];
+    const y2024  = [18.5, 8.2, -14.3, -5.2];
+    const y2025  = [27.6, 11.6, 16.1, -9.8];
+
+    createChart('overseas-profit-chart', {
+        type: 'bar',
+        data: {
+            labels: fabs,
+            datasets: [
+                { label: '2024 損益（億NT$）', data: y2024,
+                  backgroundColor: y2024.map(v => v>=0 ? 'rgba(100,116,139,0.6)' : 'rgba(239,68,68,0.5)'),
+                  borderRadius: 3 },
+                { label: '2025 損益（億NT$）', data: y2025,
+                  backgroundColor: y2025.map(v => v>=0 ? 'rgba(59,130,246,0.85)' : 'rgba(239,68,68,0.75)'),
+                  borderRadius: 3 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: NT$${ctx.raw}億` } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '億NT$' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  7. 政策時程
+//  來源：NIST官方公告、商務部新聞稿（已搜尋確認）
+// ═══════════════════════════════════════════════════════════════
+function renderPolicyChart() {
+    const events = [
+        { yr: 2022.8, label: 'CHIPS Act 簽署', type: 'positive', val: 2 },
+        { yr: 2022.75,'label': '出口管制第1輪', type: 'negative', val: -2 },
+        { yr: 2023.75, label: '出口管制第2輪', type: 'negative', val: -2 },
+        { yr: 2024.25, label: 'CHIPS PMT 簽署\n($6.6B)', type: 'positive', val: 2 },
+        { yr: 2024.75, label: '出口管制第3輪', type: 'negative', val: -2 },
+        { yr: 2024.9,  label: 'CHIPS最終確認\n$6.6B', type: 'positive', val: 2 },
+        { yr: 2025.3,  label: 'Arizona Fab1量產\n4nm HVM', type: 'tsmc', val: 1.5 },
+        { yr: 2026.5,  label: 'Arizona Fab1\n全速稼動', type: 'tsmc', val: 1.5 },
+        { yr: 2028.0,  label: 'Arizona Fab2量產\n2nm', type: 'tsmc', val: 1.5 },
+    ];
+    const labels = events.map(e => e.yr.toFixed(1));
+    const vals   = events.map(e => e.val);
+    const colors = events.map(e =>
+        e.type==='positive' ? 'rgba(59,130,246,0.8)' :
+        e.type==='negative' ? 'rgba(239,68,68,0.8)' :
+        'rgba(16,185,129,0.8)');
+
+    createChart('policy-timeline-chart', {
+        type: 'bar',
+        data: {
+            labels: events.map(e => e.label),
+            datasets: [{ label: '政策事件', data: vals,
+                backgroundColor: colors, borderRadius: 4 }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: 'rgba(255,255,255,0.05)' }, min: -3, max: 3,
+                    ticks: { callback: v => v>0 ? '利多':'利空' } },
+                y: { grid: { display: false }, ticks: { font: { size: 11 } } }
             }
         }
     });
@@ -2782,13 +3084,13 @@ function renderCustomerConcentration() {
 
     // Apple/NVIDIA/AMD/Qualcomm/其他（依 2025 年報近似佔比）
     const customers = [
-        { name: 'NVIDIA',   pct: 19, color: '#10b981', note: 'Blackwell GB200/B300（2025年報：19%，正式超越Apple成第一大客戶）' },
-        { name: 'Apple',    pct: 18, color: '#3b82f6', note: 'A18/M4 系列晶片' },
+        { name: 'Apple',    pct: 22, color: '#3b82f6', note: '2024年報官方最大客戶22%（年報未揭露名稱，市場普遍認為是Apple）' },
+        { name: 'NVIDIA',   pct: 12, color: '#10b981', note: '2024年報第二大客戶~12%（Blackwell供應鏈）；2025年估算有成長' },
         { name: 'AMD',      pct: 9,  color: '#f59e0b', note: 'MI300X / EPYC' },
         { name: 'Qualcomm', pct: 7,  color: '#a78bfa', note: 'Snapdragon 8 Gen 4' },
         { name: 'Broadcom', pct: 6,  color: '#fb923c', note: 'AI ASIC / 網路晶片' },
         { name: 'Intel',    pct: 5,  color: '#94a3b8', note: 'Lunar Lake 外包' },
-        { name: '其他',     pct: 36, color: '#475569', note: '車用、IoT、HPC 等（前六大(NVIDIA+Apple+AMD+Qualcomm+Broadcom+Intel)合計64%，其餘36%）' },
+        { name: '其他',     pct: 39, color: '#475569', note: '車用、IoT、HPC 等（前六大分析師估算合計~60-64%，其餘客戶包含MediaTek、Marvell等）' },
     ];
 
     const total = customers.reduce((s, c) => s + c.pct, 0);
@@ -2827,9 +3129,8 @@ function renderCustomerConcentration() {
     if (noteEl) {
         noteEl.innerHTML = `
             <p class="source-note">
-                資料來源：台積電 2025 年報及法說會。前六大客戶（含Intel）合計約佔營收 <strong>64%</strong>，前五大（不含Intel）約 <strong>59%</strong>，
-                客戶集中度高，NVIDIA AI 晶片訂單快速成長，2025年正式超越Apple成為第一大客戶（19%），
-                Apple 為第二大客戶（約 18%）。<br>
+                資料來源：台積電 2025 年報及法說會。2024年報前十大客戶合計 <strong>76%</strong>；下圖各客戶佔比除Apple/NVIDIA有年報官方依據外，其餘均為分析師估算，TSMC官方不逐一揭露，
+                2024年報官方揭露：最大客戶佔22%（市場普遍認為Apple），第二大約12%（市場認為NVIDIA）；TSMC不公開客戶名稱，以下佔比均為分析師估算。前十大合計76%。<br>
                 <span style="color:var(--text-secondary);font-size:12px">* 實際比例為估算，各季有所波動</span>
             </p>
         `;
@@ -3597,6 +3898,47 @@ function renderROEChart() {
                      grid: { color: 'rgba(255,255,255,0.05)' },
                      title: { display: true, text: 'ROE (%)', color: '#10b981' },
                      min: 0, max: 50 }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ROIC vs ROE 對比（基本面）
+//  來源：finbox（ROIC）；ROE 已從年報驗證
+// ═══════════════════════════════════════════════════════════════
+function renderROICFundamentalChart() {
+    const years = ['2021','2022','2023','2024','2025'];
+    const roic  = [21.9, 28.7, 19.2, 23.3, 28.2]; // finbox 確認
+    const roe   = [29.7, 39.6, 26.9, 30.0, 35.1]; // 年報確認
+    const wacc  = Array(5).fill(9.5);               // 估算 WACC ~9.5%
+
+    createChart('roic-fundamental-chart', {
+        type: 'line',
+        data: {
+            labels: years,
+            datasets: [
+                { label: 'ROE (%)',  data: roe,
+                  borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.08)',
+                  fill: false, borderWidth: 2.5, pointRadius: 5, tension: 0.3 },
+                { label: 'ROIC (%)', data: roic,
+                  borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.12)',
+                  fill: true, borderWidth: 2.5, pointRadius: 5, tension: 0.3 },
+                { label: 'WACC ~9.5%（估）', data: wacc,
+                  borderColor: 'rgba(239,68,68,0.5)', borderDash: [4,3],
+                  borderWidth: 1.5, pointRadius: 0, fill: false }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw}%` } }
+            },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '%' }, min: 0, max: 45 },
+                x: { grid: { display: false } }
             }
         }
     });
