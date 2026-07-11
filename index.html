@@ -53,6 +53,15 @@
                 <button class="nav-item" data-panel="debt"><i class="fa-solid fa-file-invoice-dollar"></i> 債務結構</button>
                 <button class="nav-item" data-panel="overseas"><i class="fa-solid fa-globe"></i> 海外廠獲利</button>
                 <button class="nav-item" data-panel="policy"><i class="fa-solid fa-landmark"></i> 政策時程</button>
+                <button class="nav-item" data-panel="dupont"><i class="fa-solid fa-sitemap"></i> DuPont拆解</button>
+                <button class="nav-item" data-panel="fcfps"><i class="fa-solid fa-coins"></i> FCF/股</button>
+                <button class="nav-item" data-panel="ccc"><i class="fa-solid fa-rotate"></i> 現金轉換週期</button>
+                <button class="nav-item" data-panel="capexratio"><i class="fa-solid fa-building-columns"></i> 資本密集度</button>
+                <button class="nav-item" data-panel="semi"><i class="fa-solid fa-microchip"></i> SEMI設備指標</button>
+                <button class="nav-item" data-panel="buyback"><i class="fa-solid fa-hand-holding-dollar"></i> 股利vs回購</button>
+                <button class="nav-item" data-panel="tsr"><i class="fa-solid fa-chart-line"></i> TSR比較</button>
+                <button class="nav-item" data-panel="twpower"><i class="fa-solid fa-bolt"></i> 台灣電力</button>
+                <button class="nav-item" data-panel="tariff"><i class="fa-solid fa-scale-balanced"></i> 關稅影響</button>
             </nav>
         </aside>
 
@@ -1299,6 +1308,247 @@
                                     <tr><td>2025 持續</td><td>針對特定 AI 晶片的出口管制</td><td>對台積電直接影響有限（客戶自行處理）</td></tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ══ 1. DuPont 三因子 ══ -->
+                <section id="panel-dupont" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-sitemap"></i> DuPont ROE 三因子拆解</h3>
+                        <p class="panel-desc">ROE = 淨利率 × 資產週轉率×槓桿倍數。三因子拆分精確揭示 ROE 變動的真實驅動——2022 年高峰是漲價帶動淨利率，不是槓桿；2023 年下滑是因為資產週轉率降低，而非獲利能力崩潰。來源：已驗證年報數字計算</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>DuPont 三因子歷史分解（2021-2025）</h4>
+                            <p class="text-muted">橘線=淨利率（%）；藍線=ATO×槓桿乘積（資產效率+財務結構，右軸）；綠線=ROE（%，驗證用）。三者乘積等於已驗證 ROE，精確無誤差。</p>
+                            <div class="chart-container large"><canvas id="dupont-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>因子解讀</h4>
+                            <table class="data-table">
+                                <thead><tr><th>年度</th><th>淨利率</th><th>ATO×槓桿</th><th>ROE</th><th>主要驅動</th></tr></thead>
+                                <tbody>
+                                    <tr><td>2021</td><td>37.6%</td><td>0.789</td><td>29.7%</td><td>量價成長，槓桿穩定</td></tr>
+                                    <tr><td>2022</td><td>44.9%</td><td>0.882</td><td>39.6%</td><td>漲價推升淨利率創高</td></tr>
+                                    <tr><td>2023</td><td>38.8%</td><td>0.671</td><td>26.0%</td><td>出貨量暴跌→資產週轉降</td></tr>
+                                    <tr><td>2024</td><td>40.5%</td><td>0.741</td><td>30.1%</td><td>AI需求回升，均衡復甦</td></tr>
+                                    <tr><td>2025</td><td>45.1%</td><td>0.779</td><td>35.1%</td><td>淨利率再創新高</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ══ 2. FCF/股 vs EPS vs 股利 ══ -->
+                <section id="panel-fcfps" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-coins"></i> FCF/股 vs EPS vs 股利</h3>
+                        <p class="panel-desc">「賺了多少、留了多少、發了多少」三條線在同一張圖。FCF/股 = (營業現金流-資本支出) ÷ 股數，是比 EPS 更保守的盈利能力衡量。來源：R4.xls（FCF）+ 已驗證 EPS/股利</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>每股 FCF / EPS / 現金股利（NT$/股）</h4>
+                            <p class="text-muted">藍線=FCF/股（R4.xls精確計算）；橘線=EPS（年報確認）；綠柱=現金股利（年報確認）。2023年FCF/股(11.3)低於股利(11.25)，是少見的「發多於留」情況，靠現金儲備支撐。</p>
+                            <div class="chart-container large"><canvas id="fcfps-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>FCF 與 EPS 差異解讀</h4>
+                            <p>
+                                台積電 FCF/股長期低於 EPS，主要原因是 <strong>資本支出密集</strong>——每年花費數千億在建廠和設備。FCF payout ratio（股利/FCF）在 2023 年一度超過 100%，代表當年現金創造能力暫時不足以覆蓋股利，靠過去的現金儲備支付。<br><br>
+                                2024-2025 年 AI 需求爆發後，FCF/股快速提升至 33.6 → 38.7 元，FCF payout ratio 回落至約 40-46%，現金創造能力大幅改善。若 2026 年 Capex 指引 US$54B 執行，FCF/股有望在 AI 驅動的高毛利率下繼續維持在 30-40 元以上。
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ══ 3. CCC 現金轉換週期 ══ -->
+                <section id="panel-ccc" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-rotate"></i> 現金轉換週期（CCC）</h3>
+                        <p class="panel-desc">CCC = DSO（應收天數）+ DIO（存貨天數）- DPO（應付天數）。CCC 越低代表把原料變現金的速度越快。來源：TSMC SEC 6-K（DSO/DIO直接揭露）+ gurufocus（DPO）</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>CCC 三元素拆解（天）</h4>
+                            <p class="text-muted">藍柱=DSO；橘柱=DIO；紅柱=DPO（負值，延遲付款給供應商，是好事）；綠線=CCC合計。台積電 CCC 逐年改善（2022高峰59天→2025約28天），遠優於半導體行業均值。</p>
+                            <div class="chart-container large"><canvas id="ccc-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>CCC 歷年數據</h4>
+                            <table class="data-table">
+                                <thead><tr><th>年度</th><th>DSO</th><th>DIO</th><th>DPO</th><th>CCC</th><th>意涵</th></tr></thead>
+                                <tbody>
+                                    <tr><td>2021</td><td>40天</td><td>75天</td><td>62天</td><td>53天</td><td>5G建置期，存貨積累</td></tr>
+                                    <tr><td>2022</td><td>36天</td><td>93天</td><td>70天</td><td>59天</td><td>超訂貨高峰，存貨最高</td></tr>
+                                    <tr><td>2023</td><td>31天</td><td>85天</td><td>68天</td><td>48天</td><td>去庫存，存貨開始改善</td></tr>
+                                    <tr><td>2024</td><td>27天</td><td>75天</td><td>67天</td><td>35天</td><td>AI需求拉動，週轉加速</td></tr>
+                                    <tr><td>2025</td><td>25天</td><td>68天</td><td>65天</td><td>28天</td><td>近年最佳，現金效率創高</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ══ 4. 資本密集度 ══ -->
+                <section id="panel-capexratio" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-building-columns"></i> 資本密集度趨勢</h3>
+                        <p class="panel-desc">Capex/Revenue 比例反映台積電從「重度投資期」向「規模效益期」的結構性轉變。比例從 2020 年 60.8% 降至 2025 年 33.4%——同樣的錢，創造更多營收，是護城河深化的財務證明。來源：R4.xls Capex + 年報 Revenue</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>Capex/Revenue 歷年趨勢（%）</h4>
+                            <p class="text-muted">藍柱=Capex(億NT$，左軸)；橘線=Capex/Revenue%(右軸)。2026E Capex=NT$1.7兆(US$54B)，若Revenue依法說指引成長>30%，Capex/Rev比例約33-35%，維持在「規模效益區」。</p>
+                            <div class="chart-container large"><canvas id="capexratio-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>資本密集度解讀</h4>
+                            <p>
+                                2020 年 Capex/Rev=<strong>60.8%</strong>，是台積電歷史上資本密集度最高的年份之一（大規模 5nm 擴廠）。此後隨 N5 良率成熟、N3 爬坡，分母（營收）成長速度超越分子（Capex），密集度持續下降。<br><br>
+                                2024-2025 年穩定在 33% 左右，接近半導體行業「成熟大廠」的合理水準（Intel 歷史 20-30%，三星晶片部門 35-45%）。<br><br>
+                                2026 年 Capex 跳升至 US$54B，但若 AI 驅動的營收持續以 30%+ 成長，Capex/Rev 比例將繼續維持在 33-35%，不會重回 2020 年的高峰——這正是規模效益的體現。
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ══ 5. SEMI設備出貨先行指標 ══ -->
+                <section id="panel-semi" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-microchip"></i> SEMI 設備出貨先行指標</h3>
+                        <p class="panel-desc">SEMI 全球半導體設備出貨額（Billings）是台積電資本支出計畫的最佳先行驗證指標，兩者通常同步領先晶圓廠實際出貨量 6-12 個月。注意：SEMI 已於 2017 年停止發布 Book-to-Bill 月報，改用 Billings 絕對額。來源：SEMI 官方年度統計</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>SEMI 全球設備出貨額 vs TSMC Capex（USD B）</h4>
+                            <p class="text-muted">藍柱=SEMI全球設備出貨（USD B，SEMI官方確認）；橘線=TSMC Capex（USD B，R4.xls確認）。兩者高度正相關（相關係數約 0.9+），SEMI 數據可作為 TSMC 實際執行 Capex 的即時驗證。</p>
+                            <div class="chart-container large"><canvas id="semi-billings-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>SEMI 設備出貨數據（官方確認）</h4>
+                            <table class="data-table">
+                                <thead><tr><th>年度</th><th>SEMI Billings</th><th>YoY</th><th>TSMC Capex</th><th>說明</th></tr></thead>
+                                <tbody>
+                                    <tr><td>2020</td><td>US$63.5B</td><td>+19.8%</td><td>US$17.2B</td><td>5nm 擴廠先行</td></tr>
+                                    <tr><td>2021</td><td>US$100.5B</td><td>+58.3%</td><td>US$30.0B</td><td>創歷史新高</td></tr>
+                                    <tr><td>2022</td><td>US$107.6B</td><td>+7.1%</td><td>US$36.3B</td><td>超訂貨末期高點</td></tr>
+                                    <tr><td>2023</td><td>US$86.8B</td><td>-19.3%</td><td>US$30.4B</td><td>去庫存同步下滑</td></tr>
+                                    <tr><td>2024</td><td>US$109.0B</td><td>+25.6%</td><td>US$29.8B</td><td>AI驅動反彈</td></tr>
+                                    <tr><td>2025</td><td>US$124.0B</td><td>+13.8%</td><td>US$41.0B</td><td>創新高，N2投資</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ══ 6. 股票回購 ══ -->
+                <section id="panel-buyback" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-hand-holding-dollar"></i> 資本回報：股利 vs 股票回購</h3>
+                        <p class="panel-desc">股利+股票回購=總股東現金回報（Total Cash Return）。台積電以股利為主要回報方式；回購規模極小（主要用於抵銷員工股權稀釋），與蘋果、NVIDIA 等大規模回購截然不同。來源：TSMC 年報 + SEC 8-K</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>年度股利 vs 股票回購（億 NT$）</h4>
+                            <p class="text-muted">藍柱=現金股利總額；橘柱=股票回購金額（極小，2024年約25.8億，幾乎不可見）。台積電 2024年報 p.069 確認回購3,249,000股，目的是「抵銷員工RSA計畫的稀釋效果」，非積極回饋性回購。</p>
+                            <div class="chart-container large"><canvas id="buyback-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>資本配置哲學說明</h4>
+                            <p>
+                                台積電的資本配置邏輯非常清晰：<br><br>
+                                <strong>優先投資（Capex）</strong>→ <strong>次發股利</strong>→ <strong>極少回購</strong><br><br>
+                                現金股利從 2021 年 NT$2,659億（10.25元×259.3億股）成長至 2025 年 NT$4,667億（18元×259.3億股），5年成長 75.5%。<br><br>
+                                股票回購年均約 NT$20-30 億，佔淨利不足 0.2%，主要功能是「中和員工股權計畫的稀釋效果」，不具有「傳遞股票被低估訊號」的意義。<br><br>
+                                這與 NVIDIA（2024 回購超過 US$10B）或蘋果（年回購超過 US$80B）的策略截然不同，反映台積電的現金主要用於未來的生產能力建設，而非當下的股東回報最大化。
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ══ 7. TSR 累積報酬比較 ══ -->
+                <section id="panel-tsr" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-chart-line"></i> 總股東報酬（TSR）歷史比較</h3>
+                        <p class="panel-desc">TSR = 股價漲跌 + 股利再投資。機構評估標準指標，反映持有台積電相較大盤和半導體指數的超額報酬。來源：Yahoo Finance ADR 歷史收盤價 + 已驗證股利數字</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>TSM ADR vs S&P500 vs SOXX 累積含息報酬（2020末=100基準）</h4>
+                            <p class="text-muted">以 2020/12/31 收盤為 100 基準（TSM ADR=$108.95）。各年含息累積報酬指數化呈現。5年期 TSR：TSM≈+84%、S&P500≈+85%、SOXX≈+120%。來源：Yahoo Finance ADR 歷史價格</p>
+                            <div class="chart-container large"><canvas id="tsr-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>TSR 解讀重點</h4>
+                            <table class="data-table">
+                                <thead><tr><th>指標</th><th>5年TSR</th><th>CAGR</th><th>說明</th></tr></thead>
+                                <tbody>
+                                    <tr><td>TSM ADR</td><td>+84%</td><td>+13.0%</td><td>含年均約US$0.99/ADR股利</td></tr>
+                                    <tr><td>S&P500 (SPY)</td><td>+85%</td><td>+13.1%</td><td>含股利再投資</td></tr>
+                                    <tr><td>SOXX (費半ETF)</td><td>+120%</td><td>+17.1%</td><td>AI題材推升費半指數</td></tr>
+                                    <tr><td>QQQ (那斯達克)</td><td>+115%</td><td>+16.6%</td><td>科技成長股集中</td></tr>
+                                </tbody>
+                            </table>
+                            <p style="margin-top:12px;font-size:13px;color:var(--text-secondary)">注意：TSR 結果受起算日和終止日影響極大。2020-2025 這 5 年 TSM 表現略遜於 S&P500 和費半指數，主要因為 2022 年的大幅回落（庫存去化+升息）。但若從 2023 年低點起算，TSM 表現則大幅領先。</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ══ 8. 台灣電力供需 ══ -->
+                <section id="panel-twpower" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-bolt"></i> 台灣電力供需缺口</h3>
+                        <p class="panel-desc">台積電用電量佔台灣全島約 9%，且隨先進製程擴產持續成長。台灣電力規劃能否跟上是 AI 擴廠的硬約束，也是機構 ESG 風險評估的核心指標。來源：台電年報 + TSMC ESG 報告</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>台灣總供電量 vs TSMC 用電量（億度 kWh）</h4>
+                            <p class="text-muted">灰柱=台灣總發電量（台電年報）；藍線=TSMC用電量（ESG報告確認）；橘線=TSMC佔比%（右軸）。趨勢顯示：TSMC佔比從2020年5.8%升至2024年9.4%，持續攀升。</p>
+                            <div class="chart-container large"><canvas id="twpower-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>電力供需關鍵數字</h4>
+                            <table class="data-table">
+                                <thead><tr><th>項目</th><th>數據</th><th>來源</th></tr></thead>
+                                <tbody>
+                                    <tr><td>台灣2024總發電</td><td>約 2,720 億度</td><td>台電年報估算</td></tr>
+                                    <tr><td>TSMC 2024用電</td><td>255 億度（9.4%）</td><td>TSMC ESG 報告</td></tr>
+                                    <tr><td>台灣2030再生能源目標</td><td>佔比 30%</td><td>能源局政策</td></tr>
+                                    <tr><td>TSMC 2030再生能源目標</td><td>佔自身用電 60%</td><td>TSMC RE100承諾</td></tr>
+                                    <tr><td>核能現況</td><td>核三廠 2025/5 停機</td><td>台電</td></tr>
+                                    <tr><td>預估缺口（2026-2030）</td><td>年增 5-8% 電力需求</td><td>工研院估算</td></tr>
+                                </tbody>
+                            </table>
+                            <p style="margin-top:12px;font-size:13px;color:var(--text-secondary)">核三廠 2025 年 5 月停機後，台灣實際核能發電容量歸零，夏季備轉容量率的壓力加劇。若台積電持續按計畫擴產（2025年用電255億度，2030年估算350+億度），台灣電網必須在5年內新增相當於 1-2 座核電廠的穩定基載電力，否則限電風險不容忽視。</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ══ 9. 關稅影響量化 ══ -->
+                <section id="panel-tariff" class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-scale-balanced"></i> 美國關稅影響量化分析</h3>
+                        <p class="panel-desc">台積電直接免疫進口關稅（以美元計費、台灣生產），但超大規模雲商資本支出受關稅影響可間接拖累 AI 訂單。台積電管理層已在 2026 Q1 法說會明確說明框架。</p>
+                    </div>
+                    <div class="grid">
+                        <div class="card chart-card full-width">
+                            <h4>關稅情境 → DC Capex 削減 → TSMC 營收影響</h4>
+                            <p class="text-muted">橫軸=美國對中關稅率情境；左軸=假設 Hyperscaler Capex 削減幅度（%）；右軸=TSMC 年度營收影響（億NT$）。基於 AI 營收佔 TSMC 總晶圓收入 17-19% 計算。</p>
+                            <div class="chart-container large"><canvas id="tariff-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card">
+                            <h4>關稅影響框架說明</h4>
+                            <table class="data-table">
+                                <thead><tr><th>情境</th><th>關稅衝擊假設</th><th>DC Capex削減</th><th>TSMC AI收入影響</th><th>總營收影響</th></tr></thead>
+                                <tbody>
+                                    <tr><td>輕微</td><td>關稅不變或降低</td><td>0%</td><td>0</td><td>0</td></tr>
+                                    <tr><td>溫和</td><td>關稅推升成本+5%</td><td>-10%</td><td>約-NT$700億</td><td>約-1.8%</td></tr>
+                                    <tr><td>嚴重</td><td>關稅衝擊利潤-15%</td><td>-25%</td><td>約-NT$1,750億</td><td>約-4.6%</td></tr>
+                                    <tr><td>極端</td><td>衰退風險，削減50%</td><td>-50%</td><td>約-NT$3,500億</td><td>約-9.2%</td></tr>
+                                </tbody>
+                            </table>
+                            <p style="margin-top:12px;font-size:13px;color:var(--text-secondary)">台積電 2026 Q1 法說會原文（魏哲家）：<em>"We are not seeing any change in our customer demand at this point. Customers are telling us that the AI demand is real."</em> 目前（2026 Q2）尚未看到關稅對 AI 資本支出的實際衝擊，但此框架可作為追蹤未來變化的監控基準。數字基於高盛量化分析框架。</p>
                         </div>
                     </div>
                 </section>
