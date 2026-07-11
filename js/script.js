@@ -297,6 +297,15 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         if (panel === 'debt')         initNewPanelOnce('debt',         renderDebtMaturityChart);
         if (panel === 'overseas')     initNewPanelOnce('overseas',     renderOverseasChart);
         if (panel === 'policy')       initNewPanelOnce('policy',       renderPolicyChart);
+        if (panel === 'dupont')       initNewPanelOnce('dupont',       renderDuPontChart);
+        if (panel === 'fcfps')        initNewPanelOnce('fcfps',        renderFCFpsChart);
+        if (panel === 'ccc')          initNewPanelOnce('ccc',          renderCCCChart);
+        if (panel === 'capexratio')   initNewPanelOnce('capexratio',   renderCapexRatioChart);
+        if (panel === 'semi')         initNewPanelOnce('semi',         renderSemiBillingsChart);
+        if (panel === 'buyback')      initNewPanelOnce('buyback',      renderBuybackChart);
+        if (panel === 'tsr')          initNewPanelOnce('tsr',          renderTSRChart);
+        if (panel === 'twpower')      initNewPanelOnce('twpower',      renderTWPowerChart);
+        if (panel === 'tariff')       initNewPanelOnce('tariff',       renderTariffChart);
     });
 });
     try { renderValuationCalculator(); }  catch(e) { console.error('[renderValuationCalculator]', e); }
@@ -2465,6 +2474,352 @@ function renderPolicyChart() {
                 x: { grid: { color: 'rgba(255,255,255,0.05)' }, min: -3, max: 3,
                     ticks: { callback: v => v>0 ? '利多':'利空' } },
                 y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  1. DuPont ROE 三因子拆解
+//  ROE = 淨利率 × ATO×槓桿；全部從已驗證年報數字計算，三乘積=已驗證ROE
+// ═══════════════════════════════════════════════════════════════
+function renderDuPontChart() {
+    const years = ['2021','2022','2023','2024','2025'];
+    const npm   = [37.6, 44.9, 38.8, 40.5, 45.1]; // 淨利率% = ni/rev（已驗證）
+    const atolev= [0.789,0.882,0.671,0.741,0.779]; // ATO×槓桿 = rev/avg_equity（已驗證）
+    const roe   = [29.7, 39.6, 26.0, 30.1, 35.1]; // 直接ROE（已驗證，三乘積=此值）
+
+    createChart('dupont-chart', {
+        type: 'line',
+        data: {
+            labels: years,
+            datasets: [
+                { label: '淨利率 (%)', data: npm,
+                  borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)',
+                  fill: false, borderWidth: 2.5, pointRadius: 5, tension: 0.3, yAxisID: 'y' },
+                { label: 'ATO×槓桿 (x)', data: atolev,
+                  borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)',
+                  fill: false, borderWidth: 2.5, pointRadius: 5, tension: 0.3, yAxisID: 'y1' },
+                { label: 'ROE = 淨利率×ATO×槓桿 (%)', data: roe,
+                  borderColor: '#10b981', borderWidth: 2, pointRadius: 4,
+                  borderDash: [4,2], tension: 0.3, fill: false, yAxisID: 'y' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '%' }, position: 'left', min: 0, max: 50 },
+                y1: { grid: { display: false }, title: { display: true, text: 'ATO×槓桿 (x)' }, position: 'right', min: 0.5, max: 1.1 },
+                x:  { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  2. FCF/股 vs EPS vs 股利
+//  FCF/股 = (R4.xls opCF - capex) ÷ 259.3億股；EPS/股利已驗證
+// ═══════════════════════════════════════════════════════════════
+function renderFCFpsChart() {
+    const years  = ['2021','2022','2023','2024','2025'];
+    // FCF = opCF(億NT$) - Capex(億NT$)，÷259.3億股 = NT$/股
+    // opCF: R4.xls: 11122,16106,12420,18262,22750 億NT$
+    // Capex: R4.xls: 8388,10817,9491,9551,12716 億NT$
+    const fcf_ps = [10.7, 20.4, 11.3, 33.6, 38.7]; // NT$/股（計算值）
+    const eps    = [23.0, 39.2, 32.3, 45.3, 66.3];  // NT$/股（年報確認）
+    const div    = [10.25,11.0, 11.25,14.0, 18.0];  // NT$/股（年報確認）
+
+    createChart('fcfps-chart', {
+        type: 'line',
+        data: {
+            labels: years,
+            datasets: [
+                { label: 'FCF/股 (NT$)', data: fcf_ps,
+                  borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.12)',
+                  fill: true, borderWidth: 2.5, pointRadius: 5, tension: 0.3 },
+                { label: 'EPS (NT$)', data: eps,
+                  borderColor: '#10b981', borderWidth: 2.5, pointRadius: 5, tension: 0.3, fill: false },
+                { label: '現金股利 (NT$)', data: div,
+                  borderColor: '#f59e0b', borderWidth: 2, pointRadius: 5, tension: 0.3,
+                  fill: false, borderDash: [4,2] }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: NT$${ctx.raw}` } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'NT$/股' }, min: 0 },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  3. CCC 現金轉換週期
+//  DSO/DIO: SEC 6-K；DPO: gurufocus TSM
+// ═══════════════════════════════════════════════════════════════
+function renderCCCChart() {
+    const years = ['2021','2022','2023','2024','2025'];
+    const dso   = [40, 36, 31, 27, 25];
+    const dio   = [75, 93, 85, 75, 68];
+    const dpo   = [62, 70, 68, 67, 65];
+    const ccc   = years.map((_,i) => dso[i]+dio[i]-dpo[i]);
+
+    createChart('ccc-chart', {
+        type: 'bar',
+        data: {
+            labels: years,
+            datasets: [
+                { label: 'DSO 應收天數', data: dso,
+                  backgroundColor: 'rgba(59,130,246,0.75)', borderRadius: 3, stack: 'a' },
+                { label: 'DIO 存貨天數', data: dio,
+                  backgroundColor: 'rgba(245,158,11,0.75)', borderRadius: 3, stack: 'a' },
+                { label: 'DPO 應付天數（負）', data: dpo.map(v => -v),
+                  backgroundColor: 'rgba(239,68,68,0.65)', borderRadius: 3, stack: 'a' },
+                { label: 'CCC 合計（天）', data: ccc,
+                  type: 'line', borderColor: '#10b981', borderWidth: 2.5,
+                  pointRadius: 6, tension: 0.2, fill: false }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx =>
+                    ctx.dataset.label.includes('DPO') ? `DPO: ${-ctx.raw}天` : `${ctx.dataset.label}: ${ctx.raw}天`
+                } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '天數' }, stacked: false },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  4. 資本密集度 Capex/Revenue
+//  Capex: R4.xls；Revenue: 年報確認
+// ═══════════════════════════════════════════════════════════════
+function renderCapexRatioChart() {
+    const years   = ['2020','2021','2022','2023','2024','2025','2026E'];
+    const capex   = [8140, 8388, 10817, 9491, 9551, 12716, 17000]; // 億NT$（2026E=US$54B×31.5）
+    const rev     = [13393,15874,22639,21617,28943,38091, 49000];  // 億NT$（2026E法說>30%估算）
+    const ratio   = capex.map((c,i) => +(c/rev[i]*100).toFixed(1));
+
+    createChart('capexratio-chart', {
+        type: 'bar',
+        data: {
+            labels: years,
+            datasets: [
+                { label: 'Capex（億NT$）', data: capex,
+                  backgroundColor: years.map(y => y.includes('E') ? 'rgba(100,116,139,0.5)' : 'rgba(59,130,246,0.75)'),
+                  borderRadius: 4, yAxisID: 'y' },
+                { label: 'Capex/Revenue (%)', data: ratio,
+                  type: 'line', borderColor: '#f59e0b', borderWidth: 2.5,
+                  pointRadius: 5, tension: 0.3, fill: false, yAxisID: 'y1',
+                  pointStyle: years.map(y => y.includes('E') ? 'triangle' : 'circle') }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '億NT$' }, position: 'left' },
+                y1: { grid: { display: false }, title: { display: true, text: 'Capex/Rev %' }, position: 'right', min: 20, max: 70 },
+                x:  { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  5. SEMI 設備出貨先行指標
+//  來源：SEMI 官方年度統計
+// ═══════════════════════════════════════════════════════════════
+function renderSemiBillingsChart() {
+    const years      = ['2020','2021','2022','2023','2024','2025'];
+    const semi_b     = [63.5, 100.5, 107.6, 86.8, 109.0, 124.0]; // USD B SEMI官方
+    const tsmc_capex = [17.2,  30.0,  36.3, 30.4,  29.8,  41.0]; // USD B 已驗證
+
+    createChart('semi-billings-chart', {
+        type: 'bar',
+        data: {
+            labels: years,
+            datasets: [
+                { label: 'SEMI 全球設備出貨額（USD B）', data: semi_b,
+                  backgroundColor: 'rgba(100,116,139,0.65)', borderRadius: 4, yAxisID: 'y' },
+                { label: 'TSMC Capex（USD B）', data: tsmc_capex,
+                  type: 'line', borderColor: '#3b82f6', borderWidth: 2.5,
+                  pointRadius: 5, tension: 0.3, fill: false, yAxisID: 'y' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'USD Billion' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  6. 股利 vs 股票回購
+//  股利：已驗證；回購：TSMC 2024年報 p.069 確認
+// ═══════════════════════════════════════════════════════════════
+function renderBuybackChart() {
+    const years   = ['2021','2022','2023','2024','2025'];
+    // 股利總額 = 股利/股 × 259.3億股
+    const divs    = [10.25,11.0,11.25,14.0,18.0].map(d => Math.round(d*259.3/100)*100); // 億NT$（四捨五入到百億）
+    // 實際: 10.25×259.3=2657, 11.0×259.3=2852, 11.25×259.3=2917, 14.0×259.3=3630, 18.0×259.3=4667
+    const divs_exact = [2657, 2852, 2917, 3630, 4667];
+    const buybacks   = [0, 0, 0, 26, 30]; // 億NT$（2024年報確認~25.8億）
+
+    createChart('buyback-chart', {
+        type: 'bar',
+        data: {
+            labels: years,
+            datasets: [
+                { label: '現金股利總額（億NT$）', data: divs_exact,
+                  backgroundColor: 'rgba(59,130,246,0.8)', borderRadius: 4 },
+                { label: '股票回購（億NT$）', data: buybacks,
+                  backgroundColor: 'rgba(245,158,11,0.8)', borderRadius: 4 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: NT$${ctx.raw}億` } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '億NT$' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  7. TSR 累積報酬比較
+//  來源：Yahoo Finance ADR 歷史收盤 + 已驗證股利
+// ═══════════════════════════════════════════════════════════════
+function renderTSRChart() {
+    const years = ['2020末','2021末','2022末','2023末','2024末','2025末'];
+    // TSM ADR 年末收盤（Yahoo Finance），以2020末=100指數化
+    // TSM: $108.95, $131.97, $72.72, $107.45, $193.44, ~$196
+    // 含股利累積: 2021+0.79, 2022+0.84, 2023+0.86, 2024+1.07, 2025+1.38
+    const tsm_price = [108.95, 131.97, 72.72, 107.45, 193.44, 196.0];
+    const tsm_div_cum = [0, 0.79, 1.63, 2.49, 3.56, 4.94]; // 累計股利USD
+    const tsm_tsr = tsm_price.map((p,i) => +((p + tsm_div_cum[i])/108.95*100).toFixed(1));
+
+    // S&P500 (SPY) 年末含息指數化（Yahoo Finance確認）
+    const spy_tsr = [100, 129.2, 104.4, 132.2, 163.1, 185.0];
+    // SOXX 年末含息指數化
+    const soxx_tsr = [100, 148.5, 99.7, 148.0, 208.3, 220.0];
+
+    createChart('tsr-chart', {
+        type: 'line',
+        data: {
+            labels: years,
+            datasets: [
+                { label: 'TSM ADR（含息）', data: tsm_tsr,
+                  borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)',
+                  fill: true, borderWidth: 2.5, pointRadius: 5, tension: 0.3 },
+                { label: 'S&P500 (SPY，含息)', data: spy_tsr,
+                  borderColor: '#94a3b8', borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false },
+                { label: 'SOXX（費半，含息）', data: soxx_tsr,
+                  borderColor: '#f59e0b', borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw}（基準=100）` } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '指數（2020末=100）' }, min: 60 },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  8. 台灣電力供需
+//  來源：台電年報（供電量）+ TSMC ESG 報告（用電量，已驗證）
+// ═══════════════════════════════════════════════════════════════
+function renderTWPowerChart() {
+    const years    = ['2020','2021','2022','2023','2024'];
+    const tw_total = [2490, 2538, 2570, 2620, 2720]; // 億度 台電年報
+    const tsmc_use = [145,  168,  219,  248,  255];  // 億度 TSMC ESG（已驗證）
+    const pct      = tsmc_use.map((t,i) => +(t/tw_total[i]*100).toFixed(1));
+
+    createChart('twpower-chart', {
+        type: 'bar',
+        data: {
+            labels: years,
+            datasets: [
+                { label: '台灣總發電量（億度）', data: tw_total,
+                  backgroundColor: 'rgba(100,116,139,0.4)', borderRadius: 3, yAxisID: 'y' },
+                { label: 'TSMC 用電量（億度）', data: tsmc_use,
+                  backgroundColor: 'rgba(239,68,68,0.75)', borderRadius: 3, yAxisID: 'y' },
+                { label: 'TSMC 佔比 (%)', data: pct,
+                  type: 'line', borderColor: '#f59e0b', borderWidth: 2.5,
+                  pointRadius: 5, tension: 0.3, fill: false, yAxisID: 'y1' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '億度 kWh' }, position: 'left', min: 0 },
+                y1: { grid: { display: false }, title: { display: true, text: 'TSMC佔比 %' }, position: 'right', min: 0, max: 15 },
+                x:  { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  9. 關稅影響量化
+//  基於 Q1 2026 法說會框架 + 高盛量化分析
+// ═══════════════════════════════════════════════════════════════
+function renderTariffChart() {
+    const scenarios  = ['無衝擊', '輕微\n(-5%DC)', '溫和\n(-10%DC)', '嚴重\n(-25%DC)', '極端\n(-50%DC)'];
+    const dc_cut_pct = [0, -5, -10, -25, -50]; // DC Capex削減%
+    // AI佔TSMC晶圓收入約18%（法說會確認17-19%，取中值）
+    // TSMC 2025年收入38091億NT$
+    const ai_rev     = 38091 * 0.18; // 約6856億NT$
+    const rev_impact = dc_cut_pct.map(c => Math.round(ai_rev * c/100)); // 億NT$
+
+    createChart('tariff-chart', {
+        type: 'bar',
+        data: {
+            labels: scenarios,
+            datasets: [
+                { label: '年度營收影響（億NT$）', data: rev_impact,
+                  backgroundColor: rev_impact.map(v => v===0?'rgba(100,116,139,0.5)':v>-1000?'rgba(245,158,11,0.75)':v>-2000?'rgba(239,68,68,0.7)':'rgba(239,68,68,0.9)'),
+                  borderRadius: 4 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false },
+                tooltip: { callbacks: { label: ctx =>
+                    ctx.raw === 0 ? '無影響' : `約 NT$${ctx.raw}億（${(ctx.raw/38091*100).toFixed(1)}%）`
+                } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '億NT$（負值=收入減少）' } },
+                x: { grid: { display: false } }
             }
         }
     });
