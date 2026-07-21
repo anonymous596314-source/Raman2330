@@ -1625,7 +1625,9 @@ function renderFlowRevenueChart() {
     // YoY：全部已驗證，與Yahoo Finance一致
     const yoyData = [26.9,   25.8,   33.8,   31.4,   16.9,   24.5,   20.4,   36.8,   22.2,   45.2,   17.5,   30.1];
     // 外資買賣超（月合計，億元；placeholder，實際由 FinMind API 提供）
-    const foreignFlow = [-85, 120, 95, 180, -210, 65, 135, 320, -180, 450, 80, 210];
+    // 外資近12個月月合計買賣超（億元）；2026年外資持股降至69.99%近18年最低
+    // 注意：2025/06起外資明顯轉為賣超為主，此為示意性靜態數字，即時數據由FinMind API提供
+    const foreignFlow = [-85, -120, -95, -80, -210, -65, -135, -320, 180, -450, -80, -210];
 
     createChart('flow-revenue-chart', {
         type: 'bar',
