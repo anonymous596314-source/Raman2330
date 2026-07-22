@@ -108,13 +108,13 @@
                         </div>
                         <div class="card stat-card span-3">
                             <h4>營業利益率</h4>
-                            <div class="stat-value" id="operating-margin">58.1%</div>
-                            <div class="stat-sub">2026 Q1 實績</div>
+                            <div class="stat-value" id="operating-margin">60.3%</div>
+                            <div class="stat-sub">2026 Q2 實績</div>
                         </div>
                         <div class="card stat-card span-3">
                             <h4>淨利率</h4>
-                            <div class="stat-value" id="net-margin">50.5%</div>
-                            <div class="stat-sub">2026 Q1 實績</div>
+                            <div class="stat-value" id="net-margin">55.6%</div>
+                            <div class="stat-sub">2026 Q2 實績</div>
                         </div>
                         <div class="card stat-card span-3">
                             <h4>2025 EPS</h4>
@@ -123,17 +123,17 @@
                         </div>
                         <div class="card stat-card span-3">
                             <h4>先進製程佔比</h4>
-                            <div class="stat-value">74%</div>
-                            <div class="stat-sub">7nm 以下，2025 全年</div>
+                            <div class="stat-value">77%</div>
+                            <div class="stat-sub">7nm 以下，2026 Q2 單季晶圓銷售金額佔比</div>
                         </div>
                         <!-- 圖表行 -->
                         <div class="card chart-card full-width">
-                            <h4>季度營收與毛利率趨勢 (24Q1 ~ 26Q1)</h4>
+                            <h4>季度營收與毛利率趨勢 (24Q1 ~ 26Q2)</h4>
                             <p class="text-muted">全部使用 FinMind 真實財報數字，單位：十億台幣</p>
                             <div class="chart-container"><canvas id="fundamental-chart"></canvas></div>
                         </div>
                         <div class="card chart-card">
-                            <h4>單季 EPS 趨勢 (24Q1 ~ 26Q1)</h4>
+                            <h4>單季 EPS 趨勢 (24Q1 ~ 26Q2)</h4>
                             <div class="chart-container"><canvas id="eps-chart"></canvas></div>
                         </div>
                         <div class="card chart-card">
@@ -152,12 +152,12 @@
                             <div class="chart-container"><canvas id="cashflow-capex-chart"></canvas></div>
                         </div>
                         <div class="card chart-card full-width">
-                            <h4>三率歷史趨勢 (毛利率 / 營業利益率 / 淨利率，2018–2026Q1)</h4>
+                            <h4>三率歷史趨勢 (毛利率 / 營業利益率 / 淨利率，2018–2026Q2)</h4>
                             <p class="text-muted">資料來源：台積電年報。毛利率突破 60% 代表定價能力大幅提升；三率同步上揚為最佳獲利品質</p>
                             <div class="chart-container"><canvas id="three-margin-chart"></canvas></div>
                         </div>
                         <div class="card chart-card full-width">
-                            <h4>研發費用率趨勢 (近8季)</h4>
+                            <h4>研發費用率趨勢 (近9季)</h4>
                             <p class="text-muted">研發費用率 = 研發支出 ÷ 營收。維持 6%+ 代表持續投入先進製程研發，為長期護城河</p>
                             <div class="chart-container"><canvas id="rnd-rate-chart"></canvas></div>
                         </div>
@@ -172,7 +172,7 @@
                             <div class="chart-container"><canvas id="cashflow-deep-chart"></canvas></div>
                         </div>
                         <div class="card chart-card full-width">
-                            <h4>流動比率 / 速動比率 (近6季)</h4>
+                            <h4>流動比率 / 速動比率 (近7季)</h4>
                             <p class="text-muted">流動比率 > 2 代表短期償債能力優異；速動比率排除存貨，更嚴格衡量即時流動性</p>
                             <div class="chart-container"><canvas id="liquidity-chart"></canvas></div>
                         </div>
@@ -208,7 +208,7 @@
                         </div>
                         <div class="card chart-card">
                             <h4>股價淨值比 (P/B) 歷史區間</h4>
-                            <p class="text-muted">目前 P/B 約 10x，為歷史新高，反映市場對 AI 時代台積電定價權的重新評估</p>
+                            <p class="text-muted">26Q2季底P/B約9.71x（隨BPS成長而從26Q1的10.28x略降），仍處歷史高檔，反映市場對AI時代台積電定價權的重新評估</p>
                             <div class="chart-container"><canvas id="pb-chart"></canvas></div>
                         </div>
                     </div>
@@ -428,7 +428,7 @@
                     <div class="grid-container">
                         <div class="card chart-card">
                             <h4>各製程營收佔比 (2025 全年)</h4>
-                            <p class="text-muted">3nm 佔比持續提升，AI 加速器帶動；26Q1 單季 3nm 已升至 25%</p>
+                            <p class="text-muted">3nm 佔比持續提升，AI 加速器帶動；26Q2 單季製程佔比：2nm 3%、3nm 30%、5nm 33%、7nm 11%，先進製程(7nm以上)合計佔晶圓銷售金額 77%</p>
                             <div class="chart-container"><canvas id="industry-pie-chart"></canvas></div>
                         </div>
                         <div class="card chart-card">
@@ -631,7 +631,7 @@
                         <div class="card text-card full-width">
                             <h4>資料來源註記</h4>
                             <p class="source-note">
-                                動態市場資料來自 Yahoo Finance 與 FinMind API；靜態財務、製程與布局假設參考台積公司 2026 Q1 季報、2025 年報與 2026 股東會議程書。此頁為研究儀表板，不構成投資建議。
+                                動態市場資料來自 Yahoo Finance 與 FinMind API；靜態財務、製程與布局假設參考台積公司 2026 Q2 季報、2025 年報與 2026 股東會議程書。此頁為研究儀表板，不構成投資建議。
                             </p>
                         </div>
                     </div>
@@ -647,12 +647,12 @@
                     </div>
                     <div class="grid">
                         <div class="card chart-card full-width">
-                            <h4>月合併營收趨勢（2022/01 ~ 2026/05）</h4>
+                            <h4>月合併營收趨勢（2022/01 ~ 2026/06）</h4>
                             <p class="text-muted">深藍=2026，深灰=2025，中灰=2024，淺灰=2022-2023；折線=YoY%（右軸，2023起有完整去年資料）。來源：Yahoo Finance 月營收表。驗證：2022=22639億✓ 2023=21617億✓ 2024=28943億✓ 2025=38091億✓ 全年誤差&lt;1億</p>
                             <div class="chart-container large"><canvas id="monthly-rev-chart"></canvas></div>
                         </div>
                         <div class="card chart-card">
-                            <h4>近12個月 YoY 加速/減速趨勢（2025/06 ~ 2026/05）</h4>
+                            <h4>近12個月 YoY 加速/減速趨勢（2025/07 ~ 2026/06）</h4>
                             <p class="text-muted">全12個月均有去年同期對照數據（2024全年已取得），橘虛線為30%參考基準。YoY持續>30%且加速通常是外資進場訊號</p>
                             <div class="chart-container"><canvas id="monthly-yoy-chart"></canvas></div>
                         </div>
@@ -661,10 +661,10 @@
                             <table class="data-table">
                                 <thead><tr><th>指標</th><th>當前狀況</th><th>意涵</th></tr></thead>
                                 <tbody>
-                                    <tr><td>2026/05 YoY</td><td style="color:var(--up-color)">+30.1%</td><td>連續成長，AI需求持續</td></tr>
-                                    <tr><td>1-5月累計 YoY</td><td style="color:var(--up-color)">+30.0%</td><td>符合法說指引 "30%+ USD growth"</td></tr>
+                                    <tr><td>2026/06 YoY</td><td style="color:var(--up-color)">+67.9%</td><td>連續兩個月創單月新高，AI需求加速</td></tr>
+                                    <tr><td>1-6月累計 YoY</td><td style="color:var(--up-color)">+35.6%</td><td>上半年累計營收約NT$2.40兆，優於法說指引</td></tr>
                                     <tr><td>季節性</td><td>2月為傳統淡季</td><td>2月環比下滑屬正常，不需過度解讀</td></tr>
-                                    <tr><td>26Q2 隱含</td><td>估 NT$1.26兆+</td><td>三個月合計將超越 25Q4 高點</td></tr>
+                                    <tr><td>26Q2 實績</td><td>NT$1兆2,703.8億</td><td>季增12%，達美元財測390-402億上緣（實際402億美元）</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -762,7 +762,7 @@
                                     <tr><td>2025 Q1</td><td style="color:var(--up-color)">+33-36%</td><td>小幅賣超</td><td>年初獲利了結，但金額不大</td></tr>
                                     <tr><td>2025 Q2</td><td style="color:#f59e0b">+17-30%</td><td>持續賣超</td><td>關稅不確定性，外資避險</td></tr>
                                     <tr><td>2025 Q3-Q4</td><td style="color:var(--up-color)">+16-24%</td><td>大幅賣超</td><td>持股從75%持續降低</td></tr>
-                                    <tr><td>2026 Q1-Q2</td><td style="color:var(--up-color)">+36-45%</td><td>仍賣超為主</td><td>持股降至69.99%近18年低點，賣超逾NT$1.23兆</td></tr>
+                                    <tr><td>2026 Q1-Q2</td><td style="color:var(--up-color)">+17-68%</td><td>仍賣超為主</td><td>持股降至69.99%近18年低點，賣超逾NT$1.23兆</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -770,7 +770,7 @@
                             <h4>外資動向說明（近期以賣超為主）</h4>
                             <p>
                                 <strong>⚠️ 重要：2026年外資持股降至近18年最低（69.99%），今年累計賣超逾NT$1.23兆。</strong><br><br>
-                                外資長期持續賣超有結構性原因：美元升值使外資將台股換回美元，以及被動 ETF 再平衡（台積電市值觸及 SOXX 10% 上限自動賣出）。月營收 YoY 雖維持30%+高成長，但外資賣超力道未見減緩。<br><br>
+                                外資長期持續賣超有結構性原因：美元升值使外資將台股換回美元，以及被動 ETF 再平衡（台積電市值觸及 SOXX 10% 上限自動賣出）。月營收 YoY 持續維持 30-68% 高速成長（6月更加速至67.9%），但外資賣超力道未見減緩。<br><br>
                                 <strong>判讀重點：</strong>外資持股比例從高點75%降至70%，再往下的支撐較少，若台股整體外資持股再下滑，台積電可能持續承壓。<br><br>
                                 <span style="color:var(--text-secondary);font-size:12px">* 即時外資買賣超數據由 FinMind API 動態提供。圖表左軸為靜態示意，以賣超（負值）為主的方向性是正確的。</span>
                             </p>
@@ -789,7 +789,7 @@
                     <div class="grid">
                         <div class="card chart-card full-width">
                             <h4>全球半導體市場規模 vs TSMC 營收（USD B）</h4>
-                            <p class="text-muted">藍柱=全球市場(WSTS)，橘線=TSMC營收，折線=TSMC市場滲透率(右軸)。2026E：WSTS預測市場$975.5B，TSMC法說指引 >30% YoY ≈ $160B</p>
+                            <p class="text-muted">藍柱=全球市場(WSTS)，橘線=TSMC營收，折線=TSMC市場滲透率(右軸)。2026E：WSTS預測市場$975.5B，TSMC法說指引上修至 >40% YoY ≈ $172B（26Q2法說會，原>30%）</p>
                             <div class="chart-container large"><canvas id="semimkt-chart"></canvas></div>
                         </div>
                         <div class="card chart-card">
@@ -807,7 +807,7 @@
                                     <tr><td>2023</td><td>$527B</td><td>$69.7B</td><td>13.2%</td><td>-8.2%</td></tr>
                                     <tr><td>2024</td><td>$631B</td><td>$90.2B</td><td>14.3%</td><td>+29.4%</td></tr>
                                     <tr><td>2025</td><td>$772B</td><td>$122.9B</td><td>15.9%</td><td>+36.3%</td></tr>
-                                    <tr><td>2026E</td><td>$976B</td><td>~$160B</td><td>~16.4%</td><td>>30%</td></tr>
+                                    <tr><td>2026E</td><td>$976B</td><td>~$172B</td><td>~17.6%</td><td>>40%</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -862,8 +862,8 @@
                     </div>
                     <div class="grid">
                         <div class="card chart-card full-width">
-                            <h4>FCF &amp; FCF Yield 歷史（2020~2026Q1）</h4>
-                            <p class="text-muted">藍柱=年度自由現金流(USD B，左軸)；橘線=FCF Yield%(右軸)。FCF = 營業現金流 - 資本支出。來源：MacroTrends/finbox，已與台積電官方 CF 表交叉驗證</p>
+                            <h4>FCF &amp; FCF Yield 歷史（2020~2026H1）</h4>
+                            <p class="text-muted">藍柱=年度自由現金流(USD B，左軸，2026為上半年實績非年化)；橘線=FCF Yield%(右軸)。FCF = 營業現金流 - 資本支出。來源：MacroTrends/finbox，已與台積電官方 CF 表交叉驗證</p>
                             <div class="chart-container large"><canvas id="fcf-yield-chart"></canvas></div>
                         </div>
                         <div class="card chart-card">
@@ -877,7 +877,7 @@
                                 台積電 FCF Yield 的高低主要由兩個因素驅動：<br><br>
                                 <strong>① 資本支出週期：</strong>Capex 高峰年（2021年Capex=US$30B，FCF被壓縮）FCF Yield 低；Capex 相對穩定或 opCF 大幅成長時（2022、2024）FCF Yield 反彈。<br><br>
                                 <strong>② 市值重估：</strong>AI 題材推升市值速度可能超過 FCF 成長，導致 FCF Yield 看似下降（如 2025：FCF 創歷史高點 US$40.5B，但市值也大幅膨脹）。<br><br>
-                                <strong>目前（2026Q1）：</strong>FCF Yield 約 <strong>2.2-2.5%</strong>，低於歷史均值（約 3%），反映市場對 TSMC 未來成長已給予相當程度的溢價，與 PE 角度結論一致。
+                                <strong>目前（2026上半年）：</strong>自由現金流實績約 <strong>US$20.1B</strong>（營業現金流$46.9B減資本支出$26.8B），較2025同期明顯增長；因缺市值資料暫無法計算FCF Yield，但現金創造能力持續強勁，與獲利成長同步。
                             </p>
                         </div>
                     </div>
@@ -1398,7 +1398,7 @@
                     <div class="grid">
                         <div class="card chart-card full-width">
                             <h4>Capex/Revenue 歷年趨勢（%）</h4>
-                            <p class="text-muted">藍柱=Capex(億NT$，左軸)；橘線=Capex/Revenue%(右軸)。2026E Capex=NT$1.7兆(US$54B)，若Revenue依法說指引成長>30%，Capex/Rev比例約33-35%，維持在「規模效益區」。</p>
+                            <p class="text-muted">藍柱=Capex(億NT$，左軸)；橘線=Capex/Revenue%(右軸)。2026E Capex=NT$1.9-2.0兆(US$600-640億，26Q2法說會上修)，若Revenue依法說指引成長>40%，Capex/Rev比例約33-35%，維持在「規模效益區」。</p>
                             <div class="chart-container large"><canvas id="capexratio-chart"></canvas></div>
                         </div>
                         <div class="card text-card">
@@ -1406,7 +1406,7 @@
                             <p>
                                 2020 年 Capex/Rev=<strong>60.8%</strong>，是台積電歷史上資本密集度最高的年份之一（大規模 5nm 擴廠）。此後隨 N5 良率成熟、N3 爬坡，分母（營收）成長速度超越分子（Capex），密集度持續下降。<br><br>
                                 2024-2025 年穩定在 33% 左右，接近半導體行業「成熟大廠」的合理水準（Intel 歷史 20-30%，三星晶片部門 35-45%）。<br><br>
-                                2026 年 Capex 跳升至 US$54B，但若 AI 驅動的營收持續以 30%+ 成長，Capex/Rev 比例將繼續維持在 33-35%，不會重回 2020 年的高峰——這正是規模效益的體現。
+                                2026 年 Capex 上修至 US$600-640 億（26Q2法說會，原520-560億），若 AI 驅動的營收持續以 40%+ 成長，Capex/Rev 比例將繼續維持在 33-35%，不會重回 2020 年的高峰——這正是規模效益的體現。
                             </p>
                         </div>
                     </div>
