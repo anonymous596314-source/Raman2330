@@ -356,15 +356,15 @@ function showChartFallback(ctxId, msg) {
 }
 
 // ─── 基本面圖表 ────────────────────────────────────────────────
-const QUARTER_LABELS = ['24Q1','24Q2','24Q3','24Q4','25Q1','25Q2','25Q3','25Q4','26Q1'];
-const REVENUES_B     = [592.64, 673.51, 759.69, 868.46, 839.25, 933.79, 989.92, 1046.09, 1134.10];
-const GROSS_MARGINS  = [53.1, 53.2, 57.8, 59.0, 58.8, 58.6, 59.5, 62.3, 66.2]; // 合併報表，來源：SEC 6-K / TSMC官方新聞稿
-const EPS_QUARTERLY  = [8.70, 9.56, 12.54, 14.45, 13.94, 15.36, 17.44, 19.50, 22.08]; // 合併報表，來源：SEC 6-K
-const OPERATING_MARGINS = [42.0, 42.5, 47.5, 49.0, 48.5, 49.6, 50.6, 54.0, 58.1]; // 合併報表，來源：SEC 6-K
-const NET_MARGINS = [38.0, 36.8, 42.8, 43.1, 43.1, 42.7, 45.7, 48.3, 50.5]; // 合併報表，來源：SEC 6-K
+const QUARTER_LABELS = ['24Q1','24Q2','24Q3','24Q4','25Q1','25Q2','25Q3','25Q4','26Q1','26Q2'];
+const REVENUES_B     = [592.64, 673.51, 759.69, 868.46, 839.25, 933.79, 989.92, 1046.09, 1134.10, 1270.38];
+const GROSS_MARGINS  = [53.1, 53.2, 57.8, 59.0, 58.8, 58.6, 59.5, 62.3, 66.2, 67.7]; // 合併報表，來源：SEC 6-K / TSMC官方新聞稿・法說會
+const EPS_QUARTERLY  = [8.70, 9.56, 12.54, 14.45, 13.94, 15.36, 17.44, 19.50, 22.08, 27.25]; // 合併報表，來源：SEC 6-K・26Q2法說會(2026/7/16)
+const OPERATING_MARGINS = [42.0, 42.5, 47.5, 49.0, 48.5, 49.6, 50.6, 54.0, 58.1, 60.3]; // 合併報表，來源：SEC 6-K・26Q2法說會
+const NET_MARGINS = [38.0, 36.8, 42.8, 43.1, 43.1, 42.7, 45.7, 48.3, 50.5, 55.6]; // 合併報表，來源：SEC 6-K・26Q2法說會
 const ANNUAL_LABELS = ['2021', '2022', '2023', '2024', '2025', '2026(E)'];
 const ANNUAL_REVENUE_B = [15874, 22639, 21617, 28943, 38091, null]; // 億元台幣；2026E 法說展望但未公告，留空
-const ANNUAL_CAPEX_USD_B = [30.0, 36.3, 30.4, 29.8, 41.0, 54.0]; // 2025實際；2026E=指引US$52-56B中值（Q1 2026法說會）
+const ANNUAL_CAPEX_USD_B = [30.0, 36.3, 30.4, 29.8, 41.0, 62.0]; // 2025實際；2026E=指引US$600-640億中值（Q2 2026法說會上修，原520-560億）
 const ANNUAL_DIVIDEND = [10.25, 11.0, 11.25, 14.0, 18.0, null]; // 2026E尚未公告
 
 function renderFundamentalChart() {
@@ -428,7 +428,7 @@ function renderEpsChart() {
 
 function renderYoyChart() {
     // 同期對比：24Q1 vs 23Q1 等（使用近似值）
-    const prevYearRevs = [508, 480, 546, 625, 592.64, 673.51, 759.69, 868.46, 839.25];
+    const prevYearRevs = [508, 480, 546, 625, 592.64, 673.51, 759.69, 868.46, 839.25, 933.79];
     const yoy = REVENUES_B.map((r, i) => prevYearRevs[i] ? ((r - prevYearRevs[i]) / prevYearRevs[i] * 100) : null);
 
     createChart('yoy-chart', {
@@ -1192,8 +1192,8 @@ function renderOutlookChart() {
             labels: ['2021', '2022', '2023', '2024', '2025', '2026(E)', '2027(E)', '2028(E)'],
             datasets: [{
                 label: '資本支出 (十億美元)',
-                data: [30.0, 36.3, 30.4, 29.8, 41.0, 54.0, 60.0, 65.0],
-                // 實際：2021-2025 已驗證（R4.xls + 匯率換算）；2026E=法說會指引US$52-56B中值；2027-2028E為市場預估
+                data: [30.0, 36.3, 30.4, 29.8, 41.0, 62.0, 60.0, 65.0],
+                // 實際：2021-2025 已驗證（R4.xls + 匯率換算）；2026E=26Q2法說會指引US$600-640億中值（原520-560億上修）；2027-2028E為市場預估
                 backgroundColor: (ctx) => {
                     const idx = ctx.dataIndex;
                     if (idx >= 5) return 'rgba(239,68,68,0.6)'; // 預估值用半透明紅
@@ -1384,13 +1384,13 @@ function renderGeoRevenueChart() {
 // ═══════════════════════════════════════════════════════════════
 function renderMonthlyRevCharts() {
     // 各年月份資料（億元）— 來源：Yahoo Finance 仟元 ÷ 100000
-    // 驗證：2022=22639億✓ 2023=21617億✓ 2024=28943億✓ 2025=38091億✓ 2026/1-5=19618億✓
+    // 驗證：2022=22639億✓ 2023=21617億✓ 2024=28943億✓ 2025=38091億✓ 2026/1-6=24044.84億✓（台積電官方公告，年增35.6%）
     // 所有月份 YoY 與 Yahoo Finance 逐月核對，最大誤差 < 0.02%
     const rev2022 = [1721.8,1469.3,1719.7,1725.6,1857.1,1758.7,1867.6,2181.3,2082.5,2102.7,2227.1,1925.6];
     const rev2023 = [2000.5,1631.7,1454.1,1479.0,1765.4,1564.0,1776.2,1886.9,1804.3,2432.0,2060.3,1763.0];
     const rev2024 = [2157.9,1816.5,1952.1,2360.2,2296.2,2078.7,2569.5,2508.7,2518.7,3142.4,2760.6,2781.6];
     const rev2025 = [2932.9,2600.1,2859.6,3495.7,3205.2,2637.1,3231.7,3357.7,3309.8,3674.7,3436.1,3350.0];
-    const rev2026 = [4012.6,3176.6,4151.9,4107.3,4169.8];
+    const rev2026 = [4012.6,3176.6,4151.9,4107.3,4169.8,4426.8]; // 6月：4,426.8億，月增6.2%、年增67.9%，連續兩個月創新高（台積電2026/7/13公告）
 
     const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
     const allLabels = [
@@ -1398,7 +1398,7 @@ function renderMonthlyRevCharts() {
         ...months.map(m=>`23/${m}`),
         ...months.map(m=>`24/${m}`),
         ...months.map(m=>`25/${m}`),
-        ...['01','02','03','04','05'].map(m=>`26/${m}`)
+        ...['01','02','03','04','05','06'].map(m=>`26/${m}`)
     ];
     const allRev = [...rev2022,...rev2023,...rev2024,...rev2025,...rev2026];
     const prevAll = [...rev2022,...rev2023,...rev2024,...rev2025];
@@ -1451,9 +1451,9 @@ function renderMonthlyRevCharts() {
         }
     });
 
-    // 近12個月 YoY 趨勢圖（2025/06 ~ 2026/05）
-    const yoy12Labels = ['25/06','25/07','25/08','25/09','25/10','25/11','25/12','26/01','26/02','26/03','26/04','26/05'];
-    const yoy12Data   = [26.9, 25.8, 33.8, 31.4, 16.9, 24.5, 20.4, 36.8, 22.2, 45.2, 17.5, 30.1];
+    // 近12個月 YoY 趨勢圖（2025/07 ~ 2026/06）
+    const yoy12Labels = ['25/07','25/08','25/09','25/10','25/11','25/12','26/01','26/02','26/03','26/04','26/05','26/06'];
+    const yoy12Data   = [25.8, 33.8, 31.4, 16.9, 24.5, 20.4, 36.8, 22.2, 45.2, 17.5, 30.1, 67.9];
 
     createChart('monthly-yoy-chart', {
         type: 'line',
@@ -1674,7 +1674,7 @@ function renderFlowRevenueChart() {
 function renderSemiMktCharts() {
     const years = ['2021','2022','2023','2024','2025','2026E'];
     const wsts  = [555.9, 574.1, 526.8, 630.5, 772.0, 975.5]; // WSTS USD B
-    const tsmc  = [ 56.8,  75.9,  69.7,  90.2, 122.9, 160.0]; // TSMC USD B（2026E法說>30%）
+    const tsmc  = [ 56.8,  75.9,  69.7,  90.2, 122.9, 172.0]; // TSMC USD B（2026E法說指引上修至>40%，26Q2法說會）
     const share = tsmc.map((t,i)=>+(t/wsts[i]*100).toFixed(1));
 
     createChart('semimkt-chart', {
@@ -1766,14 +1766,14 @@ function renderRoadmap2Charts() {
 //  已與R4.xls現金流量表交叉驗證（2024/2025數字完全一致）
 // ═══════════════════════════════════════════════════════════════
 function renderFCFCharts() {
-    const years = ['2020','2021','2022','2023','2024','2025'];
-    const fcf   = [17.4, 9.8, 17.2, 9.6, 26.6, 40.5]; // USD B; MacroTrends/BusinessQuant
-    const yield_pct = [4.2, 1.9, 4.5, 1.4, 3.0, 2.2];  // finbox FCF Yield %
+    const years = ['2020','2021','2022','2023','2024','2025','26H1'];
+    const fcf   = [17.4, 9.8, 17.2, 9.6, 26.6, 40.5, 20.1]; // USD B; 26H1來源：TSMC 2Q26官方合併現金流量表（營業現金流$46.9B − 資本支出$26.8B，六個月非年化）
+    const yield_pct = [4.2, 1.9, 4.5, 1.4, 3.0, 2.2, null];  // finbox FCF Yield %；26H1缺市值資料無法計算，留空
     // 股利殖利率（歷史均股價，已驗證股利數字）
     const div_yield = [
         10.25/398*100, 10.25/620*100, 11.0/500*100,
-        11.25/538*100, 14.0/793*100, 18.0/1069*100
-    ].map(v=>+v.toFixed(2));
+        11.25/538*100, 14.0/793*100, 18.0/1069*100, null
+    ].map(v=>v===null?null:+v.toFixed(2));
 
     createChart('fcf-yield-chart', {
         type: 'bar',
@@ -2609,8 +2609,8 @@ function renderCCCChart() {
 // ═══════════════════════════════════════════════════════════════
 function renderCapexRatioChart() {
     const years   = ['2020','2021','2022','2023','2024','2025','2026E'];
-    const capex   = [8140, 8388, 10817, 9491, 9551, 12716, 17000]; // 億NT$（2026E=US$54B×31.5）
-    const rev     = [13393,15874,22639,21617,28943,38091, 49000];  // 億NT$（2026E法說>30%估算）
+    const capex   = [8140, 8388, 10817, 9491, 9551, 12716, 19530]; // 億NT$（2026E=US$620億中值×31.5，26Q2法說會上修）
+    const rev     = [13393,15874,22639,21617,28943,38091, 53330];  // 億NT$（2026E法說>40%估算，26Q2法說會上修）
     const ratio   = capex.map((c,i) => +(c/rev[i]*100).toFixed(1));
 
     createChart('capexratio-chart', {
@@ -2772,7 +2772,8 @@ function renderTWPowerChart() {
                 { label: '台灣總發電量（億度）', data: tw_total,
                   backgroundColor: 'rgba(100,116,139,0.4)', borderRadius: 3, yAxisID: 'y' },
                 { label: 'TSMC 用電量（億度）', data: tsmc_use,
-                  backgroundColor: 'rgba(239,68,68,0.75)', borderRadius: 3, yAxisID: 'y' },
+                  type: 'line', borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)',
+                  borderWidth: 2.5, pointRadius: 5, tension: 0.3, fill: false, yAxisID: 'y' },
                 { label: 'TSMC 佔比 (%)', data: pct,
                   type: 'line', borderColor: '#f59e0b', borderWidth: 2.5,
                   pointRadius: 5, tension: 0.3, fill: false, yAxisID: 'y1' }
@@ -3160,21 +3161,22 @@ function renderVIXChart(tsmData, vixData) {
 }
 
 // ── 5. 外資法人目標價（消息面）─────────────────────────────────
-// 公開資料：各大外資最新目標價（截至 2026 年 6 月底，7 月法說前調升潮）
+// 公開資料：各大外資最新目標價（截至 2026 年 7 月 21 日，Q2法說會後(7/16)最新一輪調升）
 const ANALYST_TARGETS = [
+    { firm: 'Macquarie (麥格理)',    rating: 'Outperform', target: 4200, date: '2026-07-17' },
+    { firm: 'Citigroup (花旗)',      rating: 'Buy',        target: 3800, date: '2026-07-06' },
     { firm: 'Aletheia Capital',      rating: 'Buy',        target: 3500, date: '2026-06' },
     { firm: 'UBS (瑞銀)',            rating: 'Buy',        target: 3400, date: '2026-06-29' },
-    { firm: 'Macquarie (麥格理)',    rating: 'Outperform', target: 3380, date: '2026-06' },
     { firm: 'CLSA (里昂)',           rating: 'Buy',        target: 3330, date: '2026-06' },
-    { firm: 'Citigroup (花旗)',      rating: 'Buy',        target: 2875, date: '2026-04' },
+    { firm: 'Mizuho (瑞穗)',         rating: 'Buy',        target: 3150, date: '2026-07-17' },
+    { firm: 'Bank of America (美銀)',rating: 'Buy',        target: 3100, date: '2026-07-17' },
+    { firm: 'JP Morgan (小摩)',      rating: 'Overweight', target: 3100, date: '2026-07-13' },
+    { firm: 'Goldman Sachs (高盛)',  rating: 'Buy',        target: 3000, date: '2026-07-14' },
+    { firm: 'GF Securities (廣發)',  rating: 'Buy',        target: 2900, date: '2026-07-14' },
+    { firm: 'BNP Paribas (法巴)',    rating: 'Buy',        target: 2890, date: '2026-07-17' },
+    { firm: 'Morgan Stanley (大摩)', rating: 'Overweight', target: 2888, date: '2026-07-14' },
     { firm: 'Nomura (野村)',         rating: 'Buy',        target: 2820, date: '2026-04' },
     { firm: 'HSBC (滙豐)',           rating: 'Buy',        target: 2800, date: '2026-04' },
-    { firm: 'Goldman Sachs (高盛)',  rating: 'Buy',        target: 2750, date: '2026-04' },
-    { firm: 'Morgan Stanley (大摩)', rating: 'Overweight', target: 2588, date: '2026-04' },
-    { firm: 'Bank of America (美銀)',rating: 'Buy',        target: 2560, date: '2026-04' },
-    { firm: 'BNP Paribas (法巴)',    rating: 'Buy',        target: 2520, date: '2026-04' },
-    { firm: 'Mizuho (瑞穗)',         rating: 'Buy',        target: 2450, date: '2026-04' },
-    { firm: 'JP Morgan (小摩)',      rating: 'Overweight', target: 2400, date: '2026-04' },
     { firm: 'Daiwa (大和)',          rating: 'Buy',        target: 2330, date: '2026-04' },
 ];
 
@@ -3187,7 +3189,7 @@ function renderAnalystTargets(currentPrice) {
     const upside = currentPrice ? ((avgTarget - currentPrice) / currentPrice * 100).toFixed(1) : null;
 
     el.innerHTML = `
-        <h4>外資法人目標價（截至 2026 年 6 月底，7 月法說前調升潮）</h4>
+        <h4>外資法人目標價（Q2法說會後最新，截至 2026 年 7 月 21 日）</h4>
         <p class="text-muted" style="margin-bottom:16px;">
             共 ${sorted.length} 家機構，平均目標價 <strong style="color:#3b82f6">NT$${avgTarget.toLocaleString()}</strong>
             ${upside ? `，較現價潛在 ${upside > 0 ? '+' : ''}${upside}%` : ''}
@@ -4150,6 +4152,7 @@ function renderEPSBeatChart() {
         { q:'25Q3', est:16.10, act:17.44 },
         { q:'25Q4', est:18.20, act:19.50 },
         { q:'26Q1', est:20.10, act:22.08 },
+        { q:'26Q2', est:23.89, act:27.25 },
     ];
 
     const labels   = data.map(d => d.q);
@@ -4316,6 +4319,7 @@ function renderBalanceSheetChart() {
         { yr:'2023', cash:14654, debt:9183,  equity:34833, netCash:14654-9183  },
         { yr:'2024', cash:21276, debt:9584,  equity:43236, netCash:21276-9584  },
         { yr:'2025', cash:27679, debt:8960,  equity:54608, netCash:27679-8960  },
+        { yr:'26Q2', cash:31342.18, debt:9824.47, equity:64744.71, netCash:31342.18-9824.47  }, // 官方2Q26合併資產負債表：現金3,134,218百萬、有息負債(公司債815,037+一年內到期公司債及銀行借款167,410)、股東權益合計6,474,471百萬
     ];
 
     createChart('balance-sheet-chart', {
@@ -4357,8 +4361,8 @@ function renderBalanceSheetChart() {
 function renderBPSChart() {
     // BPS = 股東權益（億元）× 100 ÷ 25930百萬股
     // 來源：R5.xls & R1.xls 已驗證股東權益；年均股價從 Yahoo Finance 季均價推算
-    const labels = ['2020', '2021', '2022', '2023', '2024', '2025', '26Q1(估)'];
-    const bps    = [71.4,   83.7,  114.2,  134.3,  166.7,  210.6,  226.7];
+    const labels = ['2020', '2021', '2022', '2023', '2024', '2025', '26Q1', '26Q2'];
+    const bps    = [71.4,   83.7,  114.2,  134.3,  166.7,  210.6,  227.2,  248.1]; // 26Q1/26Q2為官方合併BS：歸屬母公司股東權益÷加權平均股數（25,931/25,932百萬股）
     createChart('bps-chart', {
         type: 'bar',
         data: {
@@ -4383,8 +4387,8 @@ function renderBPSChart() {
 
 function renderPBChart() {
     // P/B = 年均股價 ÷ 年末BPS；來源：年均股價參考Yahoo Finance季均價; BPS同上
-    const labels   = ['2020', '2021', '2022', '2023', '2024', '2025', '26Q1(估)'];
-    const pb       = [5.57,   7.41,   4.48,   4.01,   4.76,   5.08,   10.28];
+    const labels   = ['2020', '2021', '2022', '2023', '2024', '2025', '26Q1(估)', '26Q2'];
+    const pb       = [5.57,   7.41,   4.48,   4.01,   4.76,   5.08,   10.28,  9.71]; // 26Q2 = 季底收盤價NT$2,410（2026/6/30）÷ 官方BPS NT$248.1
     const avgPB    = 5.34; // 2020-2025 平均
     createChart('pb-chart', {
         type: 'bar',
@@ -4500,10 +4504,10 @@ function renderRatePEChart(us10yData, perHistory) {
 function renderThreeMarginChart() {
     if (!document.getElementById('three-margin-chart')) return;
     // 資料來源：台積電年報（Report__4_.xls）
-    const labels = ['2018','2019','2020','2021','2022','2023','2024','2025','26Q1'];
-    const gm     = [48.3, 46.0, 53.1, 51.6, 59.6, 54.4, 56.1, 59.9, 66.2]; // 2018-2026Q1，2024/2025為合併年度值
-    const opm    = [37.2, 34.8, 42.3, 40.9, 49.5, 42.6, 45.7, 50.8, 58.1];
-    const npm    = [34.0, 32.3, 38.7, 37.6, 44.9, 38.8, 40.5, 45.1, 50.5];
+    const labels = ['2018','2019','2020','2021','2022','2023','2024','2025','26Q1','26Q2'];
+    const gm     = [48.3, 46.0, 53.1, 51.6, 59.6, 54.4, 56.1, 59.9, 66.2, 67.7]; // 2018-2026Q2，2024/2025為合併年度值
+    const opm    = [37.2, 34.8, 42.3, 40.9, 49.5, 42.6, 45.7, 50.8, 58.1, 60.3];
+    const npm    = [34.0, 32.3, 38.7, 37.6, 44.9, 38.8, 40.5, 45.1, 50.5, 55.6];
 
     createChart('three-margin-chart', {
         type: 'line',
@@ -4544,9 +4548,9 @@ function renderRnDRateChart() {
     // 資料來源：台積電損益表（Report__1_.xls）
     // 24Q1~Q4：2024全年研發2042億÷全年營收28943億=7.05%，按季營收均攤
     // 25Q1+：從損益表累計值反推單季，677.6/11341=5.97%（26Q1）
-    const labels   = ['24Q1','24Q2','24Q3','24Q4','25Q1','25Q2','25Q3','25Q4','26Q1'];
-    const rndAmt   = [417.8, 474.8, 535.6, 612.3, 565.5, 612.5, 638.0, 648.0, 677.6]; // 億元
-    const revAmt   = [5926.4, 6735.1, 7596.9, 8684.6, 8393,  9337,  9900, 10461, 11341];  // 億元
+    const labels   = ['24Q1','24Q2','24Q3','24Q4','25Q1','25Q2','25Q3','25Q4','26Q1','26Q2'];
+    const rndAmt   = [417.8, 474.8, 535.6, 612.3, 565.5, 612.5, 638.0, 648.0, 677.6, 731.46]; // 億元；26Q2來源：TSMC 2Q26官方合併損益表(研發費用73,146百萬元)
+    const revAmt   = [5926.4, 6735.1, 7596.9, 8684.6, 8393,  9337,  9900, 10461, 11341, 12703.81];  // 億元
     const rndRate  = rndAmt.map((r,i) => +(r/revAmt[i]*100).toFixed(2));
 
     createChart('rnd-rate-chart', {
@@ -4640,14 +4644,14 @@ function renderLiquidityChart() {
     // 近6季資產負債表數字（億元）
     // 資料來源：台積電資產負債表（Report.xls），億元台幣
     // 速動比率 = (現金及約當現金 + 應收款項合計 + 流動金融資產FVTPL + FVOCI + AC) / 流動負債
-    const labels = ['24Q4','25Q1','25Q2','25Q3','25Q4','26Q1'];
-    const ca     = [30884, 33457, 32649, 34360, 38171, 42655]; // 流動資產合計
-    const cl     = [12645, 13998, 13773, 12759, 14580, 17143]; // 流動負債合計
-    const cash   = [21276, 23948, 23645, 24708, 27679, 30356]; // 現金及約當現金
-    const ar     = [2721,  2439,  2383,  3079,  2821,  3647];  // 應收款項合計
-    const fvtpl  = [2.08,  0.54,  17.66, 0.21,  1,     0.054]; // FVTPL流動金融資產
-    const fvoci  = [1922,  1899,  1636,  1718,  1757,  1949];  // FVOCI流動金融資產
-    const ac     = [1020,  1183,  1045,  1085,  1249,  1530];  // 按攤銷後成本衡量流動金融資產
+    const labels = ['24Q4','25Q1','25Q2','25Q3','25Q4','26Q1','26Q2'];
+    const ca     = [30884, 33457, 32649, 34360, 38171, 42655, 45657.01]; // 流動資產合計；26Q2來源：TSMC 2Q26官方合併資產負債表
+    const cl     = [12645, 13998, 13773, 12759, 14580, 17143, 18577.62]; // 流動負債合計
+    const cash   = [21276, 23948, 23645, 24708, 27679, 30356, 31342.18]; // 現金及約當現金
+    const ar     = [2721,  2439,  2383,  3079,  2821,  3647,  4409.23];  // 應收帳款
+    const fvtpl  = [2.08,  0.54,  17.66, 0.21,  1,     0.054, 0]; // FVTPL流動金融資產
+    const fvoci  = [1922,  1899,  1636,  1718,  1757,  1949,  3837.95];  // 26Q2為官方合併BS未分類之「流動金融資產投資」合計數
+    const ac     = [1020,  1183,  1045,  1085,  1249,  1530,  0];  // 按攤銷後成本衡量流動金融資產
     const cr     = ca.map((a,i) => +(a/cl[i]).toFixed(2));
     const qr     = cash.map((c,i) => +((c + ar[i] + fvtpl[i] + fvoci[i] + ac[i])/cl[i]).toFixed(2)); // 速動=(現金+應收+流動金融資產)/流動負債
 
