@@ -178,7 +178,7 @@
                         </div>
                         <div class="card chart-card full-width">
                             <h4>本益比歷史走勢 (P/E Band)</h4>
-                            <p class="text-muted">灰色虛線為歷史均值，紅/綠區間為 ±1σ 與 ±2σ 標準差帶，協助判斷當前估值貴賤</p>
+                            <p class="text-muted">灰色虛線為歷史均值；紅=+2σ、橘=+1σ、綠=-1σ、藍=-2σ標準差帶，協助判斷當前估值貴賤</p>
                             <div class="chart-container"><canvas id="per-band-chart"></canvas></div>
                         </div>
                         <div class="card chart-card full-width">
@@ -466,7 +466,7 @@
                         </div>
                         <div class="card chart-card wide">
                             <h4>前五大客戶集中度（2025 年報）</h4>
-                            <p class="text-muted">NVIDIA、Apple 合計約佔 37%，2025年NVIDIA首度超車成第一大客戶</p>
+                            <p class="text-muted">NVIDIA、Apple 合計約佔 36%，2025年NVIDIA首度超車成第一大客戶（19% vs Apple 17%，台積電2025年報官方揭露）</p>
                             <div class="chart-container"><canvas id="customer-pie-chart"></canvas></div>
                         </div>
                         <div class="card text-card" id="customer-note"></div>
@@ -541,7 +541,7 @@
                             <h4>全球製造布局</h4>
                             <div class="geo-grid">
                                 <div class="geo-item"><strong>台灣</strong><span>新竹、高雄等 2nm 與先進封裝核心基地</span></div>
-                                <div class="geo-item"><strong>美國 Arizona</strong><span>第一座廠已量產，第二座廠預計 2027 下半年高量產</span></div>
+                                <div class="geo-item"><strong>美國 Arizona</strong><span>第一座廠已量產，2026/7再加碼$100B，總投資達$265B，規劃擴至12座廠+研發中心</span></div>
                                 <div class="geo-item"><strong>日本 Kumamoto</strong><span>第一座特殊製程廠量產，第二座規劃導入 3nm</span></div>
                                 <div class="geo-item"><strong>德國 Dresden</strong><span>聚焦汽車與工業特殊製程，強化歐洲供應彈性</span></div>
                             </div>
@@ -682,7 +682,7 @@
                     <div class="grid">
                         <div class="card chart-card full-width">
                             <h4>四大設備商年度營收趨勢（USD B）</h4>
-                            <p class="text-muted">來源：各公司年報（ASML FY=日曆年；AMAT FY=10月底；LRCX FY=6月底；TEL FY=3月底）。2025年四家合計 US$106B，較2022年成長 24%</p>
+                            <p class="text-muted">來源：各公司年報（ASML FY=日曆年；AMAT FY=10月底；LRCX FY=6月底；TEL FY=3月底）。2025年四家合計 US$106B，較2022年（US$79.1B）成長 34%</p>
                             <div class="chart-container large"><canvas id="supplier-rev-chart"></canvas></div>
                         </div>
                         <div class="card chart-card">
@@ -751,7 +751,7 @@
                     <div class="grid">
                         <div class="card chart-card full-width">
                             <h4>外資累計買賣超 vs 月營收 YoY（近12個月）</h4>
-                            <p class="text-muted">橘線 = 月營收 YoY%（右軸）；藍柱 = 外資當月累計買賣超（億元，左軸）；資料來源：FinMind API + TSMC官方月報</p>
+                            <p class="text-muted">橘線 = 月營收 YoY%（右軸）；綠柱 = 外資當月淨買超、紅柱 = 淨賣超（億元，左軸，示意性數字）；資料來源：FinMind API + TSMC官方月報</p>
                             <div class="chart-container large"><canvas id="flow-revenue-chart"></canvas></div>
                         </div>
                         <div class="card text-card">
@@ -894,7 +894,7 @@
                     <div class="grid">
                         <div class="card chart-card">
                             <h4>年度用電量趨勢（億度 kWh）</h4>
-                            <p class="text-muted">來源：TSMC ESG 報告書 + CommonWealth雜誌。2023=247.8億度（佔台灣8.9%，CommonWealth確認），2024=255億度（ESG報告）；2020-2022為趨勢估算</p>
+                            <p class="text-muted">來源：TSMC 永續報告書（工商時報、自由財經引述確認）。2022=224億度（佔台灣約8.0%），2023=247.75億度（佔台灣約9.0%），2024=255.5億度（佔台灣約9.0%）；2020-2021為趨勢估算</p>
                             <div class="chart-container"><canvas id="electricity-chart"></canvas></div>
                         </div>
                         <div class="card chart-card">
@@ -936,7 +936,7 @@
                     <div class="grid">
                         <div class="card chart-card full-width">
                             <h4>NVIDIA 資料中心營收 vs 四大超大規模雲商 Capex（USD B）</h4>
-                            <p class="text-muted">灰柱=Amazon+Google+Microsoft+Meta Capex 合計（右軸）；綠線=NVIDIA DC 營收（左軸，FY ends Jan）。來源：各公司 10-K/20-F。兩者高度正相關，NVIDIA 業績是台積電 N3/N2/CoWoS 訂單的最直接先行指標。</p>
+                            <p class="text-muted">灰柱=Amazon+Google+Microsoft+Meta Capex 合計（左軸）；綠線=NVIDIA DC 營收（右軸，FY ends Jan）。來源：各公司 10-K/20-F。兩者高度正相關，NVIDIA 業績是台積電 N3/N2/CoWoS 訂單的最直接先行指標。</p>
                             <div class="chart-container large"><canvas id="downstream-nvidia-chart"></canvas></div>
                         </div>
                         <div class="card chart-card">
@@ -1142,7 +1142,7 @@
                     <div class="grid">
                         <div class="card chart-card full-width">
                             <h4>有效稅率歷史趨勢（%）</h4>
-                            <p class="text-muted">藍柱=有效稅率；橘虛線=台灣法定稅率20%；綠虛線=OECD最低稅率15%。2024年起稅率上升是 EPS 成長的結構性壓力之一。來源：finbox（已確認）</p>
+                            <p class="text-muted">柱狀=有效稅率（≥17%以紅色標示，其餘為藍色）；橘虛線=台灣法定稅率20%；綠虛線=OECD最低稅率15%。2024年起稅率上升是 EPS 成長的結構性壓力之一。來源：finbox（已確認）</p>
                             <div class="chart-container large"><canvas id="taxrate-chart"></canvas></div>
                         </div>
                         <div class="card text-card">
@@ -1290,7 +1290,7 @@
                                 <tbody>
                                     <tr><td>CHIPS Act 直接補貼</td><td>US$6.6B</td><td>2024/11/15 最終確認（NIST官方公告）</td></tr>
                                     <tr><td>CHIPS Act 貸款</td><td>US$5.0B</td><td>同上，依里程碑分期撥付</td></tr>
-                                    <tr><td>Arizona 總投資</td><td>US$65B+</td><td>三座廠（4nm/2nm/2nm+）</td></tr>
+                                    <tr><td>Arizona 總投資</td><td>US$265B</td><td>2026/7/16法說會宣布再加碼$100B（原$165B），規劃12座晶圓廠+封裝廠+研發中心</td></tr>
                                     <tr><td>日本 JASM 補貼</td><td>約¥47億（~US$3.2億）</td><td>日本經濟産業省確認</td></tr>
                                     <tr><td>德國廠（Dresden）</td><td>€5B 歐盟補貼</td><td>規劃中，2024年宣布</td></tr>
                                 </tbody>
@@ -1475,7 +1475,7 @@
                     <div class="grid">
                         <div class="card chart-card full-width">
                             <h4>TSM ADR vs S&P500 vs SOXX 累積含息報酬（2020末=100基準）</h4>
-                            <p class="text-muted">以 2020/12/31 收盤為 100 基準（TSM ADR=$108.95）。各年含息累積報酬指數化呈現。5年期 TSR：TSM≈+84%、S&P500≈+85%、SOXX≈+120%。來源：Yahoo Finance ADR 歷史價格</p>
+                            <p class="text-muted">以 2020/12/31 收盤為 100 基準（TSM ADR=$108.95）。各年含息累積報酬指數化呈現。5年期 TSR（2020末→2025末）：TSM≈+182%、S&amp;P500≈+85%、SOXX≈+120%，TSM明顯跑贏大盤與費半。來源：Yahoo Finance ADR 歷史價格</p>
                             <div class="chart-container large"><canvas id="tsr-chart"></canvas></div>
                         </div>
                         <div class="card text-card">
@@ -1498,12 +1498,12 @@
                 <section id="panel-twpower" class="panel">
                     <div class="panel-header">
                         <h3><i class="fa-solid fa-bolt"></i> 台灣電力供需缺口</h3>
-                        <p class="panel-desc">台積電用電量佔台灣全島約 9%，且隨先進製程擴產持續成長。台灣電力規劃能否跟上是 AI 擴廠的硬約束，也是機構 ESG 風險評估的核心指標。來源：台電年報 + TSMC ESG 報告</p>
+                        <p class="panel-desc">台積電用電量佔台灣全島約 9%，且隨先進製程擴產持續成長。台灣電力規劃能否跟上是 AI 擴廠的硬約束，也是機構 ESG 風險評估的核心指標。來源：經濟部能源署電力消費統計 + TSMC 永續報告書</p>
                     </div>
                     <div class="grid">
                         <div class="card chart-card full-width">
                             <h4>台灣總供電量 vs TSMC 用電量（億度 kWh）</h4>
-                            <p class="text-muted">灰柱=台灣總發電量（台電年報）；藍線=TSMC用電量（ESG報告確認）；橘線=TSMC佔比%（右軸）。趨勢顯示：TSMC佔比從2020年5.8%升至2024年9.4%，持續攀升。</p>
+                            <p class="text-muted">灰柱=全國電力消費總量（經濟部能源署）；藍線=TSMC用電量（TSMC永續報告書確認）；橘線=TSMC佔比%（右軸）。趨勢顯示：TSMC佔比從2020年約5.5%升至2024年9.0%，持續攀升。</p>
                             <div class="chart-container large"><canvas id="twpower-chart"></canvas></div>
                         </div>
                         <div class="card text-card">
@@ -1511,15 +1511,15 @@
                             <table class="data-table">
                                 <thead><tr><th>項目</th><th>數據</th><th>來源</th></tr></thead>
                                 <tbody>
-                                    <tr><td>台灣2024總發電</td><td>約 2,720 億度</td><td>台電年報估算</td></tr>
-                                    <tr><td>TSMC 2024用電</td><td>255 億度（9.4%）</td><td>TSMC ESG 報告</td></tr>
+                                    <tr><td>台灣2024總消費電力</td><td>約 2,838.2 億度</td><td>經濟部能源署（自由財經引述）</td></tr>
+                                    <tr><td>TSMC 2024用電</td><td>255.5 億度（9.0%）</td><td>TSMC 永續報告書</td></tr>
                                     <tr><td>台灣2030再生能源目標</td><td>佔比 30%</td><td>能源局政策</td></tr>
                                     <tr><td>TSMC 2030再生能源目標</td><td>佔自身用電 60%</td><td>TSMC RE100承諾</td></tr>
                                     <tr><td>核能現況</td><td>核三廠 2025/5 停機</td><td>台電</td></tr>
                                     <tr><td>預估缺口（2026-2030）</td><td>年增 5-8% 電力需求</td><td>工研院估算</td></tr>
                                 </tbody>
                             </table>
-                            <p style="margin-top:12px;font-size:13px;color:var(--text-secondary)">核三廠 2025 年 5 月停機後，台灣實際核能發電容量歸零，夏季備轉容量率的壓力加劇。若台積電持續按計畫擴產（2025年用電255億度，2030年估算350+億度），台灣電網必須在5年內新增相當於 1-2 座核電廠的穩定基載電力，否則限電風險不容忽視。</p>
+                            <p style="margin-top:12px;font-size:13px;color:var(--text-secondary)">核三廠 2025 年 5 月停機後，台灣實際核能發電容量歸零，夏季備轉容量率的壓力加劇。若台積電持續按計畫擴產（2024年用電255.5億度，2030年估算350+億度），台灣電網必須在5年內新增相當於 1-2 座核電廠的穩定基載電力，否則限電風險不容忽視。</p>
                         </div>
                     </div>
                 </section>
