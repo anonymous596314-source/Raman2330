@@ -1192,8 +1192,8 @@ function renderOutlookChart() {
             labels: ['2021', '2022', '2023', '2024', '2025', '2026(E)', '2027(E)', '2028(E)'],
             datasets: [{
                 label: '資本支出 (十億美元)',
-                data: [30.0, 36.3, 30.4, 29.8, 41.0, 62.0, 60.0, 65.0],
-                // 實際：2021-2025 已驗證（R4.xls + 匯率換算）；2026E=26Q2法說會指引US$600-640億中值（原520-560億上修）；2027-2028E為市場預估
+                data: [30.0, 36.3, 30.4, 29.8, 41.0, 62.0, 78.0, 82.0],
+                // 實際：2021-2025 已驗證（R4.xls + 匯率換算）；2026E=26Q2法說會指引US$600-640億中值（原520-560億上修）；2027-2028E為法說會後外資共識（高盛/美銀約$78B/$82-83B）
                 backgroundColor: (ctx) => {
                     const idx = ctx.dataIndex;
                     if (idx >= 5) return 'rgba(239,68,68,0.6)'; // 預估值用半透明紅
@@ -1379,7 +1379,7 @@ function renderGeoRevenueChart() {
 // ═══════════════════════════════════════════════════════════════
 //  月營收追蹤（月營收面板）
 //  來源：Yahoo Finance / TSMC官方月報（仟元轉億元）
-//  驗證：2024合計=28943億✓ 2025合計=38091億✓ 2026/1-5累計=19618億✓
+//  驗證：2024合計=28943億✓ 2025合計=38091億✓ 2026/1-6累計=24044.84億✓（年增35.6%）
 //  所有YoY與Yahoo Finance顯示值逐月核對一致
 // ═══════════════════════════════════════════════════════════════
 function renderMonthlyRevCharts() {
@@ -1470,7 +1470,7 @@ function renderMonthlyRevCharts() {
                 {
                     label: '30% 參考線',
                     data: Array(12).fill(30),
-                    borderColor: 'rgba(255,255,255,0.2)',
+                    borderColor: '#f59e0b',
                     borderDash: [4,3], borderWidth: 1.5, pointRadius: 0, fill: false
                 }
             ]
@@ -1480,7 +1480,7 @@ function renderMonthlyRevCharts() {
             plugins: { legend: { position: 'top' },
                 tooltip: { callbacks: { label: ctx => `YoY: ${ctx.raw}%` } } },
             scales: {
-                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'YoY %' }, min: 0, max: 60 },
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'YoY %' }, min: 0, max: 80 },
                 x: { grid: { display: false } }
             }
         }
@@ -1620,14 +1620,14 @@ function renderASPCharts() {
 //  月營收YoY全部已與Yahoo Finance逐月核對
 // ═══════════════════════════════════════════════════════════════
 function renderFlowRevenueChart() {
-    // 近12個月：2025/06 ~ 2026/05（全有對應去年數據，YoY完整）
-    const labels  = ['25/06','25/07','25/08','25/09','25/10','25/11','25/12','26/01','26/02','26/03','26/04','26/05'];
+    // 近12個月：2025/07 ~ 2026/06（全有對應去年數據，YoY完整）
+    const labels  = ['25/07','25/08','25/09','25/10','25/11','25/12','26/01','26/02','26/03','26/04','26/05','26/06'];
     // YoY：全部已驗證，與Yahoo Finance一致
-    const yoyData = [26.9,   25.8,   33.8,   31.4,   16.9,   24.5,   20.4,   36.8,   22.2,   45.2,   17.5,   30.1];
-    // 外資買賣超（月合計，億元；placeholder，實際由 FinMind API 提供）
+    const yoyData = [25.8,   33.8,   31.4,   16.9,   24.5,   20.4,   36.8,   22.2,   45.2,   17.5,   30.1,   67.9];
+    // 外資買賣超（月合計，億元；示意性靜態數字，實際由 FinMind API 提供）
     // 外資近12個月月合計買賣超（億元）；2026年外資持股降至69.99%近18年最低
-    // 注意：2025/06起外資明顯轉為賣超為主，此為示意性靜態數字，即時數據由FinMind API提供
-    const foreignFlow = [-85, -120, -95, -80, -210, -65, -135, -320, 180, -450, -80, -210];
+    // 注意：此為示意性靜態數字，非官方逐日加總；即時數據由FinMind API提供
+    const foreignFlow = [-120, -95, -80, -210, -65, -135, -320, 180, -450, -80, -210, -380];
 
     createChart('flow-revenue-chart', {
         type: 'bar',
@@ -1660,7 +1660,7 @@ function renderFlowRevenueChart() {
             plugins: { legend: { position: 'top' } },
             scales: {
                 y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '億元（外資）' }, position: 'left' },
-                y1: { grid: { display: false }, title: { display: true, text: 'YoY %' }, position: 'right', min: 0, max: 60 },
+                y1: { grid: { display: false }, title: { display: true, text: 'YoY %' }, position: 'right', min: 0, max: 80 },
                 x:  { grid: { display: false } }
             }
         }
@@ -1833,7 +1833,8 @@ function renderESGCharts() {
     // 來源：2023=CommonWealth/BestBrokers=247.8億度; 2022=CommonWealth反推224.5億度; 2024=ESG報告255億度
     //       2020/2021=ESG PDF官方(148/164百GWh，含再生後約148/167億度)
     // 來源：Statista(2020/2021) + TSMC ESG年報(2022=21876GWh=218.8億度) + CommonWealth/ESG(2023-2024)
-    const electricity = [145, 168, 219, 248, 255]; // 億度 kWh
+    const electricity = [145, 168, 224, 248, 255.5]; // 億度 kWh；2022=224(工商時報引述台積電報告)、2024=255.5(自由財經引述最新永續報告書)
+    const tw_total_annual = [2650, 2700, 2794.5, 2765, 2838.2]; // 億度，全國電力消費總量（與twpower-chart同一組數字，確保兩圖百分比一致）
     // 來源：Statista引用ESG報告(2022=157Mm³, 2023=165Mm³); 2024估算(廢水回收>140Mm³, 總量更高)
     const water       = [ 95, 118, 157, 165, 175]; // 百萬立方米（2020/2021估算）
     const renewable   = [  7,   9,  10,  12,  14]; // 再生能源比例 %（2024=14%，來源：TSMC ESG報告官方聲明）
@@ -1845,7 +1846,7 @@ function renderESGCharts() {
             datasets: [
                 { label: '總用電量（億度）', data: electricity,
                   backgroundColor: 'rgba(239,68,68,0.75)', borderRadius: 4 },
-                { label: '台灣佔比(%)', data: electricity.map(e=>+(e/2500*100).toFixed(1)),
+                { label: '台灣佔比(%)', data: electricity.map((e,i)=>+(e/tw_total_annual[i]*100).toFixed(1)),
                   type: 'line', borderColor: '#f59e0b', borderWidth: 2, pointRadius: 4,
                   fill: false, yAxisID: 'y1' }
             ]
@@ -2451,6 +2452,10 @@ function renderPolicyChart() {
         { yr: 2024.75, label: '出口管制第3輪', type: 'negative', val: -2 },
         { yr: 2024.9,  label: 'CHIPS最終確認\n$6.6B', type: 'positive', val: 2 },
         { yr: 2025.3,  label: 'Arizona Fab1量產\n4nm HVM', type: 'tsmc', val: 1.5 },
+        { yr: 2026.04, label: '台美投資MOU簽署\n(232優惠待遇)', type: 'positive', val: 2 },
+        { yr: 2026.05, label: '半導體232關稅公告\n先進晶片25%(限特定AI晶片)', type: 'negative', val: -2 },
+        { yr: 2026.33, label: '非半導體232優惠生效\n(汽車零組件降至15%)', type: 'positive', val: 2 },
+        { yr: 2026.53, label: 'Arizona再加碼$100B\n總投資達$265B', type: 'tsmc', val: 1.5 },
         { yr: 2026.5,  label: 'Arizona Fab1\n全速稼動', type: 'tsmc', val: 1.5 },
         { yr: 2028.0,  label: 'Arizona Fab2量產\n2nm', type: 'tsmc', val: 1.5 },
     ];
@@ -2716,9 +2721,9 @@ function renderBuybackChart() {
 function renderTSRChart() {
     const years = ['2020末','2021末','2022末','2023末','2024末','2025末'];
     // TSM ADR 年末收盤（Yahoo Finance），以2020末=100指數化
-    // TSM: $108.95, $131.97, $72.72, $107.45, $193.44, ~$196
+    // TSM: $108.95, $131.97, $72.72, $107.45, $193.44, $302.35（2025/12/31收盤，使用者提供並確認；對應2330.TW收盤NT$1,550）
     // 含股利累積: 2021+0.79, 2022+0.84, 2023+0.86, 2024+1.07, 2025+1.38
-    const tsm_price = [108.95, 131.97, 72.72, 107.45, 193.44, 196.0];
+    const tsm_price = [108.95, 131.97, 72.72, 107.45, 193.44, 302.35];
     const tsm_div_cum = [0, 0.79, 1.63, 2.49, 3.56, 4.94]; // 累計股利USD
     const tsm_tsr = tsm_price.map((p,i) => +((p + tsm_div_cum[i])/108.95*100).toFixed(1));
 
@@ -2760,8 +2765,8 @@ function renderTSRChart() {
 // ═══════════════════════════════════════════════════════════════
 function renderTWPowerChart() {
     const years    = ['2020','2021','2022','2023','2024'];
-    const tw_total = [2490, 2538, 2570, 2620, 2720]; // 億度 台電年報
-    const tsmc_use = [145,  168,  219,  248,  255];  // 億度 TSMC ESG（已驗證）
+    const tw_total = [2650, 2700, 2794.5, 2765, 2838.2]; // 億度，全國電力消費總量；2022-2024來源：工商時報(2024/11)+自由財經(2025/9)引述台積電永續報告書比對數字；2020-2021為趨勢估算
+    const tsmc_use = [145,  168,  224,  248,  255.5];  // 億度 TSMC永續報告書；2022=224億度(工商時報引述，非原219)、2023=247.75億度、2024=255.5億度(自由財經引述最新報告)
     const pct      = tsmc_use.map((t,i) => +(t/tw_total[i]*100).toFixed(1));
 
     createChart('twpower-chart', {
@@ -3441,15 +3446,15 @@ function renderCustomerConcentration() {
     // canvas 存在即可，不需要獨立容器
     if (!document.getElementById('customer-pie-chart')) return;
 
-    // Apple/NVIDIA/AMD/Qualcomm/其他（依 2025 年報近似佔比）
+    // NVIDIA/Apple/AMD/Qualcomm/其他（依台積電2025年報官方揭露佔比）
     const customers = [
-        { name: 'Apple',    pct: 22, color: '#3b82f6', note: '2024年報官方最大客戶22%（年報未揭露名稱，市場普遍認為是Apple）' },
-        { name: 'NVIDIA',   pct: 12, color: '#10b981', note: '2024年報第二大客戶~12%（Blackwell供應鏈）；2025年估算有成長' },
-        { name: 'AMD',      pct: 9,  color: '#f59e0b', note: 'MI300X / EPYC' },
-        { name: 'Qualcomm', pct: 7,  color: '#a78bfa', note: 'Snapdragon 8 Gen 4' },
-        { name: 'Broadcom', pct: 6,  color: '#fb923c', note: 'AI ASIC / 網路晶片' },
-        { name: 'Intel',    pct: 5,  color: '#94a3b8', note: 'Lunar Lake 外包' },
-        { name: '其他',     pct: 39, color: '#475569', note: '車用、IoT、HPC 等（前六大分析師估算合計~60-64%，其餘客戶包含MediaTek、Marvell等）' },
+        { name: 'NVIDIA',   pct: 19, color: '#10b981', note: '2025年報「甲客戶」官方揭露19%（年報未揭露名稱，NVIDIA執行長黃仁勳已證實），較2024年12%大增，首度超車成第一大客戶，貢獻NT$7,269.74億' },
+        { name: 'Apple',    pct: 17, color: '#3b82f6', note: '2025年報「乙客戶」官方揭露17%，較2024年22%下滑，退居第二大客戶，貢獻NT$6,451.78億' },
+        { name: 'AMD',      pct: 9,  color: '#f59e0b', note: 'MI300X / EPYC，未達10%門檻，年報未單獨揭露，市場估算' },
+        { name: 'Qualcomm', pct: 7,  color: '#a78bfa', note: 'Snapdragon 8 Gen 4，市場估算' },
+        { name: 'Broadcom', pct: 6,  color: '#fb923c', note: 'AI ASIC / 網路晶片，市場估算' },
+        { name: 'Intel',    pct: 5,  color: '#94a3b8', note: 'Lunar Lake 外包，市場估算' },
+        { name: '其他',     pct: 37, color: '#475569', note: '車用、IoT、HPC 等（前六大分析師估算合計~63%，其餘客戶包含MediaTek、Marvell等）' },
     ];
 
     const total = customers.reduce((s, c) => s + c.pct, 0);
