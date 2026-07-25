@@ -365,7 +365,7 @@ const NET_MARGINS = [38.0, 36.8, 42.8, 43.1, 43.1, 42.7, 45.7, 48.3, 50.5, 55.6]
 const ANNUAL_LABELS = ['2021', '2022', '2023', '2024', '2025', '2026(E)'];
 const ANNUAL_REVENUE_B = [15874, 22639, 21617, 28943, 38091, null]; // 億元台幣；2026E 法說展望但未公告，留空
 const ANNUAL_CAPEX_USD_B = [30.0, 36.3, 30.4, 29.8, 41.0, 62.0]; // 2025實際；2026E=指引US$600-640億中值（Q2 2026法說會上修，原520-560億）
-const ANNUAL_DIVIDEND = [10.25, 11.0, 11.25, 14.0, 18.0, null]; // 2026E尚未公告
+const ANNUAL_DIVIDEND = [10.5, 11.0, 11.5, 15.0, 22.0, null]; // 2026E尚未公告；2024/2025經多方交叉驗證修正（原14.0/18.0低估，實際為每季3.5×3+4.5=15.0、5+5+6+6=22.0）
 
 function renderFundamentalChart() {
     createChart('fundamental-chart', {
@@ -1137,7 +1137,7 @@ function renderIndustryChart() {
             labels: ['2024年底', '2025年底', '2026年底(目標)'],
             datasets: [{
                 label: 'CoWoS 月產能（千片）',
-                data: [35, 75, 128],
+                data: [35, 75, 135],
                 backgroundColor: ['#94a3b8', '#3b82f6', '#ef4444'],
                 borderRadius: 4
             }]
@@ -1771,8 +1771,8 @@ function renderFCFCharts() {
     const yield_pct = [4.2, 1.9, 4.5, 1.4, 3.0, 2.2, null];  // finbox FCF Yield %；26H1缺市值資料無法計算，留空
     // 股利殖利率（歷史均股價，已驗證股利數字）
     const div_yield = [
-        10.25/398*100, 10.25/620*100, 11.0/500*100,
-        11.25/538*100, 14.0/793*100, 18.0/1069*100, null
+        10.0/398*100, 10.5/620*100, 11.0/500*100,
+        11.5/538*100, 15.0/793*100, 22.0/1069*100, null
     ].map(v=>v===null?null:+v.toFixed(2));
 
     createChart('fcf-yield-chart', {
@@ -1907,7 +1907,7 @@ function renderESGCharts() {
 // ═══════════════════════════════════════════════════════════════
 function renderDownstreamCharts() {
     const years = ['2022', '2023', '2024', '2025', '2026E'];
-    const nvidiadc = [15.0, 47.5, 115.2, 193.7, 280];  // NVIDIA DC 營收 USD B（FY2022-2026E，FY ends Jan；FY2026=$193.7B官方SEC 8-K）
+    const nvidiadc = [15.0, 47.5, 115.2, 193.7, 343.4];  // NVIDIA DC 營收 USD B（FY2022-2026實際+FY2027E；FY ends Jan；FY2026實際=$193.7B官方10-K，FY2027E=$343.4B，S&P Global/Visible Alpha共識，2026/5，取代原先過時的$280B估計）
     const hyperCap = [155, 155, 251, 427, 725];           // 四大超大規模(Amazon+Google+Microsoft+Meta) Capex USD B（2026E=$725B，Goldman Sachs確認）
 
     createChart('downstream-nvidia-chart', {
@@ -1937,7 +1937,7 @@ function renderDownstreamCharts() {
     });
 
     const bcomYears  = ['FY2023', 'FY2024', 'FY2025', 'FY2026E'];
-    const bcomAI     = [4.2, 12.2, 20.0, 38.0];  // FY2025=$20B(SEC 8-K Q1-Q4累計)；FY2026E≈$38B(Q1指引$8.2B×4+成長)；$60B是FY2027E(Hock Tan公開聲明)
+    const bcomAI     = [4.2, 12.2, 20.0, 56.0];  // FY2025=$20B(SEC 8-K Q1-Q4累計)；FY2026E=$56B(官方法說會指引，2026/3與6月兩次重申，年增約180%)；FY2027E目標>$100B(Hock Tan公開聲明)
     createChart('downstream-broadcom-chart', {
         type: 'bar',
         data: {
@@ -2301,8 +2301,8 @@ function renderTaxRateChart() {
 // ═══════════════════════════════════════════════════════════════
 function renderETFChart() {
     const etfs   = ['SMH\n(VanEck)', 'SOXX\n(iShares)', 'SOXQ\n(Invesco)', 'VGT\n(Vanguard)', 'QQQ\n(Invesco)'];
-    const weights = [10.4, 8.5, 9.0, 2.0, 2.5];
-    const aum     = [47, 23, 1.2, 90, 320]; // USD B
+    const weights = [9.4, 4.0, 4.4, 2.0, 2.5]; // SOXX/SOXQ經查證修正：兩者皆採「修正市值加權」上限機制，TSM權重實際僅約4%，原8.5%/9.0%明顯高估近1倍（來源：stockanalysis.com、investsnips.com，2026/6-7）
+    const aum     = [68, 45, 1.2, 90, 320]; // USD B；SMH/SOXX因2026年半導體ETF資金大量湧入（全年流入超$46B）大幅成長，原47/23已過時（來源：多方財經網站，2026/7）
 
     createChart('etf-weight-chart', {
         type: 'bar',
@@ -2372,14 +2372,12 @@ function renderFXChart() {
 //  來源：TSMC 2025年報附註（到期時程）
 // ═══════════════════════════════════════════════════════════════
 function renderDebtMaturityChart() {
-    // 來自年報附註：應付公司債各期到期金額（億NT$）
+    // 來源：台積電官方投資人關係網站「Credit Rating」頁面完整債券明細表（資料日期2026/05/22）
+    // 逐筆債券（發行日+年期）計算到期年度，含國內NT$公司債 + 海外USD公司債(TSMC Global/Arizona子公司發行)
+    // 國內公司債總計NT$4,979億 + 海外USD公司債US$15.4B(≈NT$486億) = 總計約NT$5,466億
+    // 此為「應付公司債」範疇，不含銀行借款（資產負債表「有息負債」另計，含銀行借款規模更大）
     const labels  = ['2026','2027','2028','2029','2030','2031+'];
-    // 到期分布：NT$台幣公司債從SEC 6-K文件整理（部分已知），差額按比例估算
-    // 已知確認：2026=780億(110-1A+111-2A), 2027=960億(111-2B), 2028=1140億(110-1B)
-    // 2029=160億(111-2C), 2031=1750億(110-1C+115-1A), 2036=460億(115-1B)
-    // 美元債(TSMC AZ) 2026-2052 另計，已換算約NT$248億
-    // 差額~3300億為2022-2025年其他批次，按比例補充估算
-    const amounts = [1000, 1300, 1400, 500, 1950, 2400]; // 億NT$（含估算，標注於說明）
+    const amounts = [376, 1133, 943, 278, 1066, 1669]; // 億NT$，逐筆債券到期日加總計算（已驗證，非估算）
 
     createChart('debt-maturity-chart', {
         type: 'bar',
@@ -2409,9 +2407,10 @@ function renderDebtMaturityChart() {
 //  來源：TSMC 2025年報合併財務報表附表（已驗證）
 // ═══════════════════════════════════════════════════════════════
 function renderOverseasChart() {
-    const fabs   = ['南京\n(中國)', '上海\n(中國)', 'Arizona\n(美國)', '熊本 JASM\n(日本)'];
-    const y2024  = [18.5, 8.2, -14.3, -5.2];
-    const y2025  = [27.6, 11.6, 16.1, -9.8];
+    // 來源：台積電股東會年報「海外子公司損益概況」；2024年報揭露（2025/4）+ 2025年報揭露（2026/2）
+    const fabs   = ['南京\n(中國)', '中國子公司\n(上海等)', 'Arizona\n(美國)', '熊本 JASM\n(日本)'];
+    const y2024  = [260.0, 95.0, -142.98, -43.75]; // 南京/Arizona/JASM為年報確認數字；中國子公司(上海)2024未查得精確數字，依2025H1(55.96億)反推估算，信心度中等
+    const y2025  = [276.05, 115.71, 161.41, -97.67]; // 全數為2025年報官方確認數字（經濟日報/壹蘋新聞引述）
 
     createChart('overseas-profit-chart', {
         type: 'bar',
@@ -2536,7 +2535,7 @@ function renderFCFpsChart() {
     // Capex: R4.xls: 8388,10817,9491,9551,12716 億NT$
     const fcf_ps = [10.7, 20.4, 11.3, 33.6, 38.7]; // NT$/股（計算值）
     const eps    = [23.0, 39.2, 32.3, 45.3, 66.3];  // NT$/股（年報確認）
-    const div    = [10.25,11.0, 11.25,14.0, 18.0];  // NT$/股（年報確認）
+    const div    = [10.5, 11.0, 11.5, 15.0, 22.0];  // NT$/股（多方交叉驗證修正）
 
     createChart('fcfps-chart', {
         type: 'line',
@@ -2651,7 +2650,7 @@ function renderCapexRatioChart() {
 // ═══════════════════════════════════════════════════════════════
 function renderSemiBillingsChart() {
     const years      = ['2020','2021','2022','2023','2024','2025'];
-    const semi_b     = [63.5, 100.5, 107.6, 86.8, 109.0, 124.0]; // USD B SEMI官方
+    const semi_b     = [63.5, 102.6, 107.6, 106.3, 117.1, 135.1]; // USD B，SEMI官方WWSEMS報告確認（2021-2025逐年新聞稿交叉驗證）
     const tsmc_capex = [17.2,  30.0,  36.3, 30.4,  29.8,  41.0]; // USD B 已驗證
 
     createChart('semi-billings-chart', {
@@ -2685,7 +2684,7 @@ function renderSemiBillingsChart() {
 function renderBuybackChart() {
     const years   = ['2021','2022','2023','2024','2025'];
     // 股利總額 = 股利/股 × 259.3億股
-    const divs    = [10.25,11.0,11.25,14.0,18.0].map(d => Math.round(d*259.3/100)*100); // 億NT$（四捨五入到百億）
+    const divs    = [10.5,11.0,11.5,15.0,22.0].map(d => Math.round(d*259.3/100)*100); // 億NT$（四捨五入到百億，多方交叉驗證修正）
     // 實際: 10.25×259.3=2657, 11.0×259.3=2852, 11.25×259.3=2917, 14.0×259.3=3630, 18.0×259.3=4667
     const divs_exact = [2657, 2852, 2917, 3630, 4667];
     const buybacks   = [0, 0, 0, 26, 30]; // 億NT$（2024年報確認~25.8億）
@@ -3969,7 +3968,7 @@ function renderMarginUsageChart(data) {
                 },
                 scales: {
                     x: { ticks: { maxTicksLimit: 10, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                    y: { min: 0, max: 1,
+                    y: { min: 0, max: 100,
                          ticks: { color: '#f59e0b', callback: v => v + '%' },
                          grid: { color: 'rgba(255,255,255,0.05)' } }
                 }
@@ -4034,11 +4033,11 @@ function renderImportantDates() {
     // 台積電 2026 重要日期（依公開公告）
     // 台積電季配息：每季除息一次，隔約4週發放
     const events = [
-        { date: '2026-07-09', label: 'Q1股利發放 (NT$6/股)', icon: 'fa-coins',      type: 'success' },
-        { date: '2026-07-10', label: 'Q2 初步營收公告',       icon: 'fa-chart-bar',  type: 'info'    },
+        { date: '2026-07-09', label: '2025 Q4股利發放 (NT$6/股)', icon: 'fa-coins',      type: 'success' },
+        { date: '2026-07-13', label: '6月營收公告',           icon: 'fa-chart-bar',  type: 'info'    },
         { date: '2026-07-16', label: '2026 Q2 法說會',        icon: 'fa-microphone', type: 'primary' },
-        { date: '2026-09-16', label: 'Q2 除息日',             icon: 'fa-scissors',   type: 'warning' },
-        { date: '2026-10-08', label: 'Q2股利發放 (預計)',     icon: 'fa-coins',      type: 'success' },
+        { date: '2026-09-16', label: '2026 Q1 除息日',        icon: 'fa-scissors',   type: 'warning' },
+        { date: '2026-10-08', label: '2026 Q1股利發放 (NT$7/股)', icon: 'fa-coins',   type: 'success' },
         { date: '2026-10-15', label: '2026 Q3 法說會',        icon: 'fa-microphone', type: 'primary' },
         { date: '2027-01-15', label: '2026 Q4 法說會',        icon: 'fa-microphone', type: 'primary' },
     ];
@@ -4392,8 +4391,8 @@ function renderBPSChart() {
 
 function renderPBChart() {
     // P/B = 年均股價 ÷ 年末BPS；來源：年均股價參考Yahoo Finance季均價; BPS同上
-    const labels   = ['2020', '2021', '2022', '2023', '2024', '2025', '26Q1(估)', '26Q2'];
-    const pb       = [5.57,   7.41,   4.48,   4.01,   4.76,   5.08,   10.28,  9.71]; // 26Q2 = 季底收盤價NT$2,410（2026/6/30）÷ 官方BPS NT$248.1
+    const labels   = ['2020', '2021', '2022', '2023', '2024', '2025', '26Q1', '26Q2'];
+    const pb       = [5.57,   7.41,   4.48,   4.01,   4.76,   5.08,   7.75,  9.71]; // 26Q1=季底收盤價NT$1,760（2026/3/31，經查證修正，原10.28為錯誤高估）÷ 官方BPS NT$227.2；26Q2 = 季底收盤價NT$2,410（2026/6/30）÷ 官方BPS NT$248.1
     const avgPB    = 5.34; // 2020-2025 平均
     createChart('pb-chart', {
         type: 'bar',
