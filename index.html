@@ -448,7 +448,7 @@
                         </div>
                         <div class="card chart-card">
                             <h4>CoWoS 先進封裝產能擴張</h4>
-                            <p class="text-muted">近4年逼近4倍擴產，仍供不應求；缺口預估從現在約20%收斂至2026年底約10%</p>
+                            <p class="text-muted">近4年近4倍擴產（2024年3.5萬片→2026年底目標13.5萬片），但NVIDIA一家即鎖定過半新增產能，供需缺口预期持續到2027年，屆時目標將擴至20萬片以上（來源：DigiTimes、摩根士丹利AI供應鏈調查，2026/7）</p>
                             <div class="chart-container"><canvas id="packaging-chart"></canvas></div>
                         </div>
                         <div class="card text-card" id="cowos-note">
@@ -904,7 +904,7 @@
                         </div>
                         <div class="card chart-card">
                             <h4>再生能源使用比例 vs 2030/2040 目標</h4>
-                            <p class="text-muted">2024年再生能源比例僅 13%，距 2030 年 60% 目標差距巨大；台灣再生能源建設進度是否能支撐 TSMC 擴產是核心不確定因素</p>
+                            <p class="text-muted">2024年再生能源比例達 14.1%（台積電官方公告），距 2030 年 60%（RE60）目標仍有差距；台灣再生能源建設進度是否能支撐 TSMC 擴產是核心不確定因素</p>
                             <div class="chart-container"><canvas id="renewable-chart"></canvas></div>
                         </div>
                         <div class="card text-card">
@@ -915,7 +915,7 @@
                                     <tr><td>總用電量</td><td>255 億度（佔台灣 ~9%）</td><td>節能 810 GWh（已達成）</td></tr>
                                     <tr><td>再生能源比例</td><td>14%</td><td>60%（2030）→ 100%（2040）</td></tr>
                                     <tr><td>廢水回收量</td><td>>1.4 億立方米</td><td>持續提升回收率</td></tr>
-                                    <tr><td>再生水替代率</td><td>17%（台南廠）</td><td>擴至所有新建廠區</td></tr>
+                                    <tr><td>再生水替代率</td><td>17%（台南廠，年份待確認）</td><td>官方目標：2030年前達60%（全公司）</td></tr>
                                     <tr><td>廢棄物回收率</td><td>>97%</td><td>連續10年 <1% 掩埋</td></tr>
                                     <tr><td>Scope 1+2 排放</td><td>持續上升（擴廠）</td><td>2050 年淨零排放</td></tr>
                                 </tbody>
@@ -951,7 +951,7 @@
                                 <tbody>
                                     <tr><td>NVIDIA DC 營收</td><td>$115B</td><td>$193.7B</td><td>$280B+</td><td>N3/N2/CoWoS 滿載（FY2026官方 SEC 8-K）</td></tr>
                                     <tr><td>超大規模 Capex 合計</td><td>$251B</td><td>$427B</td><td>$725B</td><td>HPC 平台需求持續（Goldman Sachs 2026E）</td></tr>
-                                    <tr><td>Broadcom AI 晶片</td><td>$12.2B</td><td>$20.0B</td><td>~$38B</td><td>CoWoS 訂單能見度（FY2027E=$60B，Hock Tan聲明）</td></tr>
+                                    <tr><td>Broadcom AI 晶片</td><td>$12.2B</td><td>$20.0B</td><td>~$56B</td><td>CoWoS 訂單能見度（FY2027E=$100B以上，Hock Tan 2026年3月/6月兩次重申）</td></tr>
                                     <tr><td>Apple A系列出貨</td><td>~230M台</td><td>~240M台</td><td>~250M台</td><td>N3 稼動率基本盤</td></tr>
                                 </tbody>
                             </table>
@@ -1037,7 +1037,7 @@
                     <div class="grid">
                         <div class="card chart-card full-width">
                             <h4>黑天鵝情境 — EPS 與股價衝擊估算</h4>
-                            <p class="text-muted">橫軸=各情境；左軸=EPS 影響幅度(%)；右軸=股價隱含目標(NT$)。基準EPS=92元，基準股價=2330元。注意：情境並非預測，而是壓力測試的邊界條件。</p>
+                            <p class="text-muted">橫軸=各情境；左軸=EPS 影響幅度(%)；右軸=股價隱含目標(NT$)。基準EPS=92元，基準本益比=26x，隱含基準股價=2,392元（與2026年7月實際股價2,400-2,460元區間相近）。注意：情境並非預測，而是壓力測試的邊界條件。</p>
                             <div class="chart-container large"><canvas id="stress-chart"></canvas></div>
                         </div>
                         <div class="card text-card">
@@ -1087,12 +1087,13 @@
                             <table class="data-table">
                                 <thead><tr><th>面向</th><th>數據</th><th>說明</th></tr></thead>
                                 <tbody>
-                                    <tr><td>2025 全球員工</td><td>90,557 人</td><td>YoY +8.0%（MacroTrends）</td></tr>
-                                    <tr><td>台灣員工比例</td><td>~80%</td><td>其餘分布美日德各廠</td></tr>
-                                    <tr><td>理工碩博士比例</td><td>>50%</td><td>ESG 報告：持續維持高學歷占比</td></tr>
-                                    <tr><td>員工流動率</td><td><5%（台灣）</td><td>低流動率是製程良率穩定的關鍵</td></tr>
-                                    <tr><td>Arizona 廠薪資溢價</td><td>~2-3x</td><td>海外員工成本遠高於台灣，是毛利率壓力來源</td></tr>
-                                    <tr><td>2026-2028 招募目標</td><td>+15,000 人</td><td>主要為海外廠工程師，培訓成本高</td></tr>
+                                    <tr><td>2025 全球員工</td><td>90,557 人</td><td>YoY +8.0%（MacroTrends，與台積電年報正職員工數一致）</td></tr>
+                                    <tr><td>台灣員工比例</td><td>~87%</td><td>2024年報：87.06%位於台灣廠區，其餘分布美日德等海外廠（官方確認）</td></tr>
+                                    <tr><td>碩博士學歷比例</td><td>~48.5%碩士+約4%博士</td><td>2024年報：碩士佔48.5%為最大宗，逐年上升；另計博士後合計略超五成</td></tr>
+                                    <tr><td>女性員工比例</td><td>~33.7%</td><td>2024年報：男女比約66.3%:33.7%（官方確認）</td></tr>
+                                    <tr><td>員工流動率</td><td>3.7%（全體，台灣）</td><td>2023年報數字，低流動率是製程良率穩定的關鍵；近年持續下降</td></tr>
+                                    <tr><td>Arizona 廠薪資溢價</td><td>~2-3x（多名派駐員工親述證實）</td><td>海外員工成本遠高於台灣，是毛利率壓力來源；非官方統計數字，但與多篇動區動趨等媒體引述的台籍派駐員工第一手經驗（"薪水3倍但開銷也3倍"）相符</td></tr>
+                                    <tr><td>2026年台灣招募目標</td><td>約 8,000 人</td><td>因應竹科/高雄/嘉義/南科/中科擴廠需求，較過去年份的6千人目標擴大</td></tr>
                                 </tbody>
                             </table>
                             <p style="margin-top:12px;font-size:13px;color:var(--text-secondary)">
@@ -1167,7 +1168,7 @@
                     <div class="grid">
                         <div class="card chart-card">
                             <h4>主要 ETF 持有 TSM 比重（%）</h4>
-                            <p class="text-muted">來源：SEC NPORT-P 文件（SMH 2025/12確認=10.4%）。SMH 是半導體 ETF 中 AUM 最大（~US$47B），TSM 為第一大持股。</p>
+                            <p class="text-muted">來源：stockanalysis.com、investsnips.com（2026/6-7）。SMH 為半導體 ETF 中 AUM 最大（~US$68B，2026年內因AI熱潮大幅成長），TSM 為第二大持股（次於NVIDIA）；SOXX/SOXQ 因採「修正市值加權」上限機制，TSM 權重明顯低於 SMH（約4%）。</p>
                             <div class="chart-container"><canvas id="etf-weight-chart"></canvas></div>
                         </div>
                         <div class="card text-card">
@@ -1223,12 +1224,12 @@
                 <section id="panel-debt" class="panel">
                     <div class="panel-header">
                         <h3><i class="fa-solid fa-file-invoice-dollar"></i> 債務到期結構</h3>
-                        <p class="panel-desc">台積電的應付公司債（公司債）到期時程直接影響未來的融資成本與資本結構。來源：TSMC 年報財務報表附註 + R5.xls 資產負債表</p>
+                        <p class="panel-desc">台積電的應付公司債（公司債）到期時程直接影響未來的融資成本與資本結構。來源：TSMC 投資人關係官網 Credit Rating 頁面官方債券明細表</p>
                     </div>
                     <div class="grid">
                         <div class="card chart-card full-width">
                             <h4>應付公司債到期分布（億 NT$）</h4>
-                            <p class="text-muted">來源：TSMC SEC 6-K 官方文件整理（110、111、115批次已確認），差額依比例估算。總計NT$8,562億（2025年末），評等 AA-（S&amp;P）。注意：各年精確金額含估算，請參閱年報附註取得完整資訊。</p>
+                            <p class="text-muted">來源：台積電投資人關係官網「Credit Rating」頁面完整債券發行明細（資料日期2026/5/22），逐筆計算到期年度加總，非估算。應付公司債總計約NT$5,466億（國內NT$4,979億+海外USD公司債約NT$487億），評等 AA-（S&amp;P，穩定）／Aa3（Moody's，穩定）。注意：此為公司債範疇，不含銀行借款；資產負債表「有息負債」總額因含銀行借款而更高。</p>
                             <div class="chart-container large"><canvas id="debt-maturity-chart"></canvas></div>
                         </div>
                         <div class="card text-card">
@@ -1253,7 +1254,7 @@
                     <div class="grid">
                         <div class="card chart-card full-width">
                             <h4>各海外子公司 2024 vs 2025 損益（億 NT$）</h4>
-                            <p class="text-muted">來源：TSMC 2025年報合併財務報表附表（子公司列表）。Arizona 轉盈時間比市場預期早，2026年有望進一步貢獻利潤。</p>
+                            <p class="text-muted">來源：台積電股東會年報「海外子公司損益概況」（2025/4、2026/2揭露）。Arizona 2025年扭虧為盈大賺161.41億元，2026Q1單季(188.07億)已超越2025全年；熊本JASM虧損則從43.75億擴大至97.67億，反映新廠爬坡期折舊高峰。</p>
                             <div class="chart-container large"><canvas id="overseas-profit-chart"></canvas></div>
                         </div>
                         <div class="card text-card">
@@ -1355,7 +1356,7 @@
                             <h4>FCF 與 EPS 差異解讀</h4>
                             <p>
                                 台積電 FCF/股長期低於 EPS，主要原因是 <strong>資本支出密集</strong>——每年花費數千億在建廠和設備。FCF payout ratio（股利/FCF）在 2023 年一度超過 100%，代表當年現金創造能力暫時不足以覆蓋股利，靠過去的現金儲備支付。<br><br>
-                                2024-2025 年 AI 需求爆發後，FCF/股快速提升至 33.6 → 38.7 元，FCF payout ratio 回落至約 40-46%，現金創造能力大幅改善。若 2026 年 Capex 指引 US$54B 執行，FCF/股有望在 AI 驅動的高毛利率下繼續維持在 30-40 元以上。
+                                2024-2025 年 AI 需求爆發後，FCF/股快速提升至 33.6 → 38.7 元，FCF payout ratio 為 2024年44.6%、2025年56.8%（隨股利加碼至22元回升，但仍遠低於2023年逾100%的緊繃水準）。若 2026 年 Capex 指引 US$600-640億執行，FCF/股能否維持在 30-40 元以上仍待觀察。
                             </p>
                         </div>
                     </div>
@@ -1458,7 +1459,7 @@
                             <p>
                                 台積電的資本配置邏輯非常清晰：<br><br>
                                 <strong>優先投資（Capex）</strong>→ <strong>次發股利</strong>→ <strong>極少回購</strong><br><br>
-                                現金股利從 2021 年 NT$2,659億（10.25元×259.3億股）成長至 2025 年 NT$4,667億（18元×259.3億股），5年成長 75.5%。<br><br>
+                                現金股利從 2021 年 NT$2,723億（10.5元×259.3億股）成長至 2025 年 NT$5,705億（22元×259.3億股），5年成長 109.5%。<br><br>
                                 股票回購年均約 NT$20-30 億，佔淨利不足 0.2%，主要功能是「中和員工股權計畫的稀釋效果」，不具有「傳遞股票被低估訊號」的意義。<br><br>
                                 這與 NVIDIA（2024 回購超過 US$10B）或蘋果（年回購超過 US$80B）的策略截然不同，反映台積電的現金主要用於未來的生產能力建設，而非當下的股東回報最大化。
                             </p>
