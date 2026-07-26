@@ -149,7 +149,7 @@ async function refreshData(partial = false) {
     }
     if (flowData) {
         renderChipFlowChart(flowData);
-        renderChipCumulativeChart(flowData);
+        renderChipCumulativeChart(flowData, techData);
         const sumForeign = flowData.foreign.reduce((a, b) => a + b, 0);
         const sumTrust = flowData.trust.reduce((a, b) => a + b, 0);
         const sumDealer = flowData.dealer.reduce((a, b) => a + b, 0);
@@ -827,7 +827,7 @@ function renderChipFlowChart(data) {
     });
 }
 
-function renderChipCumulativeChart(data) {
+function renderChipCumulativeChart(data, priceData) {
     if (!data) {
         createChart('chip-cumulative-chart', {
             type: 'line',
@@ -849,16 +849,44 @@ function renderChipCumulativeChart(data) {
         return series;
     }, []);
 
+    const foreignCum = cumulative(data.foreign);
+
+    // 將已抓取的日線價格資料（MM-DD 對齊）疊加到同一張圖，不額外呼叫 API
+    let priceSeries = null;
+    let divergenceNote = '';
+    if (priceData && priceData.length > 0) {
+        const priceMap = {};
+        priceData.forEach(d => {
+            const mmdd = `${String(d.date.getUTCMonth()+1).padStart(2,'0')}-${String(d.date.getUTCDate()).padStart(2,'0')}`;
+            priceMap[mmdd] = d.close;
+        });
+        priceSeries = data.labels.map(lbl => priceMap[lbl] ?? null);
+
+        // 簡單背離偵測：近段期間股價漲跌方向 vs 外資累積買賣超方向是否相反
+        const validPrices = priceSeries.filter(v => v !== null);
+        if (validPrices.length >= 5 && foreignCum.length >= 5) {
+            const priceChange = validPrices[validPrices.length-1] - validPrices[0];
+            const flowChange = foreignCum[foreignCum.length-1] - foreignCum[0];
+            if (priceChange > 0 && flowChange < 0) {
+                divergenceNote = '⚠ 近期股價上漲但外資持續賣超（背離）';
+            } else if (priceChange < 0 && flowChange > 0) {
+                divergenceNote = '⚠ 近期股價下跌但外資持續買超（背離）';
+            }
+        }
+    }
+
+    const datasets = [
+        { label: '外資累積', data: foreignCum, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.12)', borderWidth: 2.5, tension: 0.25, pointRadius: 0, yAxisID: 'y' },
+        { label: '投信累積', data: cumulative(data.trust), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.12)', borderWidth: 2.5, tension: 0.25, pointRadius: 0, yAxisID: 'y' },
+        { label: '自營累積', data: cumulative(data.dealer), borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.12)', borderWidth: 2.5, tension: 0.25, pointRadius: 0, yAxisID: 'y' }
+    ];
+    if (priceSeries) {
+        datasets.push({ label: '股價（右軸）', data: priceSeries, borderColor: '#22c55e', borderWidth: 2, borderDash: [4,3], tension: 0.15, pointRadius: 0, yAxisID: 'y1' });
+    }
+
     createChart('chip-cumulative-chart', {
         type: 'line',
-        data: {
-            labels: data.labels,
-            datasets: [
-                { label: '外資累積', data: cumulative(data.foreign), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.12)', borderWidth: 2.5, tension: 0.25, pointRadius: 0 },
-                { label: '投信累積', data: cumulative(data.trust), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.12)', borderWidth: 2.5, tension: 0.25, pointRadius: 0 },
-                { label: '自營累積', data: cumulative(data.dealer), borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.12)', borderWidth: 2.5, tension: 0.25, pointRadius: 0 }
-            ]
-        },
+        data: { labels: data.labels, datasets },
         options: {
             responsive: true,
             maintainAspectRatio: false,
@@ -867,13 +895,17 @@ function renderChipCumulativeChart(data) {
                 legend: { position: 'top' },
                 tooltip: {
                     callbacks: {
-                        label: ctx => ` ${ctx.dataset.label}: ${ctx.raw >= 0 ? '+' : ''}${Math.round(ctx.raw).toLocaleString()} 張`
+                        label: ctx => ctx.dataset.label.includes('股價')
+                            ? ` 股價: NT$${ctx.raw?.toFixed(1) ?? '--'}`
+                            : ` ${ctx.dataset.label}: ${ctx.raw >= 0 ? '+' : ''}${Math.round(ctx.raw).toLocaleString()} 張`
                     }
-                }
+                },
+                subtitle: divergenceNote ? { display: true, text: divergenceNote, color: '#f59e0b', font: { size: 12 } } : undefined
             },
             scales: {
                 x: { ticks: { maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '累積張數' } }
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '累積張數' } },
+                y1: { position: 'right', grid: { display: false }, title: { display: true, text: '股價 NT$' }, display: !!priceSeries }
             }
         }
     });
@@ -4030,16 +4062,18 @@ function renderImportantDates() {
     const el = document.getElementById('important-dates');
     if (!el) return;
 
-    // 台積電 2026 重要日期（公開資訊）
-    // 台積電 2026 重要日期（依公開公告）
-    // 台積電季配息：每季除息一次，隔約4週發放
+    // 台積電 2026 重要日期（依公開公告）+ 主要客戶財報日（法人關注的股價領先指標，來源：各公司IR/Wall Street Horizon）
     const events = [
         { date: '2026-07-09', label: '2025 Q4股利發放 (NT$6/股)', icon: 'fa-coins',      type: 'success' },
         { date: '2026-07-13', label: '6月營收公告',           icon: 'fa-chart-bar',  type: 'info'    },
         { date: '2026-07-16', label: '2026 Q2 法說會',        icon: 'fa-microphone', type: 'primary' },
+        { date: '2026-07-30', label: 'Apple Q3 FY26 財報（客戶）', icon: 'fa-mobile-screen', type: 'customer' },
+        { date: '2026-08-04', label: 'AMD Q2 2026 財報（客戶）',   icon: 'fa-microchip', type: 'customer' },
+        { date: '2026-08-26', label: 'NVIDIA Q2 FY27 財報（客戶，最大權值客戶）', icon: 'fa-microchip', type: 'customer' },
         { date: '2026-09-16', label: '2026 Q1 除息日',        icon: 'fa-scissors',   type: 'warning' },
         { date: '2026-10-08', label: '2026 Q1股利發放 (NT$7/股)', icon: 'fa-coins',   type: 'success' },
         { date: '2026-10-15', label: '2026 Q3 法說會',        icon: 'fa-microphone', type: 'primary' },
+        { date: '2027-01-06', label: 'CES 2027 開幕（Jensen Huang主題演講慣例）', icon: 'fa-tv', type: 'customer' },
         { date: '2027-01-15', label: '2026 Q4 法說會',        icon: 'fa-microphone', type: 'primary' },
     ];
 
@@ -4049,6 +4083,7 @@ function renderImportantDates() {
         info:    { bg: 'rgba(148,163,184,0.1)',  border: '#64748b',  text: '#94a3b8' },
         success: { bg: 'rgba(34,197,94,0.12)',   border: '#22c55e',  text: '#4ade80' },
         warning: { bg: 'rgba(245,158,11,0.12)',  border: '#f59e0b',  text: '#fbbf24' },
+        customer:{ bg: 'rgba(168,85,247,0.12)',  border: '#a855f7',  text: '#c084fc' },
     };
 
     const sorted  = events
@@ -4057,7 +4092,7 @@ function renderImportantDates() {
         .sort((a, b) => a.ts - b.ts);
 
     el.innerHTML = `
-        <h4 style="margin-bottom:16px"><i class="fa-solid fa-calendar-days" style="color:var(--accent-color);margin-right:8px"></i>重要日期倒數</h4>
+        <h4 style="margin-bottom:16px"><i class="fa-solid fa-calendar-days" style="color:var(--accent-color);margin-right:8px"></i>重要日期倒數<span style="font-size:12px;font-weight:400;color:var(--text-secondary);margin-left:8px">（含主要客戶財報催化劑）</span></h4>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
             ${sorted.map(e => {
                 const days   = Math.ceil((e.ts - now) / 86400000);
