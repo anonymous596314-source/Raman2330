@@ -283,7 +283,7 @@
                         </div>
                         <div class="card chart-card">
                             <h4>法人累積買賣超趨勢</h4>
-                            <p class="text-muted">把每日買賣超累加，快速看資金是連續堆疊或反覆撤退</p>
+                            <p class="text-muted">把每日買賣超累加，快速看資金是連續堆疊或反覆撤退；綠色虛線疊加同期股價（右軸），股價與外資籌碼方向相反時會在圖表上方顯示背離提示</p>
                             <div class="chart-container"><canvas id="chip-cumulative-chart"></canvas></div>
                         </div>
                         <div class="card text-card">
@@ -524,6 +524,18 @@
                             <h4>2030 營收情境分析</h4>
                             <p class="text-muted">保守=CAGR 15%、基準=CAGR 25%（官方指引）、樂觀=CAGR 35%（AI ASIC+封裝全面爆發）；以2025實際NT$3,809B為起點</p>
                             <div class="chart-container"><canvas id="outlook-scenario-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card full-width">
+                            <h4>2030 情境對應隱含目標價（推算，非預測）</h4>
+                            <p class="text-muted">將上方三種營收情境，套用固定淨利率45%（與2025實際淨利率相近，未假設擴張或壓縮）與目前流通股數259.3億股換算EPS，再乘上三種本益比情境（20x=情緒收斂、30x=接近近期均值、40x=維持AI溢價），純屬數學推算，非任何法人或本站的目標價預測。</p>
+                            <table class="data-table">
+                                <thead><tr><th>情境</th><th>2030E EPS</th><th>20x P/E</th><th>30x P/E</th><th>40x P/E</th></tr></thead>
+                                <tbody>
+                                    <tr><td>保守（CAGR 15%）</td><td>NT$133.0</td><td>NT$2,659</td><td>NT$3,989</td><td>NT$5,318</td></tr>
+                                    <tr><td>基準（CAGR 25%）</td><td>NT$201.7</td><td>NT$4,035</td><td>NT$6,052</td><td>NT$8,069</td></tr>
+                                    <tr><td>樂觀（CAGR 35%）</td><td>NT$296.5</td><td>NT$5,929</td><td>NT$8,894</td><td>NT$11,859</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                         <div class="card chart-card full-width">
                             <h4>先進製程節點競爭比較：TSMC vs Samsung vs Intel</h4>
