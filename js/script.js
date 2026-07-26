@@ -849,36 +849,48 @@ function renderChipCumulativeChart(data, priceData) {
         return series;
     }, []);
 
-    const foreignCum = cumulative(data.foreign);
-
-    // 將已抓取的日線價格資料（MM-DD 對齊）疊加到同一張圖，不額外呼叫 API
+    // 將已抓取的日線價格資料（MM-DD 對齊）用來交叉驗證「當天是否真的有開盤」
+    // 三大法人資料集偶爾會出現非交易日的殘留記錄（如T+1入帳誤植），若價格來源當天沒有收盤價，
+    // 代表當天未開盤，此時應把該日「整筆」從籌碼資料中剔除，而非只是價格留白、張數照算
+    let labels = data.labels, foreign = data.foreign, trust = data.trust, dealer = data.dealer;
     let priceSeries = null;
-    let divergenceNote = '';
+
     if (priceData && priceData.length > 0) {
         const priceMap = {};
         priceData.forEach(d => {
             const mmdd = `${String(d.date.getUTCMonth()+1).padStart(2,'0')}-${String(d.date.getUTCDate()).padStart(2,'0')}`;
             priceMap[mmdd] = d.close;
         });
-        priceSeries = data.labels.map(lbl => priceMap[lbl] ?? null);
 
-        // 簡單背離偵測：近段期間股價漲跌方向 vs 外資累積買賣超方向是否相反
-        const validPrices = priceSeries.filter(v => v !== null);
-        if (validPrices.length >= 5 && foreignCum.length >= 5) {
-            const priceChange = validPrices[validPrices.length-1] - validPrices[0];
-            const flowChange = foreignCum[foreignCum.length-1] - foreignCum[0];
-            if (priceChange > 0 && flowChange < 0) {
-                divergenceNote = '⚠ 近期股價上漲但外資持續賣超（背離）';
-            } else if (priceChange < 0 && flowChange > 0) {
-                divergenceNote = '⚠ 近期股價下跌但外資持續買超（背離）';
-            }
+        const keepIdx = [];
+        data.labels.forEach((lbl, i) => { if (priceMap[lbl] !== undefined) keepIdx.push(i); });
+
+        // 只有在「大部分日期都能對到價格」時才啟用過濾，避免價格來源本身不完整時誤刪正常交易日
+        if (keepIdx.length >= data.labels.length * 0.8) {
+            labels  = keepIdx.map(i => data.labels[i]);
+            foreign = keepIdx.map(i => data.foreign[i]);
+            trust   = keepIdx.map(i => data.trust[i]);
+            dealer  = keepIdx.map(i => data.dealer[i]);
+            priceSeries = labels.map(lbl => priceMap[lbl]);
+        }
+    }
+
+    const foreignCum = cumulative(foreign);
+    let divergenceNote = '';
+    if (priceSeries && priceSeries.length >= 5 && foreignCum.length >= 5) {
+        const priceChange = priceSeries[priceSeries.length-1] - priceSeries[0];
+        const flowChange = foreignCum[foreignCum.length-1] - foreignCum[0];
+        if (priceChange > 0 && flowChange < 0) {
+            divergenceNote = '⚠ 近期股價上漲但外資持續賣超（背離）';
+        } else if (priceChange < 0 && flowChange > 0) {
+            divergenceNote = '⚠ 近期股價下跌但外資持續買超（背離）';
         }
     }
 
     const datasets = [
         { label: '外資累積', data: foreignCum, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.12)', borderWidth: 2.5, tension: 0.25, pointRadius: 0, yAxisID: 'y' },
-        { label: '投信累積', data: cumulative(data.trust), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.12)', borderWidth: 2.5, tension: 0.25, pointRadius: 0, yAxisID: 'y' },
-        { label: '自營累積', data: cumulative(data.dealer), borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.12)', borderWidth: 2.5, tension: 0.25, pointRadius: 0, yAxisID: 'y' }
+        { label: '投信累積', data: cumulative(trust), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.12)', borderWidth: 2.5, tension: 0.25, pointRadius: 0, yAxisID: 'y' },
+        { label: '自營累積', data: cumulative(dealer), borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.12)', borderWidth: 2.5, tension: 0.25, pointRadius: 0, yAxisID: 'y' }
     ];
     if (priceSeries) {
         datasets.push({ label: '股價（右軸）', data: priceSeries, borderColor: '#22c55e', borderWidth: 2, borderDash: [4,3], tension: 0.15, pointRadius: 0, yAxisID: 'y1' });
@@ -886,7 +898,7 @@ function renderChipCumulativeChart(data, priceData) {
 
     createChart('chip-cumulative-chart', {
         type: 'line',
-        data: { labels: data.labels, datasets },
+        data: { labels, datasets },
         options: {
             responsive: true,
             maintainAspectRatio: false,
