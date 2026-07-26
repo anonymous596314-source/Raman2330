@@ -2408,9 +2408,10 @@ function renderDebtMaturityChart() {
 // ═══════════════════════════════════════════════════════════════
 function renderOverseasChart() {
     // 來源：台積電股東會年報「海外子公司損益概況」；2024年報揭露（2025/4）+ 2025年報揭露（2026/2）
-    const fabs   = ['南京\n(中國)', '中國子公司\n(上海等)', 'Arizona\n(美國)', '熊本 JASM\n(日本)'];
-    const y2024  = [260.0, 95.0, -142.98, -43.75]; // 南京/Arizona/JASM為年報確認數字；中國子公司(上海)2024未查得精確數字，依2025H1(55.96億)反推估算，信心度中等
-    const y2025  = [276.05, 115.71, 161.41, -97.67]; // 全數為2025年報官方確認數字（經濟日報/壹蘋新聞引述）
+    // 來源：台積電股東會年報「海外子公司損益概況」；2024年報揭露（2025/4，經工商時報/聯合新聞網/新華社等多方交叉確認）+ 2025年報揭露（2026/2）
+    const fabs   = ['南京\n(中國)', '中國子公司\n(上海等)', 'Arizona\n(美國)', '熊本 JASM\n(日本)', 'ESMC\n(德國)'];
+    const y2024  = [259.54, null, -142.98, -43.75, -5.56]; // 南京/Arizona/JASM/ESMC均為2024年報確認數字（多方新聞交叉驗證一致）；中國子公司(上海)：查證多篇2024年報報導，均只單獨揭露「南京」，未見「中國子公司」分項數字，可能該年度未單獨列示或併入南京項下，誠實標示為缺漏而非估算
+    const y2025  = [276.05, 115.71, 161.41, -97.67, -6.88]; // 全數為2025年報官方確認數字（經濟日報/壹蘋新聞引述）
 
     createChart('overseas-profit-chart', {
         type: 'bar',
@@ -3775,7 +3776,7 @@ function renderProcessRoadmapChart() {
             { year: 2020, node: '5nm (N5)',   density: 171.3, status: 'done' },
             { year: 2022, node: '4nm (N4)',   density: 192,   status: 'done' },
             { year: 2022, node: '3nm (N3)',   density: 292,   status: 'done' },
-            { year: 2025, node: '2nm (N2)',   density: 380,   status: 'done' },
+            { year: 2025, node: '2nm (N2)',   density: 313,   status: 'done' }, // TechInsights/SemiWiki (IEDM揭露) HD標準cell密度，經查證修正（原380高估）
             { year: 2026, node: 'A16',        density: 450,   status: 'current' },
             { year: 2028, node: 'A14',        density: 560,   status: 'future' },
         ],
@@ -3783,14 +3784,14 @@ function renderProcessRoadmapChart() {
             { year: 2021, node: '5nm',        density: 127,   status: 'done' },
             { year: 2022, node: '4nm',        density: 149,   status: 'done' },
             { year: 2022, node: '3nm (GAA)',  density: 228,   status: 'done' },
-            { year: 2025, node: '2nm (GAA)',  density: 300,   status: 'done' },
+            { year: 2025, node: '2nm (SF2/GAA)', density: 231, status: 'done' }, // TechInsights確認，經查證修正（原300高估）
             { year: 2027, node: '1.4nm',      density: 420,   status: 'future' },
         ],
         'Intel': [
             { year: 2021, node: 'Intel 7',    density: 100,   status: 'done' },
             { year: 2023, node: 'Intel 4',    density: 151,   status: 'done' },
             { year: 2024, node: 'Intel 3',    density: 238,   status: 'done' },
-            { year: 2025, node: '18A (1.8nm級)', density: 260, status: 'current' }, // HVM 2025年底，良率55%，2026年持續爬坡
+            { year: 2025, node: '18A (1.8nm級)', density: 238, status: 'current' }, // TechInsights IEDM揭露HD標準cell密度；HVM 2025年底，良率約50-55%，2026年持續爬坡
             { year: 2026, node: '18A-P',      density: 285,   status: 'future' },   // 2026H2 量產，增強版
             { year: 2028, node: '14A',        density: 380,   status: 'future' },
         ],
