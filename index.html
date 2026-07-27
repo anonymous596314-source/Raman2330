@@ -181,6 +181,9 @@
                             <p class="text-muted">灰色虛線為歷史均值；紅=+2σ、橘=+1σ、綠=-1σ、藍=-2σ標準差帶，協助判斷當前估值貴賤</p>
                             <div class="chart-container"><canvas id="per-band-chart"></canvas></div>
                         </div>
+                        <div class="card full-width" id="risk-valuation-metrics">
+                            <!-- PEG / Beta / 殖利率利差，由JS動態計算並填入 -->
+                        </div>
                         <div class="card chart-card full-width">
                             <h4>現金股息 vs 殖利率歷史</h4>
                             <p class="text-muted">台積電連續多年調升股息，殖利率反映股價相對股息的投資吸引力</p>
@@ -301,8 +304,25 @@
                         </div>
                         <div class="card chart-card full-width">
                             <h4>外資持股比例歷史趨勢 (近2年)</h4>
-                            <p class="text-muted">外資持股比例持續攀升，顯示國際資金長期信任度；驟降通常伴隨重要風險訊號</p>
+                            <p class="text-muted" id="shareholding-caption">主因美元升值使外資將台股資金換回美元、以及被動ETF再平衡；驟降通常伴隨重要風險訊號，但需搭配股價走勢綜合判斷（賣超不代表看空，也可能是資金配置調整）</p>
                             <div class="chart-container"><canvas id="shareholding-chart"></canvas></div>
+                        </div>
+                        <div class="card text-card full-width">
+                            <h4>近期董監事／高階主管持股異動</h4>
+                            <p class="text-muted">來源：公開資訊觀測站申報轉讓資料（經ETtoday財經雲等媒體整理）。⚠️ 此區塊為靜態資料，僅涵蓋查證當下（2026年6月）已知的申報紀錄，未串接即時API，需定期人工更新才能反映最新異動。多數轉讓對象為配偶／子女等家族成員，市場普遍解讀為家族內部財富規劃或節稅安排，而非對公司前景看空的訊號，惟仍建議與其他籌碼指標交叉比對。</p>
+                            <table class="data-table">
+                                <thead><tr><th>日期</th><th>身分</th><th>姓名</th><th>轉讓張數</th><th>受讓人</th><th>備註</th></tr></thead>
+                                <tbody>
+                                    <tr><td>2026/06/24</td><td>廠務副總經理</td><td>莊子壽</td><td>500張</td><td>莊士毅（疑似家族成員）</td><td>市值約NT$11.95億（以2,390元計）</td></tr>
+                                    <tr><td>2026/06初</td><td>廠務副總經理</td><td>莊子壽</td><td>500張</td><td>莊絮捷</td><td>同一申報人近期第2次轉讓</td></tr>
+                                    <tr><td>2026/05</td><td>廠務副總經理</td><td>莊子壽</td><td>200張</td><td>（一般市場賣出）</td><td>非家族內轉讓</td></tr>
+                                    <tr><td>歷史紀錄</td><td>共同營運長</td><td>秦永沛</td><td>2,000張</td><td>配偶陳靜蘭</td><td>市值約NT$47.8億（申報當時股價計算）</td></tr>
+                                    <tr><td>歷史紀錄</td><td>董事長暨總裁</td><td>魏哲家</td><td>1,000張+600張</td><td>配偶牛慶容＋三名子女</td><td>市值約NT$23.9億＋NT$4.78億</td></tr>
+                                </tbody>
+                            </table>
+                            <p style="margin-top:12px;font-size:13px;color:var(--text-secondary)">
+                                補充：截至2026/6，全體董監質押股票張數合計1,600張，質押比例約0.09%，處於極低水位，代表經營層對股權掌控度高、財務壓力小。查詢完整最新異動紀錄可至<a href="https://mopsov.twse.com.tw/mops/web/t100sb02_1" target="_blank" style="color:var(--accent-color)">公開資訊觀測站</a>或Goodinfo「董監持股轉讓」頁面。
+                            </p>
                         </div>
                         <div class="card chart-card full-width">
                             <h4>融資融券餘額趨勢 (近1年)</h4>
@@ -435,6 +455,11 @@
                             <h4>全球晶圓代工市佔率 (2025)</h4>
                             <p class="text-muted">台積電 69.9% 絕對主導，護城河深厚</p>
                             <div class="chart-container"><canvas id="market-share-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card full-width">
+                            <h4>晶圓代工同業 2025 全年營收與成長率比較</h4>
+                            <p class="text-muted">藍柱=2025全年營收(USD B，左軸)；橘線=YoY成長率%(右軸)。來源：各公司官方財報/SEC文件（TSMC、UMC、GlobalFoundries、SMIC）；Samsung Foundry未單獨上市無獨立財報，數字為TrendForce直接揭露（經Motley Fool引述：2025全年$12.9B，較2024「essentially flat」）。台積電成長率遙遙領先所有對手，顯示AI晶片需求集中度極高，不是單純景氣循環驅動。</p>
+                            <div class="chart-container"><canvas id="peer-revenue-chart"></canvas></div>
                         </div>
                         <div class="card chart-card full-width">
                             <h4>平台業務收入結構 (AI 應用佔比趨勢)</h4>
@@ -758,7 +783,7 @@
                 <section id="panel-flow-revenue" class="panel">
                     <div class="panel-header">
                         <h3><i class="fa-solid fa-arrows-left-right"></i> 外資動向 × 月營收共振</h3>
-                        <p class="panel-desc">2026年外資持股降至近18年最低（69.99%），以賣超為主（今年賣超逾NT$1.23兆）。月營收公告後的外資反應仍是重要訊號，但需結合持股水位判讀。</p>
+                        <p class="panel-desc"><span id="fo-mention-1">2026年外資持股降至近18年最低（69.99%）</span>，以賣超為主（今年賣超逾NT$1.23兆）。月營收公告後的外資反應仍是重要訊號，但需結合持股水位判讀。</p>
                     </div>
                     <div class="grid">
                         <div class="card chart-card full-width">
@@ -774,14 +799,14 @@
                                     <tr><td>2025 Q1</td><td style="color:var(--up-color)">+33-36%</td><td>小幅賣超</td><td>年初獲利了結，但金額不大</td></tr>
                                     <tr><td>2025 Q2</td><td style="color:#f59e0b">+17-30%</td><td>持續賣超</td><td>關稅不確定性，外資避險</td></tr>
                                     <tr><td>2025 Q3-Q4</td><td style="color:var(--up-color)">+16-24%</td><td>大幅賣超</td><td>持股從75%持續降低</td></tr>
-                                    <tr><td>2026 Q1-Q2</td><td style="color:var(--up-color)">+17-68%</td><td>仍賣超為主</td><td>持股降至69.99%近18年低點，賣超逾NT$1.23兆</td></tr>
+                                    <tr><td>2026 Q1-Q2</td><td style="color:var(--up-color)">+17-68%</td><td>仍賣超為主</td><td><span id="fo-mention-2">持股降至69.99%近18年低點</span>，賣超逾NT$1.23兆</td></tr>
                                 </tbody>
                             </table>
                         </div>
                         <div class="card text-card">
                             <h4>外資動向說明（近期以賣超為主）</h4>
                             <p>
-                                <strong>⚠️ 重要：2026年外資持股降至近18年最低（69.99%），今年累計賣超逾NT$1.23兆。</strong><br><br>
+                                <strong>⚠️ 重要：<span id="fo-mention-3">2026年外資持股降至近18年最低（69.99%）</span>，今年累計賣超逾NT$1.23兆。</strong><br><br>
                                 外資長期持續賣超有結構性原因：美元升值使外資將台股換回美元，以及被動 ETF 再平衡（台積電市值觸及 SOXX 10% 上限自動賣出）。月營收 YoY 持續維持 30-68% 高速成長（6月更加速至67.9%），但外資賣超力道未見減緩。<br><br>
                                 <strong>判讀重點：</strong>外資持股比例從高點75%降至70%，再往下的支撐較少，若台股整體外資持股再下滑，台積電可能持續承壓。<br><br>
                                 <span style="color:var(--text-secondary);font-size:12px">* 即時外資買賣超數據由 FinMind API 動態提供。圖表左軸為靜態示意，以賣超（負值）為主的方向性是正確的。</span>
@@ -1023,6 +1048,11 @@
                             <h4>季節性指數（各季相對全年均值）</h4>
                             <p class="text-muted">2022-2025 年四年平均季節性指數。指數>1代表高於年均，<1代表低於年均。</p>
                             <div class="chart-container"><canvas id="seasonal-index-chart"></canvas></div>
+                        </div>
+                        <div class="card chart-card full-width">
+                            <h4>股價月份季節性（近10年平均月報酬%）</h4>
+                            <p class="text-muted">用近10年週線股價資料，計算每個日曆月份的平均報酬率（非累積，逐月獨立計算後取多年平均）。這是股價本身的季節性，跟上方的營收季節性是不同指標——營收看的是業績淡旺季，這裡看的是股價歷史上哪幾個月漲跌機率較高。僅供參考，不代表未來會重演。</p>
+                            <div class="chart-container"><canvas id="price-seasonality-chart"></canvas></div>
                         </div>
                         <div class="card text-card">
                             <h4>季節性判讀重點</h4>
