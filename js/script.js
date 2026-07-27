@@ -144,6 +144,8 @@ async function refreshData(partial = false) {
     // 5. 籌碼面
     if (chipData && chipData.length > 0) {
         renderChipCostChart(chipData);
+        try { renderPriceSeasonalityChart(chipData); }
+        catch(e) { console.error('[renderPriceSeasonalityChart]', e); }
     } else {
         showChartFallback('chip-cost-chart');
     }
@@ -190,6 +192,10 @@ async function refreshData(partial = false) {
     } else {
         showChartFallback('per-band-chart');
     }
+
+    // PEG / Beta / 殖利率利差：全部用已抓取的資料計算，不額外呼叫API
+    try { renderRiskValuationMetrics(perHistory, adrData, spyData, us10yData, techData); }
+    catch(e) { console.error('[renderRiskValuationMetrics]', e); }
 
     // ROE + 資產負債表（靜態資料）
     try { renderROEChart(); }          catch(e) { console.error('[renderROEChart]', e); }
@@ -260,6 +266,7 @@ async function refreshData(partial = false) {
 
     // 8. 靜態圖表
     try { renderIndustryChart(); }        catch(e) { console.error('[renderIndustryChart]', e); }
+    try { renderPeerRevenueChart(); }     catch(e) { console.error('[renderPeerRevenueChart]', e); }
     try { renderOutlookChart(); }         catch(e) { console.error('[renderOutlookChart]', e); }
     try { renderRiskChart(); }            catch(e) { console.error('[renderRiskChart]', e); }
     try { renderPEBandChart(); }          catch(e) { console.error('[renderPEBandChart]', e); }
@@ -727,6 +734,62 @@ function renderMacdChart(data) {
 }
 
 // ─── 籌碼面圖表 ────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+//  股價月份季節性：用近10年週線資料，計算每個日曆月的平均報酬率
+//  純統計計算，使用已抓取的chipData（10年週線），無新增資料源
+// ═══════════════════════════════════════════════════════════════
+function renderPriceSeasonalityChart(weeklyData) {
+    if (!weeklyData || weeklyData.length < 20) { showChartFallback('price-seasonality-chart'); return; }
+
+    // 依「年-月」分組，取每組第一筆與最後一筆收盤價，算該月報酬率
+    const monthGroups = {};
+    weeklyData.forEach(d => {
+        const key = `${d.date.getUTCFullYear()}-${d.date.getUTCMonth()}`;
+        if (!monthGroups[key]) monthGroups[key] = [];
+        monthGroups[key].push(d.close);
+    });
+
+    const monthlyReturns = Array.from({length: 12}, () => []);
+    Object.entries(monthGroups).forEach(([key, closes]) => {
+        if (closes.length < 2) return;
+        const month = parseInt(key.split('-')[1], 10);
+        const ret = (closes[closes.length - 1] - closes[0]) / closes[0] * 100;
+        monthlyReturns[month].push(ret);
+    });
+
+    const monthLabels = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    const avgReturns = monthlyReturns.map(arr => arr.length > 0 ? arr.reduce((s,v)=>s+v,0) / arr.length : 0);
+    const sampleCounts = monthlyReturns.map(arr => arr.length);
+
+    createChart('price-seasonality-chart', {
+        type: 'bar',
+        data: {
+            labels: monthLabels,
+            datasets: [{
+                label: '平均月報酬 (%)',
+                data: avgReturns.map(v => +v.toFixed(2)),
+                backgroundColor: avgReturns.map(v => v >= 0 ? 'rgba(34,197,94,0.75)' : 'rgba(239,68,68,0.75)'),
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` 平均: ${ctx.raw >= 0 ? '+' : ''}${ctx.raw}%（樣本數${sampleCounts[ctx.dataIndex]}年）`
+                    }
+                }
+            },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '平均月報酬 %' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
 function renderChipCostChart(data) {
     const canvasEl = document.getElementById('chip-cost-chart');
     if (!canvasEl) return;
@@ -1095,6 +1158,51 @@ function updateMacroSnapshot(tsmData, twdData, soxData, adrData) {
 }
 
 // ─── 產業面圖表 ────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+//  晶圓代工同業 2025 全年營收與成長率比較
+//  來源：TSMC/UMC/GlobalFoundries官方財報、SMIC官方年報（皆為公司自行揭露）
+//  Samsung Foundry未單獨上市，無獨立財報，用TrendForce市佔率(7.2%)×2025全球晶圓代工市場總額($169.5B)反推估算
+// ═══════════════════════════════════════════════════════════════
+function renderPeerRevenueChart() {
+    const foundries = ['TSMC', 'Samsung\nFoundry(估)', 'SMIC', 'UMC', 'GlobalFoundries'];
+    const revenue   = [122.42, 12.9, 9.33, 7.57, 6.79]; // USD B，2025全年；Samsung Foundry數字為TrendForce直接揭露(via Motley Fool引述)，非反推估算
+    const yoyGrowth = [30.5,   0.2,  16.2, 2.3,  0.6];  // YoY%；Samsung官方形容為「essentially flat」，TrendForce原文：TSMC同期成長37.4%至$132.9B(不同計算基礎，本表TSMC用公司官方營收$122.42B以與全站數字一致)
+
+    createChart('peer-revenue-chart', {
+        type: 'bar',
+        data: {
+            labels: foundries,
+            datasets: [
+                { label: '2025全年營收 (USD B)', data: revenue,
+                  backgroundColor: foundries.map((_,i)=> i===0 ? 'rgba(59,130,246,0.85)' : 'rgba(100,116,139,0.6)'),
+                  borderRadius: 4, yAxisID: 'y' },
+                { label: 'YoY成長率 (%)', data: yoyGrowth,
+                  type: 'line', borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)',
+                  borderWidth: 2.5, pointRadius: 5, tension: 0.3, fill: false, yAxisID: 'y1' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ctx.dataset.label.includes('YoY')
+                            ? ` YoY: ${ctx.raw >= 0 ? '+' : ''}${ctx.raw}%`
+                            : ` 營收: $${ctx.raw}B`
+                    }
+                }
+            },
+            scales: {
+                y:  { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'USD B' } },
+                y1: { position: 'right', grid: { display: false }, title: { display: true, text: 'YoY %' } },
+                x:  { grid: { display: false } }
+            }
+        }
+    });
+}
+
 function renderIndustryChart() {
     createChart('industry-pie-chart', {
         type: 'doughnut',
@@ -3046,6 +3154,109 @@ function correlation(a, b) {
 // ═══════════════════════════════════════════════════════════════
 
 // ── 1. P/E Band 圖（基本面）────────────────────────────────────
+// ── PEG / Beta / 殖利率利差 / 歷史波動率：純計算，使用已抓取資料 ─────────────────────
+function renderRiskValuationMetrics(perHistory, adrData, spyData, us10yData, techData) {
+    const el = document.getElementById('risk-valuation-metrics');
+    if (!el) return;
+
+    // 1. PEG Ratio = 目前P/E ÷ EPS成長率
+    // EPS成長率使用2025全年YoY成長46.4%（66.25 vs 45.25，已於財報數字驗證章節確認），較單季成長率(如26Q2 YoY 77%)更穩定，避免單季波動失真
+    let pegHtml = '<span style="color:var(--text-secondary)">資料不足</span>';
+    let latestPE = null;
+    if (perHistory && perHistory.length > 0) {
+        latestPE = perHistory[perHistory.length - 1].per;
+        const epsGrowthPct = 46.4;
+        const peg = latestPE / epsGrowthPct;
+        const pegColor = peg < 1 ? 'var(--up-color)' : peg < 1.5 ? '#f59e0b' : 'var(--down-color)';
+        pegHtml = `<strong style="color:${pegColor};font-size:22px">${peg.toFixed(2)}</strong>
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">P/E ${latestPE.toFixed(1)}x ÷ EPS成長46.4%（2025全年YoY）</div>`;
+    }
+
+    // 2. Beta係數：TSM ADR 週報酬 vs S&P500(SPY) 週報酬，1年迴歸
+    let betaHtml = '<span style="color:var(--text-secondary)">資料不足</span>';
+    if (adrData?.length > 5 && spyData?.length > 5) {
+        const weeklyReturns = (data) => data.slice(1).map((r, i) => {
+            const prev = data[i].close;
+            return prev > 0 ? (r.close - prev) / prev : 0;
+        });
+        const stockRet = weeklyReturns(adrData);
+        const mktRet   = weeklyReturns(spyData);
+        const len = Math.min(stockRet.length, mktRet.length);
+        if (len >= 10) {
+            const sx = stockRet.slice(-len), mx = mktRet.slice(-len);
+            const meanM = mx.reduce((s,v)=>s+v,0) / len;
+            const meanS = sx.reduce((s,v)=>s+v,0) / len;
+            let cov = 0, varM = 0;
+            for (let i = 0; i < len; i++) {
+                cov  += (sx[i]-meanS) * (mx[i]-meanM);
+                varM += (mx[i]-meanM) ** 2;
+            }
+            const beta = varM > 0 ? cov / varM : null;
+            if (beta !== null) {
+                const betaColor = beta > 1.3 ? 'var(--down-color)' : beta > 1 ? '#f59e0b' : 'var(--up-color)';
+                betaHtml = `<strong style="color:${betaColor};font-size:22px">${beta.toFixed(2)}</strong>
+                    <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">TSM ADR vs S&amp;P500，近1年週報酬迴歸（樣本數${len}週）</div>`;
+            }
+        }
+    }
+
+    // 3. 現金殖利率 - 10年期美債利差
+    // 殖利率用2025全年股利22.0元 ÷ 隱含股價（P/E × TTM EPS）估算
+    let spreadHtml = '<span style="color:var(--text-secondary)">資料不足</span>';
+    if (latestPE && us10yData?.length > 0) {
+        const ttmEPS = 22.08 + 27.25 + 17.44 + 19.50; // 26Q1+26Q2+25Q3+25Q4
+        const impliedPrice = latestPE * ttmEPS;
+        const divYield = (22.0 / impliedPrice) * 100;
+        const us10y = us10yData[us10yData.length - 1].close;
+        if (us10y) {
+            const spread = divYield - us10y;
+            const spreadColor = spread > 0 ? 'var(--up-color)' : 'var(--down-color)';
+            spreadHtml = `<strong style="color:${spreadColor};font-size:22px">${spread >= 0 ? '+' : ''}${spread.toFixed(2)}pp</strong>
+                <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">殖利率${divYield.toFixed(2)}% − 美債10Y ${us10y.toFixed(2)}%（隱含股價NT$${impliedPrice.toFixed(0)}反推，非即時報價）</div>`;
+        }
+    }
+
+    // 4. 歷史波動率（年化）：近6個月日報酬標準差 × √252
+    let volHtml = '<span style="color:var(--text-secondary)">資料不足</span>';
+    if (techData?.length > 10) {
+        const dailyRet = techData.slice(1).map((r, i) => {
+            const prev = techData[i].close;
+            return prev > 0 ? (r.close - prev) / prev : 0;
+        });
+        const n = dailyRet.length;
+        const mean = dailyRet.reduce((s,v)=>s+v,0) / n;
+        const variance = dailyRet.reduce((s,v)=>s+(v-mean)**2,0) / (n-1);
+        const dailyStd = Math.sqrt(variance);
+        const annualizedVol = dailyStd * Math.sqrt(252) * 100;
+        const volColor = annualizedVol > 45 ? 'var(--down-color)' : annualizedVol > 30 ? '#f59e0b' : 'var(--up-color)';
+        volHtml = `<strong style="color:${volColor};font-size:22px">${annualizedVol.toFixed(1)}%</strong>
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">近6個月日報酬年化標準差（樣本數${n}日）</div>`;
+    }
+
+    el.innerHTML = `
+        <h4 style="margin-bottom:16px">估值與風險延伸指標</h4>
+        <p class="text-muted" style="margin-bottom:16px">以下四項皆為既有資料的數學延伸計算，非另行取得的第三方指標；PEG/殖利率利差用隱含股價估算，Beta/波動率為即時計算</p>
+        <div class="stat-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+            <div class="stat-card" style="padding:16px;background:rgba(255,255,255,0.03);border-radius:8px">
+                <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">PEG Ratio</div>
+                ${pegHtml}
+            </div>
+            <div class="stat-card" style="padding:16px;background:rgba(255,255,255,0.03);border-radius:8px">
+                <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">Beta 係數（相對S&amp;P500）</div>
+                ${betaHtml}
+            </div>
+            <div class="stat-card" style="padding:16px;background:rgba(255,255,255,0.03);border-radius:8px">
+                <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">殖利率利差（vs 美債10Y）</div>
+                ${spreadHtml}
+            </div>
+            <div class="stat-card" style="padding:16px;background:rgba(255,255,255,0.03);border-radius:8px">
+                <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">歷史波動率（年化）</div>
+                ${volHtml}
+            </div>
+        </div>
+    `;
+}
+
 function renderPERBandChart(perData) {
     if (!perData?.length) return;
 
@@ -3090,10 +3301,44 @@ function renderPERBandChart(perData) {
 }
 
 // ── 2. 外資持股比例歷史趨勢（籌碼面）──────────────────────────
+// 更新頁面上所有提及外資持股比例的地方，改用即時資料，避免寫死百分比過時
+// 注意：這裡只用已載入的24個月資料做比較，不會宣稱「18年新低」這種需要更長歷史才能驗證的說法
+function updateForeignOwnershipMentions(ratios, labels) {
+    if (!ratios?.length) return;
+    const latest = ratios[ratios.length - 1];
+    const latestDate = labels[labels.length - 1];
+    const minInWindow = Math.min(...ratios);
+    const isNearWindowLow = latest <= minInWindow * 1.005; // 在載入區間內是否接近最低點
+
+    const shortText = `外資持股降至 ${latest.toFixed(2)}%（${latestDate}，近24個月${isNearWindowLow ? '低點' : '區間內'}）`;
+    const longText  = `${latestDate}外資持股比例為 ${latest.toFixed(2)}%，為近24個月${isNearWindowLow ? '最低水位' : '統計區間內水位'}`;
+
+    const el1 = document.getElementById('fo-mention-1');
+    if (el1) el1.textContent = longText;
+    const el2 = document.getElementById('fo-mention-2');
+    if (el2) el2.textContent = shortText;
+    const el3 = document.getElementById('fo-mention-3');
+    if (el3) el3.textContent = longText;
+}
+
 function renderShareholdingChart(data) {
     if (!data?.length) return;
     const labels = data.map(r => r.date.substring(0, 7));
     const ratios = data.map(r => r.ratio);
+
+    // 動態更新說明文字的開頭句：用實際抓到的最新一筆資料，不寫死百分比，避免資料過時
+    const captionEl = document.getElementById('shareholding-caption');
+    if (captionEl) {
+        // 第一次執行時記住原本寫死的靜態說明（原因/風險提醒），之後只在前面插入動態數字，不重複疊加
+        if (!captionEl.dataset.baseText) captionEl.dataset.baseText = captionEl.textContent;
+        const latest = ratios[ratios.length - 1];
+        const earliest = ratios[0];
+        const latestDate = labels[labels.length - 1];
+        const trendWord = latest > earliest ? '較統計區間起點攀升' : latest < earliest ? '較統計區間起點下滑' : '與統計區間起點持平';
+        const prefix = `最新外資持股比例為 ${latest.toFixed(2)}%（${latestDate}），${trendWord}。`;
+        captionEl.textContent = prefix + captionEl.dataset.baseText;
+    }
+    updateForeignOwnershipMentions(ratios, labels);
 
     createChart('shareholding-chart', {
         type: 'line',
@@ -3222,10 +3467,16 @@ const ANALYST_TARGETS = [
     { firm: 'JP Morgan (小摩)',      rating: 'Overweight', target: 3100, date: '2026-07-13' },
     { firm: 'Goldman Sachs (高盛)',  rating: 'Buy',        target: 3000, date: '2026-07-14' },
     { firm: 'GF Securities (廣發)',  rating: 'Buy',        target: 2900, date: '2026-07-14' },
+    { firm: 'KGI (凱基證券，本土)',   rating: 'Outperform', target: 3200, date: '2026-07' },
     { firm: 'BNP Paribas (法巴)',    rating: 'Buy',        target: 2890, date: '2026-07-17' },
-    { firm: 'Morgan Stanley (大摩)', rating: 'Overweight', target: 2888, date: '2026-07-14' },
-    { firm: 'Nomura (野村)',         rating: 'Buy',        target: 2820, date: '2026-04' },
-    { firm: 'HSBC (滙豐)',           rating: 'Buy',        target: 2800, date: '2026-04' },
+    { firm: 'Nomura (野村)',         rating: 'Buy',        target: 3425, date: '2026-07-01' },
+    { firm: 'Barclays',              rating: 'Overweight', target: 4148, date: '2026-07-17', usdNote: '原始報價 US$650(ADR)，換算NT$（31.9匯率÷5股）' },
+    { firm: 'Susquehanna',           rating: 'Buy',        target: 3828, date: '2026-07-17', usdNote: '原始報價 US$600(ADR)，換算NT$（31.9匯率÷5股）' },
+    { firm: 'HSBC (滙豐)',           rating: 'Buy',        target: 3350, date: '2026-07' },
+    { firm: 'Yuanta (元大投顧，本土)', rating: 'Buy',        target: 2600, date: '2026-04-19' },
+    { firm: 'DA Davidson',           rating: 'Buy',        target: 3190, date: '2026-07-17', usdNote: '原始報價 US$500(ADR)，換算NT$（31.9匯率÷5股）' },
+    { firm: 'Morgan Stanley (大摩)', rating: 'Overweight', target: 2988, date: '2026-07-20' },
+    { firm: 'TD Cowen',              rating: 'Buy',        target: 2807, date: '2026-07-17', usdNote: '原始報價 US$440(ADR)，換算NT$（31.9匯率÷5股）' },
     { firm: 'Daiwa (大和)',          rating: 'Buy',        target: 2330, date: '2026-04' },
 ];
 
@@ -3238,7 +3489,8 @@ function renderAnalystTargets(currentPrice) {
     const upside = currentPrice ? ((avgTarget - currentPrice) / currentPrice * 100).toFixed(1) : null;
 
     el.innerHTML = `
-        <h4>外資法人目標價（Q2法說會後最新，截至 2026 年 7 月 21 日）</h4>
+        <h4>國內外法人目標價（截至 2026 年 7 月 27 日）</h4>
+        <p class="text-muted" style="margin-bottom:8px;font-size:12px">美系券商（Barclays/Susquehanna/TD Cowen/DA Davidson）原始報價為美股ADR，已用匯率31.9、1 ADR=5股換算為新台幣目標價，換算前金額列於表格內；元大投顧為4/19法說前發布，其餘皆為法說後最新。</p>
         <p class="text-muted" style="margin-bottom:16px;">
             共 ${sorted.length} 家機構，平均目標價 <strong style="color:#3b82f6">NT$${avgTarget.toLocaleString()}</strong>
             ${upside ? `，較現價潛在 ${upside > 0 ? '+' : ''}${upside}%` : ''}
@@ -3257,7 +3509,7 @@ function renderAnalystTargets(currentPrice) {
                         return `<tr>
                             <td><strong>${r.firm}</strong></td>
                             <td><span style="background:${ratingColor};padding:2px 8px;border-radius:4px;font-size:12px;">${r.rating}</span></td>
-                            <td style="font-weight:600">NT$${r.target.toLocaleString()}</td>
+                            <td style="font-weight:600">NT$${r.target.toLocaleString()}${r.usdNote ? `<div style="font-weight:400;font-size:11px;color:var(--text-secondary)">${r.usdNote}</div>` : ''}</td>
                             <td style="color:${color};font-weight:600">${diff ? (diff > 0 ? '+' : '') + diff + '%' : '--'}</td>
                             <td style="color:var(--text-secondary);font-size:12px">${r.date}</td>
                         </tr>`;
