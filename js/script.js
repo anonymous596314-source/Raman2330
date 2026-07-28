@@ -145,9 +145,10 @@ async function refreshData(partial = false) {
     if (chipData && chipData.length > 0) {
         renderChipCostChart(chipData);
         try { renderPriceSeasonalityChart(chipData); }
-        catch(e) { console.error('[renderPriceSeasonalityChart]', e); }
+        catch(e) { console.error('[renderPriceSeasonalityChart]', e); showChartFallback('price-seasonality-chart'); }
     } else {
         showChartFallback('chip-cost-chart');
+        showChartFallback('price-seasonality-chart');
     }
     if (flowData) {
         renderChipFlowChart(flowData);
