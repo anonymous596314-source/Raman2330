@@ -26,14 +26,30 @@ function setupSidebar() {
     });
 }
 
+let isRefreshing = false;
+
 function setupRefreshLogic() {
     const refreshBtn = document.getElementById('refresh-btn');
     refreshBtn.addEventListener('click', async () => {
+        if (isRefreshing) return; // 防止連續點擊疊加多組並行請求
+        isRefreshing = true;
         refreshBtn.classList.add('loading');
-        await refreshData();
-        refreshBtn.classList.remove('loading');
+        try {
+            await refreshData();
+        } finally {
+            refreshBtn.classList.remove('loading');
+            isRefreshing = false;
+        }
     });
-    setInterval(async () => { await refreshData(true); }, 60000);
+    setInterval(async () => {
+        if (isRefreshing) return; // 若上一次刷新（手動或自動）尚未完成，跳過這次自動刷新，避免疊加
+        isRefreshing = true;
+        try {
+            await refreshData(true);
+        } finally {
+            isRefreshing = false;
+        }
+    }, 60000);
 }
 
 async function refreshData(partial = false) {
@@ -115,6 +131,7 @@ async function refreshData(partial = false) {
 
     // 3. 基本面
     if (fund) {
+      try {
         document.getElementById('pe-ratio').innerText = fund.peRatio ? (typeof fund.peRatio === 'number' ? fund.peRatio.toFixed(2) : fund.peRatio) : '--';
         document.getElementById('eps-ttm').innerText = fund.eps ? fund.eps.toFixed(2) : '--';
         const roeEl = document.getElementById('roe-value');
@@ -129,14 +146,23 @@ async function refreshData(partial = false) {
         renderYoyChart();
         renderMarginStackChart();
         renderCashflowCapexChart();
+      } catch (e) {
+        console.error('[基本面區塊]', e);
+        ['fundamental-chart','eps-chart','yoy-chart','margin-stack-chart','cashflow-capex-chart'].forEach(id => showChartFallback(id));
+      }
     }
 
     // 4. 技術面
     if (techData && techData.length > 0) {
+      try {
         renderTechnicalChart(techData);
         renderVolumeChart(techData);
         renderRsiChart(techData);
         renderMacdChart(techData);
+      } catch (e) {
+        console.error('[技術面區塊]', e);
+        ['technical-chart', 'kd-chart', 'volume-chart', 'rsi-chart', 'macd-chart'].forEach(id => showChartFallback(id));
+      }
     } else {
         ['technical-chart', 'kd-chart', 'volume-chart', 'rsi-chart', 'macd-chart'].forEach(showChartFallback);
     }
@@ -150,35 +176,41 @@ async function refreshData(partial = false) {
         showChartFallback('chip-cost-chart');
         showChartFallback('price-seasonality-chart');
     }
-    if (flowData) {
-        renderChipFlowChart(flowData);
-        renderChipCumulativeChart(flowData, techData);
-        const sumForeign = flowData.foreign.reduce((a, b) => a + b, 0);
-        const sumTrust = flowData.trust.reduce((a, b) => a + b, 0);
-        const sumDealer = flowData.dealer.reduce((a, b) => a + b, 0);
-        const fmt = (v) => {
-            const el_sign = v >= 0 ? '+' : '';
-            return `${el_sign}${Math.round(v).toLocaleString()}`;
-        };
-        const fEl = document.getElementById('foreign-net-30d');
-        const tEl = document.getElementById('trust-net-30d');
-        const dEl = document.getElementById('dealer-net-30d');
-        if (fEl) { fEl.innerText = fmt(sumForeign); fEl.style.color = sumForeign >= 0 ? '#ef4444' : '#22c55e'; }
-        if (tEl) { tEl.innerText = fmt(sumTrust); tEl.style.color = sumTrust >= 0 ? '#ef4444' : '#22c55e'; }
-        if (dEl) { dEl.innerText = fmt(sumDealer); dEl.style.color = sumDealer >= 0 ? '#ef4444' : '#22c55e'; }
-    } else {
-        renderChipFlowChart();
-        renderChipCumulativeChart();
+    try {
+        if (flowData) {
+            renderChipFlowChart(flowData);
+            renderChipCumulativeChart(flowData, techData);
+            const sumForeign = flowData.foreign.reduce((a, b) => a + b, 0);
+            const sumTrust = flowData.trust.reduce((a, b) => a + b, 0);
+            const sumDealer = flowData.dealer.reduce((a, b) => a + b, 0);
+            const fmt = (v) => {
+                const el_sign = v >= 0 ? '+' : '';
+                return `${el_sign}${Math.round(v).toLocaleString()}`;
+            };
+            const fEl = document.getElementById('foreign-net-30d');
+            const tEl = document.getElementById('trust-net-30d');
+            const dEl = document.getElementById('dealer-net-30d');
+            if (fEl) { fEl.innerText = fmt(sumForeign); fEl.style.color = sumForeign >= 0 ? '#ef4444' : '#22c55e'; }
+            if (tEl) { tEl.innerText = fmt(sumTrust); tEl.style.color = sumTrust >= 0 ? '#ef4444' : '#22c55e'; }
+            if (dEl) { dEl.innerText = fmt(sumDealer); dEl.style.color = sumDealer >= 0 ? '#ef4444' : '#22c55e'; }
+        } else {
+            renderChipFlowChart();
+            renderChipCumulativeChart();
+        }
+    } catch (e) {
+        console.error('[三大法人區塊]', e);
+        showChartFallback('chip-flow-chart');
+        showChartFallback('chip-cumulative-chart');
     }
 
     // 6. 總經面
     if (twdData && twdData.length > 0 && tsm1yData && tsm1yData.length > 0) {
-        renderMacroChart(tsm1yData, twdData);
+        try { renderMacroChart(tsm1yData, twdData); } catch(e) { console.error('[renderMacroChart]', e); showChartFallback('macro-chart'); }
     } else {
         showChartFallback('macro-chart');
     }
     if (soxData && soxData.length > 0 && adrData && adrData.length > 0) {
-        renderSoxAdrChart(tsm1yData, soxData, adrData);
+        try { renderSoxAdrChart(tsm1yData, soxData, adrData); } catch(e) { console.error('[renderSoxAdrChart]', e); showChartFallback('sox-adr-chart'); }
     } else {
         showChartFallback('sox-adr-chart');
     }
@@ -213,13 +245,13 @@ async function refreshData(partial = false) {
     }
 
     if (shareholdingHistory && shareholdingHistory.length > 0) {
-        renderShareholdingChart(shareholdingHistory);
+        try { renderShareholdingChart(shareholdingHistory); } catch(e) { console.error('[renderShareholdingChart]', e); showChartFallback('shareholding-chart'); }
     } else {
         showChartFallback('shareholding-chart');
     }
 
     if (vixData && vixData.length > 0 && tsm1yData && tsm1yData.length > 0) {
-        renderVIXChart(tsm1yData, vixData);
+        try { renderVIXChart(tsm1yData, vixData); } catch(e) { console.error('[renderVIXChart]', e); showChartFallback('vix-chart'); }
     } else {
         showChartFallback('vix-chart');
     }
@@ -850,12 +882,12 @@ function renderChipFlowChart(data) {
         scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' } } }
     };
 
-    if (!data) {
+    if (!data || !data.labels || data.labels.length === 0) {
         createChart('chip-flow-chart', {
             type: 'bar',
             data: {
-                labels: ['資料載入中...'],
-                datasets: [{ label: '等待資料', data: [0] }]
+                labels: ['資料暫時無法取得'],
+                datasets: [{ label: '請按右上角「更新資料」重試', data: [0] }]
             },
             options: commonOptions
         });
@@ -892,12 +924,12 @@ function renderChipFlowChart(data) {
 }
 
 function renderChipCumulativeChart(data, priceData) {
-    if (!data) {
+    if (!data || !data.labels || data.labels.length === 0) {
         createChart('chip-cumulative-chart', {
             type: 'line',
             data: {
-                labels: ['資料載入中...'],
-                datasets: [{ label: '等待資料', data: [0], borderColor: '#64748b' }]
+                labels: ['資料暫時無法取得'],
+                datasets: [{ label: '請按右上角「更新資料」重試', data: [0], borderColor: '#64748b' }]
             },
             options: {
                 responsive: true,
@@ -3165,12 +3197,18 @@ function renderRiskValuationMetrics(perHistory, adrData, spyData, us10yData, tec
     let pegHtml = '<span style="color:var(--text-secondary)">資料不足</span>';
     let latestPE = null;
     if (perHistory && perHistory.length > 0) {
-        latestPE = perHistory[perHistory.length - 1].per;
-        const epsGrowthPct = 46.4;
-        const peg = latestPE / epsGrowthPct;
-        const pegColor = peg < 1 ? 'var(--up-color)' : peg < 1.5 ? '#f59e0b' : 'var(--down-color)';
-        pegHtml = `<strong style="color:${pegColor};font-size:22px">${peg.toFixed(2)}</strong>
-            <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">P/E ${latestPE.toFixed(1)}x ÷ EPS成長46.4%（2025全年YoY）</div>`;
+        const rawPE = perHistory[perHistory.length - 1].per;
+        // 驗證P/E是合理的正數，避免資料異常（0、負值、NaN）算出誤導性結果（例如P/E=0會讓PEG顯示"0.00"且標成綠色看似超便宜，P/E=NaN會直接顯示"NaN"字樣）
+        if (Number.isFinite(rawPE) && rawPE > 0) {
+            latestPE = rawPE;
+            const epsGrowthPct = 46.4;
+            const peg = latestPE / epsGrowthPct;
+            const pegColor = peg < 1 ? 'var(--up-color)' : peg < 1.5 ? '#f59e0b' : 'var(--down-color)';
+            pegHtml = `<strong style="color:${pegColor};font-size:22px">${peg.toFixed(2)}</strong>
+                <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">P/E ${latestPE.toFixed(1)}x ÷ EPS成長46.4%（2025全年YoY）</div>`;
+        } else {
+            pegHtml = '<span style="color:var(--text-secondary)">P/E 資料異常</span>';
+        }
     }
 
     // 2. Beta係數：TSM ADR 週報酬 vs S&P500(SPY) 週報酬，1年迴歸
