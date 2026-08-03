@@ -76,12 +76,17 @@ async function refreshData(partial = false) {
 
     if (news && news.length > 0) {
         const newsContainer = document.getElementById('news-container');
-        newsContainer.innerHTML = '<h4>即時外資報告與新聞</h4>' + news.map(n => `
+        newsContainer.innerHTML = '<h4>即時外資報告與新聞</h4>' + news.map(n => {
+            // 連結網址用於 href 屬性內，escapeHtml 是針對文字內容設計的（雙引號在屬性情境不一定會被跳脫），
+            // 這裡額外處理雙引號並限制只接受 http/https，避免 javascript: 等協定被當成連結注入
+            const safeHref = /^https?:\/\//i.test(n.link || '') ? n.link.replace(/"/g, '&quot;') : '#';
+            return `
             <div class="news-item">
-                <a href="${n.link}" target="_blank" rel="noopener noreferrer"><h5>${escapeHtml(n.title)}</h5></a>
+                <a href="${safeHref}" target="_blank" rel="noopener noreferrer"><h5>${escapeHtml(n.title)}</h5></a>
                 <p>${escapeHtml(n.publisher)} - ${new Date(n.providerPublishTime * 1000).toLocaleString('zh-TW')}</p>
             </div>
-        `).join('');
+        `;
+        }).join('');
         analyzeSentiment(news);
     } else {
         const newsContainer = document.getElementById('news-container');
@@ -185,7 +190,7 @@ async function refreshData(partial = false) {
             const sumDealer = flowData.dealer.reduce((a, b) => a + b, 0);
             const fmt = (v) => {
                 const el_sign = v >= 0 ? '+' : '';
-                return `${el_sign}${Math.round(v).toLocaleString()}`;
+                return `${el_sign}${Math.round(v).toLocaleString('en-US')}`;
             };
             const fEl = document.getElementById('foreign-net-30d');
             const tEl = document.getElementById('trust-net-30d');
@@ -362,14 +367,23 @@ if (typeof window.Chart !== 'undefined') {
 }
 
 function createChart(ctxId, config) {
-    const ctx = document.getElementById(ctxId);
+    let ctx = document.getElementById(ctxId);
     if (!ctx) return;
     if (typeof window.Chart === 'undefined') {
         const fallback = document.createElement('div');
+        fallback.id = ctxId;
         fallback.className = 'chart-fallback';
         fallback.innerHTML = '<strong>圖表套件未載入</strong><span>請確認網路可連到 Chart.js CDN 後重新整理。</span>';
         ctx.replaceWith(fallback);
         return;
+    }
+    // 若這個位置目前是先前失敗時留下的 fallback div（不是canvas），先換回一個乾淨的canvas才能重新畫圖
+    // 否則資料恢復正常後，圖表會因為找不到canvas元素而永遠卡在錯誤訊息畫面，即使使用者按了更新資料重試
+    if (ctx.tagName !== 'CANVAS') {
+        const canvas = document.createElement('canvas');
+        canvas.id = ctxId;
+        ctx.replaceWith(canvas);
+        ctx = canvas;
     }
     if (charts[ctxId]) charts[ctxId].destroy();
     charts[ctxId] = new Chart(ctx, config);
@@ -390,6 +404,7 @@ function showChartFallback(ctxId, msg) {
     // 若已被替換成 div，不重複替換
     if (el.tagName !== 'CANVAS') return;
     const fb = document.createElement('div');
+    fb.id = ctxId; // 保留原本canvas的id，否則之後資料恢復正常時，createChart()會永遠找不到這個位置而無法重新畫圖
     fb.className = 'chart-fallback';
     fb.innerHTML = `<strong>資料暫時無法取得</strong><span>${msg || 'Yahoo Finance / FinMind proxy 未回應，請按右上角「更新資料」重試，或稍後再試。'}</span>`;
     el.replaceWith(fb);
@@ -570,7 +585,7 @@ function renderTechnicalChart(data) {
 
     const labels = data.map(d => {
         const dt = new Date(d.date);
-        return `${dt.getMonth()+1}/${dt.getDate()}`;
+        return `${dt.getUTCMonth()+1}/${dt.getUTCDate()}`;
     });
     const closes = data.map(d => d.close);
 
@@ -623,7 +638,7 @@ function renderTechnicalChart(data) {
             },
             scales: {
                 x: { ticks: { maxTicksLimit: 10, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { ticks: { color: '#94a3b8', callback: v => 'NT$' + v.toLocaleString() }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                y: { ticks: { color: '#94a3b8', callback: v => 'NT$' + v.toLocaleString('en-US') }, grid: { color: 'rgba(255,255,255,0.05)' } }
             }
         }
     });
@@ -684,7 +699,7 @@ function renderTechnicalChart(data) {
 }
 
 function renderVolumeChart(data) {
-    const labels = data.map(d => `${d.date.getMonth()+1}/${d.date.getDate()}`);
+    const labels = data.map(d => `${d.date.getUTCMonth()+1}/${d.date.getUTCDate()}`);
     const volumes = data.map(d => Math.round((d.volume || 0) / 1000)); // 千股
     const colors = data.map((d, i) => i === 0 ? 'rgba(59,130,246,0.7)' : (d.close >= data[i-1].close ? 'rgba(239,68,68,0.7)' : 'rgba(34,197,94,0.7)'));
 
@@ -708,7 +723,7 @@ function renderVolumeChart(data) {
 }
 
 function renderRsiChart(data) {
-    const labels = data.map(d => `${d.date.getMonth()+1}/${d.date.getDate()}`);
+    const labels = data.map(d => `${d.date.getUTCMonth()+1}/${d.date.getUTCDate()}`);
     const rsi = calculateRSI(data, 14);
 
     createChart('rsi-chart', {
@@ -735,7 +750,7 @@ function renderRsiChart(data) {
 }
 
 function renderMacdChart(data) {
-    const labels = data.map(d => `${d.date.getMonth()+1}/${d.date.getDate()}`);
+    const labels = data.map(d => `${d.date.getUTCMonth()+1}/${d.date.getUTCDate()}`);
     const macd = calculateMACD(data);
 
     createChart('macd-chart', {
@@ -829,13 +844,14 @@ function renderChipCostChart(data) {
 
     if (!data || data.length < 53) {
         const fb = document.createElement('div');
+        fb.id = 'chip-cost-chart'; // 保留id，否則資料恢復正常後createChart()永遠找不到這個位置
         fb.className = 'chart-fallback';
         fb.innerHTML = '<strong>法人成本資料暫時無法取得</strong><span>Yahoo Finance CORS proxy 未回應，請稍後按右上角「更新資料」重試。</span>';
         canvasEl.replaceWith(fb);
         return;
     }
 
-    const labels = data.map(d => `${d.date.getFullYear()}/${d.date.getMonth()+1}`);
+    const labels = data.map(d => `${d.date.getUTCFullYear()}/${d.date.getUTCMonth()+1}`);
     const closes = data.map(d => d.close);
     const cost1Y = calculateMA(data, 52);
     // 需要至少 260 筆才有意義；資料不足時降級顯示已有長度的 MA
@@ -875,7 +891,7 @@ function renderChipFlowChart(data) {
             legend: { position: 'top' },
             tooltip: {
                 callbacks: {
-                    label: ctx => ` ${ctx.dataset.label}: ${ctx.raw >= 0 ? '+' : ''}${ctx.raw.toLocaleString()} 張`
+                    label: ctx => ` ${ctx.dataset.label}: ${ctx.raw >= 0 ? '+' : ''}${ctx.raw.toLocaleString('en-US')} 張`
                 }
             }
         },
@@ -1005,7 +1021,7 @@ function renderChipCumulativeChart(data, priceData) {
                     callbacks: {
                         label: ctx => ctx.dataset.label.includes('股價')
                             ? ` 股價: NT$${ctx.raw?.toFixed(1) ?? '--'}`
-                            : ` ${ctx.dataset.label}: ${ctx.raw >= 0 ? '+' : ''}${Math.round(ctx.raw).toLocaleString()} 張`
+                            : ` ${ctx.dataset.label}: ${ctx.raw >= 0 ? '+' : ''}${Math.round(ctx.raw).toLocaleString('en-US')} 張`
                     }
                 },
                 subtitle: divergenceNote ? { display: true, text: divergenceNote, color: '#f59e0b', font: { size: 12 } } : undefined
@@ -1024,7 +1040,7 @@ function renderMacroChart(tsmData, twdData) {
     const minLength = Math.min(tsmData.length, twdData.length);
     const rTsm = tsmData.slice(-minLength);
     const rTwd = twdData.slice(-minLength);
-    const labels = rTsm.map(d => `${d.date.getMonth()+1}/${d.date.getDate()}`);
+    const labels = rTsm.map(d => `${d.date.getUTCMonth()+1}/${d.date.getUTCDate()}`);
 
     createChart('macro-chart', {
         type: 'line',
@@ -1071,7 +1087,7 @@ function renderSoxAdrChart(tsmData, soxData, adrData) {
     const master = [rTsm, rSox, rAdr].reduce((a, b) => a.length >= b.length ? a : b);
     const labels = master.map(d => {
         const dt = new Date(d.date);
-        return `${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()}`;
+        return `${dt.getUTCFullYear()}/${dt.getUTCMonth()+1}/${dt.getUTCDate()}`;
     });
 
     // 把任意陣列插值對齊到 master 長度
@@ -1444,7 +1460,7 @@ function renderOutlookChart() {
             interaction: { mode: 'index', intersect: false },
             plugins: {
                 legend: { position: 'top' },
-                tooltip: { callbacks: { label: ctx => ctx.raw ? `NT$${ctx.raw.toLocaleString()}B` : '—' } }
+                tooltip: { callbacks: { label: ctx => ctx.raw ? `NT$${ctx.raw.toLocaleString('en-US')}B` : '—' } }
             },
             scales: {
                 x: { grid: { color: 'rgba(255,255,255,0.05)' } },
@@ -1469,7 +1485,7 @@ function renderOutlookChart() {
             interaction: { mode: 'index', intersect: false },
             plugins: {
                 legend: { position: 'top' },
-                tooltip: { callbacks: { label: ctx => `NT$${ctx.raw.toLocaleString()}B` } }
+                tooltip: { callbacks: { label: ctx => `NT$${ctx.raw.toLocaleString('en-US')}B` } }
             },
             scales: {
                 y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '十億台幣' } }
@@ -1761,7 +1777,7 @@ function renderASPCharts() {
             responsive: true, maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
-                tooltip: { callbacks: { label: ctx => `US$${ctx.raw.toLocaleString()} / 片` } }
+                tooltip: { callbacks: { label: ctx => `US$${ctx.raw.toLocaleString('en-US')} / 片` } }
             },
             scales: {
                 y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'USD / 12吋等效片' } },
@@ -1790,7 +1806,7 @@ function renderASPCharts() {
             responsive: true, maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
-                tooltip: { callbacks: { label: ctx => `US$${ctx.raw.toLocaleString()} / 片` } }
+                tooltip: { callbacks: { label: ctx => `US$${ctx.raw.toLocaleString('en-US')} / 片` } }
             },
             scales: {
                 x: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'USD / 片（估）' } },
@@ -2315,7 +2331,7 @@ function renderStressChart() {
                 tooltip: { callbacks: {
                     afterBody: ctx => {
                         const i = ctx[0].dataIndex;
-                        return `隱含股價：NT$${priceImpact[i].toLocaleString()}（較現價${((priceImpact[i]-2330)/2330*100).toFixed(0)}%）`;
+                        return `隱含股價：NT$${priceImpact[i].toLocaleString('en-US')}（較現價${((priceImpact[i]-2330)/2330*100).toFixed(0)}%）`;
                     }
                 } } },
             scales: {
@@ -2347,7 +2363,7 @@ function renderPeopleCharts() {
         options: {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false },
-                tooltip: { callbacks: { label: ctx => `${ctx.raw.toLocaleString()} 人` } } },
+                tooltip: { callbacks: { label: ctx => `${ctx.raw.toLocaleString('en-US')} 人` } } },
             scales: {
                 y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: '人' } },
                 x: { grid: { display: false } }
@@ -3198,8 +3214,8 @@ function renderRiskValuationMetrics(perHistory, adrData, spyData, us10yData, tec
     let latestPE = null;
     if (perHistory && perHistory.length > 0) {
         const rawPE = perHistory[perHistory.length - 1].per;
-        // 驗證P/E是合理的正數，避免資料異常（0、負值、NaN）算出誤導性結果（例如P/E=0會讓PEG顯示"0.00"且標成綠色看似超便宜，P/E=NaN會直接顯示"NaN"字樣）
-        if (Number.isFinite(rawPE) && rawPE > 0) {
+        // 驗證P/E是合理的正數，避免資料異常（0、負值、NaN、離譜大值如小數點誤植）算出誤導性結果
+        if (Number.isFinite(rawPE) && rawPE > 0 && rawPE < 200) {
             latestPE = rawPE;
             const epsGrowthPct = 46.4;
             const peg = latestPE / epsGrowthPct;
@@ -3232,9 +3248,16 @@ function renderRiskValuationMetrics(perHistory, adrData, spyData, us10yData, tec
             }
             const beta = varM > 0 ? cov / varM : null;
             if (beta !== null) {
-                const betaColor = beta > 1.3 ? 'var(--down-color)' : beta > 1 ? '#f59e0b' : 'var(--up-color)';
-                betaHtml = `<strong style="color:${betaColor};font-size:22px">${beta.toFixed(2)}</strong>
-                    <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">TSM ADR vs S&amp;P500，近1年週報酬迴歸（樣本數${len}週）</div>`;
+                if (Math.abs(beta) > 5) {
+                    // Beta超出合理範圍（一般股票Beta約0.5-2.5，極端也很少超過±5），代表這段期間市場波動異常小或個股有單一極端事件主導，
+                    // 迴歸結果數學上成立但不具參考意義，避免原封不動顯示誤導使用者
+                    betaHtml = `<strong style="color:var(--text-secondary);font-size:20px">數值異常 (${beta.toFixed(1)})</strong>
+                        <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">計算結果超出合理範圍，可能是市場波動度過低或單一極端事件主導，暫不具參考性</div>`;
+                } else {
+                    const betaColor = beta > 1.3 ? 'var(--down-color)' : beta > 1 ? '#f59e0b' : 'var(--up-color)';
+                    betaHtml = `<strong style="color:${betaColor};font-size:22px">${beta.toFixed(2)}</strong>
+                        <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">TSM ADR vs S&amp;P500，近1年週報酬迴歸（樣本數${len}週）</div>`;
+                }
             }
         }
     }
@@ -3275,20 +3298,20 @@ function renderRiskValuationMetrics(perHistory, adrData, spyData, us10yData, tec
     el.innerHTML = `
         <h4 style="margin-bottom:16px">估值與風險延伸指標</h4>
         <p class="text-muted" style="margin-bottom:16px">以下四項皆為既有資料的數學延伸計算，非另行取得的第三方指標；PEG/殖利率利差用隱含股價估算，Beta/波動率為即時計算</p>
-        <div class="stat-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
-            <div class="stat-card" style="padding:16px;background:rgba(255,255,255,0.03);border-radius:8px">
+        <div class="stat-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
+            <div style="padding:16px;background:rgba(255,255,255,0.03);border-radius:8px">
                 <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">PEG Ratio</div>
                 ${pegHtml}
             </div>
-            <div class="stat-card" style="padding:16px;background:rgba(255,255,255,0.03);border-radius:8px">
+            <div style="padding:16px;background:rgba(255,255,255,0.03);border-radius:8px">
                 <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">Beta 係數（相對S&amp;P500）</div>
                 ${betaHtml}
             </div>
-            <div class="stat-card" style="padding:16px;background:rgba(255,255,255,0.03);border-radius:8px">
+            <div style="padding:16px;background:rgba(255,255,255,0.03);border-radius:8px">
                 <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">殖利率利差（vs 美債10Y）</div>
                 ${spreadHtml}
             </div>
-            <div class="stat-card" style="padding:16px;background:rgba(255,255,255,0.03);border-radius:8px">
+            <div style="padding:16px;background:rgba(255,255,255,0.03);border-radius:8px">
                 <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">歷史波動率（年化）</div>
                 ${volHtml}
             </div>
@@ -3426,7 +3449,7 @@ function renderVIXChart(tsmData, vixData) {
     // 對齊到 TSM 的時間軸
     const labels = tsm.map(d => {
         const dt = new Date(d.date);
-        return `${dt.getMonth()+1}/${dt.getDate()}`;
+        return `${dt.getUTCMonth()+1}/${dt.getUTCDate()}`;
     });
 
     createChart('vix-chart', {
@@ -3471,7 +3494,7 @@ function renderVIXChart(tsmData, vixData) {
                 legend: { position: 'top', labels: { color: '#94a3b8' } },
                 tooltip: { callbacks: {
                     label: ctx => ctx.datasetIndex === 0
-                        ? ` 台積電: NT$${ctx.raw.toLocaleString()}`
+                        ? ` 台積電: NT$${ctx.raw.toLocaleString('en-US')}`
                         : ` VIX: ${ctx.raw.toFixed(1)}`
                 }}
             },
@@ -3479,7 +3502,7 @@ function renderVIXChart(tsmData, vixData) {
                 x: { ticks: { maxTicksLimit: 12, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
                 y: {
                     type: 'linear', position: 'left',
-                    ticks: { color: '#ef4444', callback: v => 'NT$' + v.toLocaleString() },
+                    ticks: { color: '#ef4444', callback: v => 'NT$' + v.toLocaleString('en-US') },
                     grid: { color: 'rgba(255,255,255,0.05)' }
                 },
                 y1: {
@@ -3531,7 +3554,7 @@ function renderAnalystTargets(currentPrice) {
         <h4>國內外法人目標價（截至 2026 年 7 月 27 日）</h4>
         <p class="text-muted" style="margin-bottom:8px;font-size:12px">美系券商（Barclays/Susquehanna/TD Cowen/DA Davidson）原始報價為美股ADR，已用匯率31.9、1 ADR=5股換算為新台幣目標價，換算前金額列於表格內；元大投顧為4/19法說前發布，其餘皆為法說後最新。</p>
         <p class="text-muted" style="margin-bottom:16px;">
-            共 ${sorted.length} 家機構，平均目標價 <strong style="color:#3b82f6">NT$${avgTarget.toLocaleString()}</strong>
+            共 ${sorted.length} 家機構，平均目標價 <strong style="color:#3b82f6">NT$${avgTarget.toLocaleString('en-US')}</strong>
             ${upside ? `，較現價潛在 ${upside > 0 ? '+' : ''}${upside}%` : ''}
         </p>
         <div style="overflow-x:auto;">
@@ -3548,7 +3571,7 @@ function renderAnalystTargets(currentPrice) {
                         return `<tr>
                             <td><strong>${r.firm}</strong></td>
                             <td><span style="background:${ratingColor};padding:2px 8px;border-radius:4px;font-size:12px;">${r.rating}</span></td>
-                            <td style="font-weight:600">NT$${r.target.toLocaleString()}${r.usdNote ? `<div style="font-weight:400;font-size:11px;color:var(--text-secondary)">${r.usdNote}</div>` : ''}</td>
+                            <td style="font-weight:600">NT$${r.target.toLocaleString('en-US')}${r.usdNote ? `<div style="font-weight:400;font-size:11px;color:var(--text-secondary)">${r.usdNote}</div>` : ''}</td>
                             <td style="color:${color};font-weight:600">${diff ? (diff > 0 ? '+' : '') + diff + '%' : '--'}</td>
                             <td style="color:var(--text-secondary);font-size:12px">${r.date}</td>
                         </tr>`;
@@ -3618,8 +3641,8 @@ function updateCalc() {
 
     if (epsEl) epsEl.textContent = `NT$${eps}`;
     if (peEl)  peEl.textContent  = `${pe}x`;
-    if (resEl) resEl.textContent = `NT$${fair.toLocaleString()}`;
-    if (ranEl) ranEl.textContent = `保守 NT$${low.toLocaleString()} ～ 樂觀 NT$${high.toLocaleString()}`;
+    if (resEl) resEl.textContent = `NT$${fair.toLocaleString('en-US')}`;
+    if (ranEl) ranEl.textContent = `保守 NT$${low.toLocaleString('en-US')} ～ 樂觀 NT$${high.toLocaleString('en-US')}`;
 
     // 對比現價
     const curEl = document.getElementById('current-price');
@@ -3751,7 +3774,7 @@ function renderMarginChart(data) {
             plugins: {
                 legend: { position: 'top', labels: { color: '#94a3b8' } },
                 tooltip: { callbacks: {
-                    label: ctx => ` ${ctx.dataset.label}: ${ctx.raw?.toLocaleString() ?? '--'} 張`
+                    label: ctx => ` ${ctx.dataset.label}: ${ctx.raw?.toLocaleString('en-US') ?? '--'} 張`
                 }}
             },
             scales: {
@@ -3759,14 +3782,14 @@ function renderMarginChart(data) {
                 yMargin: {
                     type: 'linear',
                     position: 'left',
-                    ticks: { color: '#ef4444', callback: v => v.toLocaleString() },
+                    ticks: { color: '#ef4444', callback: v => v.toLocaleString('en-US') },
                     grid: { color: 'rgba(255,255,255,0.05)' },
                     title: { display: true, text: '融資 (張)', color: '#ef4444' }
                 },
                 yShort: {
                     type: 'linear',
                     position: 'right',
-                    ticks: { color: '#22c55e', callback: v => v.toLocaleString() },
+                    ticks: { color: '#22c55e', callback: v => v.toLocaleString('en-US') },
                     grid: { drawOnChartArea: false },
                     title: { display: true, text: '融券 (張)', color: '#22c55e' }
                 }
@@ -3927,7 +3950,7 @@ function renderScenarioChart(epsMode) {
         })),
         // 當前股價水平線（灰色）
         {
-            label: `現價 NT$${currentPrice.toLocaleString()}`,
+            label: `現價 NT$${currentPrice.toLocaleString('en-US')}`,
             data: years.map(() => currentPrice),
             borderColor: 'rgba(148,163,184,0.6)',
             borderWidth: 1.5,
@@ -3952,14 +3975,14 @@ function renderScenarioChart(epsMode) {
                         const pe = Object.values(peScenes)[ctx.datasetIndex];
                         const y = years[ctx.dataIndex];
                         const eps = ctx.dataIndex === 0 ? '（實際）' : `EPS NT$${epsData.values[y]} × ${pe.val}x`;
-                        return ` ${pe.label}: NT$${ctx.raw.toLocaleString()} ${eps}`;
+                        return ` ${pe.label}: NT$${ctx.raw.toLocaleString('en-US')} ${eps}`;
                     }
                 }}
             },
             scales: {
                 x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
                 y: {
-                    ticks: { color: '#94a3b8', callback: v => 'NT$' + v.toLocaleString() },
+                    ticks: { color: '#94a3b8', callback: v => 'NT$' + v.toLocaleString('en-US') },
                     grid: { color: 'rgba(255,255,255,0.05)' },
                     title: { display: true, text: '目標股價 (NT$)', color: '#94a3b8' }
                 }
@@ -4218,7 +4241,7 @@ function renderADRPremiumChart(tsmData, adrData, twdData) {
             : null;
 
         const dt = new Date(tsmRow.date);
-        labels.push(`${dt.getMonth()+1}/${dt.getDate()}`);
+        labels.push(`${dt.getUTCMonth()+1}/${dt.getUTCDate()}`);
         premium.push(pct);
     });
 
@@ -4324,13 +4347,13 @@ function renderMarginUsageChart(data) {
                     { label: '融資餘額 (張)', data: margin,
                       borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)',
                       borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 },
-                    { label: `1年均值 ${avg.toLocaleString()}張`, data: labels.map(() => avg),
+                    { label: `1年均值 ${avg.toLocaleString('en-US')}張`, data: labels.map(() => avg),
                       borderColor: 'rgba(148,163,184,0.7)', borderWidth: 1.5,
                       borderDash: [6,3], pointRadius: 0 },
-                    { label: `1年高點 ${max1.toLocaleString()}張`, data: labels.map(() => max1),
+                    { label: `1年高點 ${max1.toLocaleString('en-US')}張`, data: labels.map(() => max1),
                       borderColor: 'rgba(239,68,68,0.5)', borderWidth: 1,
                       borderDash: [3,4], pointRadius: 0 },
-                    { label: `1年低點 ${min1.toLocaleString()}張`, data: labels.map(() => min1),
+                    { label: `1年低點 ${min1.toLocaleString('en-US')}張`, data: labels.map(() => min1),
                       borderColor: 'rgba(34,197,94,0.5)', borderWidth: 1,
                       borderDash: [3,4], pointRadius: 0 }
                 ]
@@ -4340,11 +4363,11 @@ function renderMarginUsageChart(data) {
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
                     legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 16 } },
-                    tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw?.toLocaleString() ?? '--'}` } }
+                    tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw?.toLocaleString('en-US') ?? '--'}` } }
                 },
                 scales: {
                     x: { ticks: { maxTicksLimit: 10, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                    y: { ticks: { color: '#f59e0b', callback: v => v.toLocaleString() },
+                    y: { ticks: { color: '#f59e0b', callback: v => v.toLocaleString('en-US') },
                          grid: { color: 'rgba(255,255,255,0.05)' } }
                 }
             }
@@ -4591,7 +4614,7 @@ function renderROEChart() {
                 legend: { position: 'top', labels: { color: '#94a3b8' } },
                 tooltip: { callbacks: {
                     label: ctx => ctx.datasetIndex === 0
-                        ? ` ROE: ${ctx.raw}%（本期淨利 NT$${data[ctx.dataIndex].ni.toLocaleString()}億，來源：年報）`
+                        ? ` ROE: ${ctx.raw}%（本期淨利 NT$${data[ctx.dataIndex].ni.toLocaleString('en-US')}億，來源：年報）`
                         : ` ${ctx.dataset.label}`
                 }}
             },
@@ -4685,7 +4708,7 @@ function renderBalanceSheetChart() {
             plugins: {
                 legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 16 } },
                 tooltip: { callbacks: {
-                    label: ctx => ` ${ctx.dataset.label}: NT$${ctx.raw?.toLocaleString()}億`
+                    label: ctx => ` ${ctx.dataset.label}: NT$${ctx.raw?.toLocaleString('en-US')}億`
                 }}
             },
             scales: {
@@ -4966,12 +4989,12 @@ function renderCashflowDeepChart() {
             plugins: {
                 legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 16 } },
                 tooltip: { callbacks: {
-                    label: ctx => ` ${ctx.dataset.label}: NT$${ctx.raw?.toLocaleString()}億`
+                    label: ctx => ` ${ctx.dataset.label}: NT$${ctx.raw?.toLocaleString('en-US')}億`
                 }}
             },
             scales: {
                 x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { ticks: { color: '#94a3b8', callback: v => v.toLocaleString() + '億' },
+                y: { ticks: { color: '#94a3b8', callback: v => v.toLocaleString('en-US') + '億' },
                      grid: { color: 'rgba(255,255,255,0.05)' },
                      title: { display: true, text: '億元台幣', color: '#94a3b8' } }
             }
