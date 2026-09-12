@@ -24,7 +24,8 @@ async function runApiDiagnostics() {
         test('TWSE-MIS直連',         `${TWSE_MIS}?ex_ch=tse_2330.tw&json=1&delay=0`),
         test('FinMind直連',          `${FINMIND_BASE}?dataset=TaiwanStockPER&data_id=2330&start_date=2026-05-01`),
         test('Proxy-allorigins',     `https://api.allorigins.win/raw?url=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/2330.TW?range=1d&interval=1d')}`),
-        test('Proxy-corsproxy',      `https://corsproxy.io/?${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/2330.TW?range=1d&interval=1d')}`),
+        test('Proxy-corsproxy',      `https://corsproxy.io/?url=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/2330.TW?range=1d&interval=1d')}`),
+        test('Proxy-worker',         `https://young-unit-cf65.anonymous596314.workers.dev/?url=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/2330.TW?range=1d&interval=1d')}`),
     ]);
     console.group('%c📡 台積電儀表板 API 診斷結果', 'font-size:14px;font-weight:bold;color:#3b82f6');
     for (const [name, result] of Object.entries(results)) {
@@ -94,12 +95,12 @@ async function fetchJSON(url, timeoutMs = 10000) {
     return res.json();
 }
 
-// CORS proxy 清單（4個競速，任一成功即返回）
+// CORS proxy 清單（競速，任一成功即返回）
 const CORS_PROXIES = [
+    u => `https://young-unit-cf65.anonymous596314.workers.dev/?url=${encodeURIComponent(u)}`,
     u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
     u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-    u => `https://thingproxy.freeboard.io/fetch/${u}`,
 ];
 
 /**
@@ -293,16 +294,15 @@ async function fetchHistoricalData(range = "1y", interval = "1d", customSymbol =
         } catch (e) { console.warn(`[歷史] FinMind ${targetSymbol} 失敗:`, e.message); }
     }
 
-    // ── 主力（美股/ETF）：Twelve Data 透過 corsproxy.io ──────────
+    // ── 主力（美股/ETF）：Twelve Data 直連（已確認支援 CORS，不需 proxy）──
     if (!isTSMC) {
         try {
             const tdSym   = toTDSymbol(targetSymbol);
             const tdInt   = toTDInterval(interval);
             const outSize = rangeToOutputSize(range);
             const tdUrl   = `${TWELVEDATA_BASE}/time_series?symbol=${encodeURIComponent(tdSym)}&interval=${tdInt}&outputsize=${outSize}&apikey=${TWELVEDATA_KEY}`;
-            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(tdUrl)}`;
             console.log(`[Twelve Data] ${tdSym} ${tdInt} x${outSize}`);
-            const res  = await fetchWithTimeout(proxyUrl, 12000);
+            const res  = await fetchWithTimeout(tdUrl, 12000);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             if (data?.status === 'error') throw new Error(data.message);
@@ -461,8 +461,9 @@ async function fetchChipFlow() {
 
 // 免費 CORS proxy（只剩新聞用，降低對 proxy 的依賴）
 const NEWS_PROXIES = [
+    u => `https://young-unit-cf65.anonymous596314.workers.dev/?url=${encodeURIComponent(u)}`,
     u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u => `https://corsproxy.io/?${encodeURIComponent(u)}`
+    u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`
 ];
 
 async function fetchNews() {
@@ -633,15 +634,14 @@ async function fetchMarginData(months = 12) {
     return null;
 }
 
-/** VIX 恐慌指數（Twelve Data via corsproxy，近1年週線）*/
+/** VIX 恐慌指數（Twelve Data 直連，近1年週線）*/
 async function fetchVIX() {
     const cacheKey = 'vix_1y';
     const cached = cacheGet(cacheKey);
     if (cached) return cached.map(r => ({ ...r, date: new Date(r.date) }));
     try {
         const tdUrl = `${TWELVEDATA_BASE}/time_series?symbol=VIX&interval=1week&outputsize=52&apikey=${TWELVEDATA_KEY}`;
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(tdUrl)}`;
-        const res = await fetchWithTimeout(proxyUrl, 12000);
+        const res = await fetchWithTimeout(tdUrl, 12000);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data?.status === 'error') throw new Error(data.message);
@@ -712,15 +712,14 @@ async function fetchVIX() {
 }
 
 
-/** 美債10年期殖利率（Twelve Data via corsproxy）*/
+/** 美債10年期殖利率（Twelve Data 直連）*/
 async function fetchUS10Y() {
     const cacheKey = 'us10y_3y';
     const cached = cacheGet(cacheKey);
     if (cached) return cached.map(r => ({ ...r, date: new Date(r.date) }));
     try {
         const tdUrl    = `${TWELVEDATA_BASE}/time_series?symbol=US10Y&interval=1week&outputsize=156&apikey=${TWELVEDATA_KEY}`;
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(tdUrl)}`;
-        const res      = await fetchWithTimeout(proxyUrl, 12000);
+        const res      = await fetchWithTimeout(tdUrl, 12000);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data     = await res.json();
         if (data?.status === 'error') throw new Error(data.message);
